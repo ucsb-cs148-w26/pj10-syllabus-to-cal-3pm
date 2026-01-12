@@ -1,6 +1,8 @@
 Names: Wilson, Lucy, Natalie, Timothy, Matthew, Rocky  
 Agreements:  
-1. When one of us is absent, we can let others know on the Edstem channel as soon as possible or through phone
-2. We will try not to be absent
-3. We will try our best to contribute the project's success as a group effort
-4. 
+-Attend meetings on time, including section and lecture  
+-Do all work in advance to avoid merge conflicts  
+-Agree on a weekly deadline to accomplish goals  
+-If you need help, ask early on to resolve misunderstandings  
+-Be nice to each other, be active in slack   
+-Make code readable, clean  
