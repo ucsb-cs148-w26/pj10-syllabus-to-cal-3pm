@@ -5,10 +5,8 @@
 **Type of meeting**: Daily Scrum  
 **Team**: Timothy [present] , Rocky [present] , Nataly [present], Lucy [present], Wilson [present], Matthew [present]  
 
-**Scribed Discussion**:  
+**Scribed Discussion (Scrum)**:  
 Lucy updated lect02.md  
-
-**Scrum**:  
 1. Timothy(Present): Researching pipeline from syllabus to sth reasonable. Parse, run nlp. Chanllenge: Don’t know how to fit together. 
 2. Rocky(Present): Researching frontend: react. 
 3. Nataly(Present): Start with react. Has a skeleton of the web. Setting up things. 
