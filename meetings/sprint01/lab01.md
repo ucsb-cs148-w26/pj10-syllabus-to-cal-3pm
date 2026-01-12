@@ -1,4 +1,4 @@
-Attendance: all were present 
+Attendance: all were present  
 -Lucy  
 -Matthew  
 -Natalie  
