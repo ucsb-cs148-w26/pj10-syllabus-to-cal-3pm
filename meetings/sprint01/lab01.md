@@ -8,10 +8,15 @@ Type of Meeting: Daily Scrum
 
 Members: 
 -Lucy (present)
+
 -Matthew (present)
+
 -Nataly (present)
+
 -Wilson (present)
+
 -Rocky (present)
+
 -Timothy (present)
 
 Scrum Discussion:
