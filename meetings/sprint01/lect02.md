@@ -3,7 +3,7 @@
 **Mentor**: Self Mentored :)  
 **Meeting Time**: lect02  
 **Type of meeting**: Daily Scrum  
-**Team**: Timothy [present] , Rocky [present] , Nataly [present], Lucy [present], Wilson [present], Matthew [present]  
+**Team**: Timothy [ ] , Rocky [ ] , Nataly [ ], Lucy [ ], Wilson [ ], Matthew [ ]  
 
 **Scribed Discussion (Scrum)**:  
 Lucy updated lect02.md  
