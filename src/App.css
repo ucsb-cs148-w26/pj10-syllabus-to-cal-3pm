@@ -1,0 +1,14 @@
+.App {
+  padding: 2rem;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+p {
+  font-size: 1.2em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
