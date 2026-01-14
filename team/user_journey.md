@@ -2,6 +2,7 @@ Goal: Enable user to upload their class syllabuses onto calendar easily through 
 Need: User is frustrated with disorganized syllabuses and wants a way to organize it on their calendar without reading each one individually.  
 
 User Journey:  
-- As a user, I can upload syllabus pdfs from which information is transferred to my calendar.  
-- As a user, I can edit my preferences for only certain information (Lectures, sections, tests, assignements, etc) I want transferred to my calendar.
-- I get notified if there is any ambiguity in the syllabi that the website was not able to convert so that I can choose what to do with only those parts.
+- As a student, I upload syllabus pdfs to the website so that their information is transferred to my calendar.  
+- As a student, I can edit my preferences for only certain information (Lectures, sections, tests, assignements, etc) to be transferred to my calendar.
+- As a student, I get notified if there is any ambiguity in the syllabi that prevents the website from processing information from a section.
+- As a student, I am given the option to manually add information about sections that I was notified about before the website creates the calendar events
