@@ -1,4 +1,5 @@
 Names: Wilson, Lucy, Nataly, Timothy, Matthew, Rocky, Saeed
+
 Agreements:  
 - If you're going to be absent, contact everyone before class via group chat (also contact TAs)
 - Let members know what file you're working on to avoid merge conflicts
