@@ -25,7 +25,7 @@ To run the development server:
 npm run dev
 ```
 
-The app will be available at `http://localhost:5173` 
+The app will be available at `http://localhost:5173`
 
 ## Building for Production
 
@@ -39,9 +39,7 @@ The built files will be in the `dist/` directory.
 
 ## Deployment
 
-This app is deployed at: [DEPLOYMENT_URL_WILL_BE_ADDED_HERE]
-
-(Once deployed, update this URL with the actual deployment link)
+This app is deployed at: https://pj10-syllabus-to-cal-3pm-43ecjlz3j-wilsons-projects-3fa1e566.vercel.app
 
 ## Technology Stack
 
