@@ -1,1 +1,3 @@
-I am a student who is interested in machine learning. I want to create an uploader that automates the process of calendar uploading as much as possible without sacraficing accuracy or information.
+Hello, I'm Matthew. I like tea and sweet things. 
+
+I plan to create a model that generates calendar events (using the syllabi) to automate the tedious process while maintaining accuracy, structure, and insight. As the project develops, I would like the model to personalize the writing style to the individual's preferences.
