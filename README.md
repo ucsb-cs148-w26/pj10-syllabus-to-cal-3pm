@@ -1,15 +1,34 @@
-# Project: Syllabus To Calendar
+# CS148 Lab01 HelloWorld Min Viable Product - Rocky Gao
 
 # Description:
-Web app that extracts important dates from syllabi and adds them to Google Calendar
+Web app frontend only with a User login button and an upload drag n drop box.
 
-# Members:
-| Name | Github ID |
-|------|-----------|
-| Matthew | yzdemo | 
-| Wilson Lau | Wilson730 |
-| Rocky Gao | rockygao2020 |
-| Nataly Gonzalez Ornelas | n-ornelas |
-| Lucy Deng | DengLucy |
-| Timothy Lou | TimatoPaste |
-| Saeed Arellano | saeed-ar |
+# How to use:
+* [Stable Vercel URL here](https://cs148-react-vite-vercel-practice.vercel.app/)
+
+# How to recreate(should not be necessary as I already provided a stable URL):
+1. Install Node.js LTS (if not already)
+```
+curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+source ~/.bashrc
+nvm install --lts
+nvm use --lts
+```
+2. Create a new Vite React project (npm downloads both toolkits)
+```
+npm create vite@latest my-app -- --template react
+```
+3. Enter project folder
+```
+cd my-app
+```
+5. Install dependencies
+```
+npm install
+```
+7. Start dev server
+```
+npm run dev
+```
+8. Code your website however you want, just make sure to add the last line in this repo's ```vite.config.js``` file and commit to personal Github repo
+9. On Vercel, import that repo and add the following environment variable: ```VITE_BASE_PATH``` with value: ```/```, then deploy
