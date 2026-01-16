@@ -1,12 +1,13 @@
 # HelloWorld CS148-react-vite-vercel MVP - Rocky Gao
 
 # Description:
-Web app frontend only with a User login button and an upload drag n drop box.
+Web app frontend only with a User login button and an upload drag n drop box. Upon dragging a PDF to the box, the webpage signals a "Hello World!" message. Uses React+Vite deployed with Vercel. 
 
 # How to use:
-* [Stable Vercel URL here](https://cs148-react-vite-vercel-practice.vercel.app/)
+* [Click the Stable URL](https://cs148-react-vite-vercel-practice.vercel.app/)
 
-# How to recreate(should not be necessary as I already provided a stable URL):
+# How to recreate:
+* Logistics Note: The [lab01 instructions](https://edstem.org/us/courses/90881/lessons/155706/slides/908999) states that we should vary our frameworks, but also create pull requests for each hello world app. The frameworks used in my webapp are not compatible with the software we plan to use in the final product, so I have taken precautionary steps to mitigate the potential disaster of an accidental merge to main. The helloworld app resides solely in the directory named ```cs148-react-vite-vercel-practice-main```, unrelated to the rest of the repo, which retains the contents of main save the README file. This way in the event that during the grading process this branch supersedes main on accident, no progress will be lost. Below is a tutorial on how to recreate the webapp locally.
 1. Install Node.js LTS (if not already)
 ```
 curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
@@ -30,7 +31,7 @@ npm install
 ```
 npm run dev
 ```
-8. You should really only need to touch 2 relevant files:
+8. You should really only need to replace 2 relevant files:
   ```
 cs148-react-vite-vercel-practice/src/App.jsx
 cs148-react-vite-vercel-practice/src/App.css
