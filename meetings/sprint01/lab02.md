@@ -6,6 +6,7 @@ Type of meeting: Daily Scrum
 Team: Timothy [ ] , Rocky [ ] , Nataly [ ], Lucy [ ], Wilson [ ], Matthew [ ]
 
 Scribed Discussion (Scrum):
+
 Timothy
 - Researching libraries for PDF parsing and NLP
 - Struggling to import relevant libraries
