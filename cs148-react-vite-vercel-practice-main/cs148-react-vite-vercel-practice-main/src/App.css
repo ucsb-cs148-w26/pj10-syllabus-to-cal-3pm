@@ -1,0 +1,84 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+/* Reset some default spacing */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+}
+
+/* Top bar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  padding: 12px 24px;
+  background-color: #0d1c74;
+  color: rgb(221, 207, 17);
+}
+
+/* Logo on the left */
+.logo {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* Login button on the right */
+.login-button {
+  padding: 8px 16px;
+  font-size: 14px;
+
+  background-color: rgb(221, 207, 17);
+  color: #0d1c74;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.login-button:hover {
+  background-color: #ddd;
+}
+
+/* Page content */
+.content {
+  padding: 24px;
+}
+
+/* Upload box */
+.upload-box {
+  width: 300px;
+  height: 200px;
+
+  border: 2px dashed #999;
+  border-radius: 8px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+  color: #555;
+  cursor: pointer;
+
+  transition: border-color 0.2s, background-color 0.2s;
+}
+
+/* When file is received */
+.upload-box.received {
+  border-color: green;
+  background-color: #e9fbe9;
+  color: #2e7d32;
+}
+
+/* Clickable upload text */
+.upload-link {
+  color: blue;
+  text-decoration: underline;
+  cursor: pointer;
+}
