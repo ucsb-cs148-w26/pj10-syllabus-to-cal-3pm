@@ -1,4 +1,4 @@
-# CS148 Lab01 HelloWorld Min Viable Product - Rocky Gao
+# HelloWorld CS148-react-vite-vercel MVP - Rocky Gao
 
 # Description:
 Web app frontend only with a User login button and an upload drag n drop box.
