@@ -36,5 +36,5 @@ npm run dev
 cs148-react-vite-vercel-practice/src/App.jsx
 cs148-react-vite-vercel-practice/src/App.css
 ```
-10. Code your website however you want, just make sure to add the last line in this repo's ```vite.config.js``` file and commit to personal Github repo
+10. Code your website however you want, just make sure to add the last line in this repo's ```cs148-react-vite-vercel-practice-main/vite.config.js``` file and commit to personal Github repo
 11. On Vercel, import that repo and add the following environment variable: ```VITE_BASE_PATH``` with value: ```/```, then deploy
