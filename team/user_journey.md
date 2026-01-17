@@ -5,6 +5,7 @@ User Journey:
 
 | As a... | I want to... | so that...|
 |---------|--------------|-----------|
+| student | interact with a well-organized front-end | I can quickly use the app |
 | student | upload syllabus pdfs to the website | syllabus information is added to my calendar |
 | student | have my uploaded pdfs parsed | the app can process the contents |
 | student | have the content of my pdfs understood by the app | the app knows what to include in the calendar events | 
