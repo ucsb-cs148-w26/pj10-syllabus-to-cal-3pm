@@ -1,8 +1,13 @@
 Date: 2026/01/16
+
 Project: Syllabus to Calendar
+
 Mentor: Self Mentored :)
+
 Meeting Time: lab02
+
 Type of meeting: Daily Scrum
+
 Team: Timothy [ ] , Rocky [ ] , Nataly [ ], Lucy [ ], Wilson [ ], Matthew [ ]
 
 Scribed Discussion (Scrum):
