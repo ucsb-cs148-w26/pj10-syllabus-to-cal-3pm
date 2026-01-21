@@ -1,0 +1,1 @@
+My name is Timothy, I am a second year CS major at UCSB, and I think we should use learned models to parse syllabi, since we are considering lecture and section times, but also other dates listed in the syllabi.
