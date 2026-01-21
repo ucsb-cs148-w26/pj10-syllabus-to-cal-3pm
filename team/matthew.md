@@ -1,3 +1,3 @@
 Hello, I'm Matthew. I like tea and cake.
 
-I plan to create a model that generates calendar events (using the syllabi) to automate the tedious process while maintaining accuracy, structure, and insight. As the project develops, I would like the model to personalize the writing style to the individual's preferences.
+I plan to create a model that generates calendar events (using the syllabi) to automate the tedious process while maintaining accuracy, structure, and insight. As the project develops, I would like the model to personalize the writing style to the individual's preferences. For instance, users can upload only test dates to their calendar when a syllabus also includes lecture times.
