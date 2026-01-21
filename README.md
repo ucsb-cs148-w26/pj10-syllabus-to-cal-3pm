@@ -1,7 +1,7 @@
 # Project: Syllabus To Calendar
 
 # Description:
-Web app that extracts important dates from syllabi and adds them to Google Calendar. Student is the only user role.
+Web app that extracts important dates from syllabi and adds them to Google Calendar. Student is the only user role. Allows student to manually decide what categories(assignments, exams, etc) are to be extracted.
 
 # Tech Stack:
 * Vercel, React, Next.js, Gemini, pdf-parse, winkNLP
