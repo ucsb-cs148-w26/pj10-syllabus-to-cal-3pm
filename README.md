@@ -1,10 +1,11 @@
 # Project: Syllabus To Calendar
 
 # Description:
-Web app that extracts important dates from syllabi and adds them to Google Calendar. Student is the only user role. Allows student to manually decide what categories(assignments, exams, etc) are to be extracted.
+
+Web app where users can recieve a complete class calendar by providing their syllabus. Users only need to provide files, press on a button, and import a file into their calendar. The app provides customization through filters and user prompts to generate calendars that meet the user's needs. For example, they can include lectures but not homework deadlines. It also incorporates validation steps such as event review which allow user to review and make changes with convenience. Furthermore, the app is designed to provide comparable accuracy and customization to manually written calendars without the same time investment. 
 
 # Tech Stack:
-* Vercel, React, Next.js, Gemini, pdf-parse, winkNLP
+* Vercel, React, Next.js, Gemini, pdf-parse, winkNLP, Python
 
 # Members:
 | Name | Github ID |
@@ -16,3 +17,17 @@ Web app that extracts important dates from syllabi and adds them to Google Calen
 | Lucy Deng | DengLucy |
 | Timothy Lou | TimatoPaste |
 | Saeed Arellano | saeed-ar |
+
+# User Roles:
+
+### Student
+  
+**Permissions:**
+
+- Uploading (PDF, Text, PNG)
+- Calendar Generation
+- Selective Editing / Revision
+- Prompting / Filter Application
+- File Downloading (CSV)
+
+Student user can only access the calendar process for themselves. They will not be able to control, nor be able to access, the calendar process for other student users.
