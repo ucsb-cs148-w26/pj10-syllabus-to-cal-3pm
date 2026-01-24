@@ -50,3 +50,4 @@ Saeed
 | Nataly: PDF upload | Next.js native elements |
 | Rocky and Wilson: Website visual layout + Calendar integration | Drawn/Next.js native tools + Google Calendar API |
 | Validation Step (Maybe) | UI to give user option to delete information deemed inaccurate + backend, must allow labeling to do this as well |
+| Filtering (Maybe) | Allow the user to give specific directions on how the events should be generated |
