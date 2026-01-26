@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { FileStorage } from '@/lib/fileStorage';
+import { FileStorage } from '../../../../lib/fileStorage';
 
 const storage = new FileStorage();
 
