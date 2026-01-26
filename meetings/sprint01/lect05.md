@@ -6,7 +6,7 @@ Mentor: Self Mentored :)
 
 Meeting Time: lect05
 
-Type of meeting: Daily Scrum
+Type of meeting: Daily Scrum + Code Freeze Plan
 
 Team: Timothy [ ] , Rocky [ ] , Nataly [ ], Lucy [ ], Wilson [ ], Matthew [ ], Saeed [ X ]
 
@@ -42,3 +42,10 @@ Matthew:
 Saeed:
 - Frontend calendar + tasks ui
 - Frontend pushed to main
+
+# Code Freeze Plan
+Priority: 
+- Saeed, Rocky, Nataly: Frontend done by Wed 1/28 so that we can integrate with file upload
+- Lucy, Timothy: Continue research on labeling training for final product
+- Matthew, Wilson: csv-calendar integration 
+
