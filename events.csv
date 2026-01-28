@@ -1,0 +1,28 @@
+Subject,Start Date,Start Time,End Date,End Time,All Day Event,Description,Location
+Lecture: Introduction and Logistics,01/06/2026,09:30 AM,01/06/2026,10:45 AM,FALSE,,Interactive Learning Pavilion 1101
+Lecture: Key Concepts in ML,01/08/2026,09:30 AM,01/08/2026,10:45 AM,FALSE,,Interactive Learning Pavilion 1101
+Lecture: Key Concepts in ML (cont.),01/13/2026,09:30 AM,01/13/2026,10:45 AM,FALSE,,Interactive Learning Pavilion 1101
+Lecture: Classification,01/15/2026,09:30 AM,01/15/2026,10:45 AM,FALSE,,Interactive Learning Pavilion 1101
+Homework #1 Out,01/15/2026,12:00 AM,01/15/2026,12:01 AM,FALSE,,
+Lecture: Guest Lecture by Dr. Wenhu Chen (Building Unified Models),01/20/2026,09:30 AM,01/20/2026,10:45 AM,FALSE,,Interactive Learning Pavilion 1101
+Lecture: Classification (cont.),01/22/2026,09:30 AM,01/22/2026,10:45 AM,FALSE,,Interactive Learning Pavilion 1101
+Lecture: Concept learning,01/27/2026,09:30 AM,01/27/2026,10:45 AM,FALSE,,Interactive Learning Pavilion 1101
+Lecture: Decision Trees,01/29/2026,09:30 AM,01/29/2026,10:45 AM,FALSE,,Interactive Learning Pavilion 1101
+Lecture: Linear models, midterm review,02/03/2026,09:30 AM,02/03/2026,10:45 AM,FALSE,,Interactive Learning Pavilion 1101
+Homework #1 Due,02/03/2026,11:59 PM,02/03/2026,11:59 PM,FALSE,,
+Homework #2 Out,02/03/2026,12:00 AM,02/03/2026,12:01 AM,FALSE,,
+Lecture: Linear models, perceptrons,02/05/2026,09:30 AM,02/05/2026,10:45 AM,FALSE,,Interactive Learning Pavilion 1101
+Midterm Exam,02/10/2026,09:30 AM,02/10/2026,10:45 AM,FALSE,,Interactive Learning Pavilion 1101
+Lecture: Support vector machines,02/12/2026,09:30 AM,02/12/2026,10:45 AM,FALSE,,Interactive Learning Pavilion 1101
+Lecture: Guest Lecture by Dr. Xuehai He (ML in practice),02/17/2026,09:30 AM,02/17/2026,10:45 AM,FALSE,,Interactive Learning Pavilion 1101
+Lecture: Kernel methods, distance measures,02/19/2026,09:30 AM,02/19/2026,10:45 AM,FALSE,,Interactive Learning Pavilion 1101
+Homework #2 Due,02/19/2026,11:59 PM,02/19/2026,11:59 PM,FALSE,,
+Homework #3 Out,02/19/2026,12:00 AM,02/19/2026,12:01 AM,FALSE,,
+Lecture: Clustering,02/24/2026,09:30 AM,02/24/2026,10:45 AM,FALSE,,Interactive Learning Pavilion 1101
+Lecture: Model ensembles,02/26/2026,09:30 AM,02/26/2026,10:45 AM,FALSE,,Interactive Learning Pavilion 1101
+Lecture: Features, machine learning experiments,03/03/2026,09:30 AM,03/03/2026,10:45 AM,FALSE,,Interactive Learning Pavilion 1101
+Lecture: Neural network & deep learning,03/05/2026,09:30 AM,03/05/2026,10:45 AM,FALSE,,Interactive Learning Pavilion 1101
+Lecture: Neural network & deep learning (cont.),03/10/2026,09:30 AM,03/10/2026,10:45 AM,FALSE,,Interactive Learning Pavilion 1101
+Homework #3 Due,03/10/2026,11:59 PM,03/10/2026,11:59 PM,FALSE,,
+Lecture: Neural network & deep learning (cont.),03/12/2026,09:30 AM,03/12/2026,10:45 AM,FALSE,,Interactive Learning Pavilion 1101
+Final Exam,03/17/2026,08:00 AM,03/17/2026,10:00 AM,FALSE,,
