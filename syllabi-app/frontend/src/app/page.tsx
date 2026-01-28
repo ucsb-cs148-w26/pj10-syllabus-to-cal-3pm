@@ -11,7 +11,7 @@ export default function LandingPage() {
 
   function handleLogin() {
     // pretend login succeeds
-    router.push("/upload");
+    router.push("/has_navbar/upload");
   }
 
   return (
