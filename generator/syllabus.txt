@@ -1,0 +1,60 @@
+sample_text = """Instructor and Venue
+Instructor: Eric Wang
+TAs:
+Chuhan Li (chuhan_li@ucsb.edu)
+Saaket Agashe (saaket@ucsb.edu)
+Gurusha Juneja (gurusha@ucsb.edu)
+Time: Tue Thu 9:30-10:45am
+Location: Interactive Learning Pavilion 1101
+Discussion Sessions (starting from the 2nd week):
+Session A: Fri 2:00-2:50pm, 387 1015 (led by Chuhan Li)
+Session B: Fri 3:00-3:50pm, 387 1011 (led by Saaket Agashe)
+Session C: Fri 4:00-4:50pm, 387 1011 (led by Gurusha Juneja)
+Instructor Office Hours (starting from the 2nd week): Thu 11am-12pm, HFH 2121
+TA Office Hours (starting from the 2nd week):
+Chuhan Li: Tue 5-6pm, Henley Hall 2014
+Saaket Agashe: Wed 11am-12pm, Henley Hall 2014
+Gurusha Juneja: Fri 10-11am, Henley Hall 2113
+
+Class Attendance
+Class attendance is expected: you are responsible for everything that goes on in class. "I wasn't there" and "I didn't know" are not valid excuses for missing something important! Prepare in advance by studying the assigned reading before coming to class and by making sure you understand the previous lecture.
+
+Weekly one-hour discussion sessions, led by the TAs, will focus mostly on (1) presenting supplementary material (such as practical examples) to the lectures and (2) answering questions (about lecture topics, homework problems, programming issues, etc.). Students are required to attend these sessions; you are responsible for the material presented in the discussion sessions. Students are encouraged to give the TAs (and, if appropriate, the instructor) feedback regarding topics or issues they would like to have discussed during this time.
+
+Piazza
+This term we will be using Piazza for class discussion. The system is highly catered to getting you help fast and efficiently from classmates, the TAs, and myself. Rather than emailing questions to the teaching staff, I encourage you to post your questions on Piazza. If you have any problems or feedback for the developers, email team@piazza.com.
+
+All the discussions and questions should be posted at: https://piazza.com/ucsb/winter2026/cs165b (access code: cs165b).
+
+Syllabus
+(This schedule is relatively fluid and will change as the quarter progresses.)
+
+Notes:
+Reading assignments, unless otherwise noted, are from the required textbook.
+Readings should be completed before the scheduled class.
+Homework is due by 23:59pm PT on the due date, unless otherwise indicated.
+
+Tentative Schedule
+Week Date Topic Reading Due
+1 1/6 Introduction and Logistics (1-6-intro.pdf)
+Prologue
+1/8 Key Concepts in ML (1-8.pdf) Ch. 1
+2 1/13 Key Concepts in ML (cont.) 
+1/15 Classification (1-15.pdf) Ch. 2, 3 HW#1 out
+3 1/20 Guest Lecture by Dr. Wenhu Chen, Researcher at Perplexity & Professor at U Waterloo (Building-Unified–Models.pdf)
+1/22 Classification (cont.) (1-22.pdf)
+4 1/27 Concept learning Ch. 4
+1/29 Decision Trees Ch. 5
+5 2/3 Linear models, midterm review Ch. 7 HW#1 due, HW#2 out
+2/5 Linear models, perceptrons
+6 2/10 In-class Midterm Exam
+2/12 Support vector machines
+7 2/17 Machine learning in practice: Guest Lecture by Dr. Xuehai He, Researcher at Microsoft AI Superintelligence
+2/19 Kernel methods, distance measures Ch. 8 HW#2 due, HW#3 out
+8 2/24 Clustering Ch. 10
+2/26 Model ensembles Ch. 11
+9 3/3 Features, machine learning experiments Ch. 11, 12
+3/5 Neural network & deep learning NN and DL chapter 1
+10 3/10 Neural network & deep learning (cont.) NN and DL chapter 6 HW#3 due
+3/12 Neural network & deep learning (cont.)
+Final Exam: Tuesday, March 17, 8:00-10:00am"""
