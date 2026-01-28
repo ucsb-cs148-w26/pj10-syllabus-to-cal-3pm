@@ -11,11 +11,11 @@ export default function Navbar() {
       <Link href="/has_navbar/calendar" className="hover:underline">
         Calendar
       </Link>
-      <Link href="/has_navbar/profile" className="hover:underline">
-        Profile
-      </Link>
       <Link href="/has_navbar/tasks" className="hover:underline">
         Tasks
+      </Link>
+      <Link href="/has_navbar/profile" className="hover:underline">
+        Profile
       </Link>
       <Link href="/" className="hover:underline">
         Logout
