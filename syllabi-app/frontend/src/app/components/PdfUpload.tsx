@@ -7,8 +7,15 @@ export default function PdfUpload() {
   const [loading, setLoading] = useState(false);
 
   async function handleFile(file: File) {
-    if (file.type !== "application/pdf") {
-      setMessage("❌ Only PDF files are allowed.");
+    const validTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'text/plain'
+    ];
+
+    if (!validTypes.includes(file.type)) {
+      setMessage("❌ Only PDF, DOC/DOCX, TXT files are allowed.");
       return;
     }
 

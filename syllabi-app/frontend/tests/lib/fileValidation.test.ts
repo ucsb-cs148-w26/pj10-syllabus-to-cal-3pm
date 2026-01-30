@@ -1,8 +1,8 @@
-import { validateFile, validateMultipleFiles, sanitizeFilename } from "@/lib/fileValidation";
+import { validateFile, validateMultipleFiles, sanitizeFilename } from "../../lib/fileValidation";
 import { only } from "node:test";
 
 process.env.MAX_FILE_SIZE = '10485760';
-process.env.ALLOWED_FILE_TYPES = 'application/pdf';
+process.env.ALLOWED_FILE_TYPES = 'application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','text/plain';
 process.env.MAX_FILES_PER_REQUEST = '10';
 
 describe('sanitizeFilename', () => {
@@ -98,7 +98,7 @@ describe('validateFile', () => {
     };
 
     test('Accept valid PDF file within size limit', () => {
-        const validPDF = createMockFile('document.pdf', 5000000, 'application/pdf'); // 5MB
+        const validPDF = createMockFile('document.pdf', 5000000, 'application/pdf');
 
         const result = validateFile(validPDF);
 
@@ -116,7 +116,7 @@ describe('validateFile', () => {
     });
 
     test('Reject file exceeding size limit', () => {
-        const largePDF = createMockFile('large.pdf', 15000000, 'application/pdf'); // 15MB
+        const largePDF = createMockFile('large.pdf', 15000000, 'application/pdf');
 
         const result = validateFile(largePDF);
 
@@ -152,7 +152,7 @@ describe('validateFile', () => {
     });
 
     test('Accept PDF file at exactly the size limit', () => {
-        const maxSizePDF = createMockFile('max.pdf', 10485760, 'application/pdf'); // Exactly 10MB
+        const maxSizePDF = createMockFile('max.pdf', 10485760, 'application/pdf');
 
         const result = validateFile(maxSizePDF);
 
@@ -160,7 +160,7 @@ describe('validateFile', () => {
     });
 
     test('Reject file one byte over the limit', () => {
-        const overLimitPDF = createMockFile('over.pdf', 10485761, 'application/pdf'); // 10MB + 1 byte
+        const overLimitPDF = createMockFile('over.pdf', 10485761, 'application/pdf');
 
         const result = validateFile(overLimitPDF);
 
@@ -169,7 +169,7 @@ describe('validateFile', () => {
     });
 
     test('Accept a very small PDF file', () => {
-        const tinyPDF = createMockFile('tiny.pdf', 100, 'application/pdf'); // 100 bytes
+        const tinyPDF = createMockFile('tiny.pdf', 100, 'application/pdf');
 
         const result = validateFile(tinyPDF);
 
@@ -241,7 +241,7 @@ describe('validateMultipleFiles', () => {
     test('Reject if any file exceeds size limit', () => {
         const files = [
             createMockFile('file1.pdf', 1000000, 'application/pdf'),
-            createMockFile('huge.pdf', 20000000, 'application/pdf'), // Too large
+            createMockFile('huge.pdf', 20000000, 'application/pdf'),
             createMockFile('file3.pdf', 1000000, 'application/pdf'),
         ];
 
@@ -279,7 +279,7 @@ describe('Environment variable handling', () => {
     beforeEach(() => {
         process.env = { ...originalEnv };
         process.env.MAX_FILE_SIZE = '10485760';
-        process.env.ALLOWED_FILE_TYPES = 'application/pdf';
+        process.env.ALLOWED_FILE_TYPES = 'application/pdf','application/msword','application/vnd.openxmlformats-officedocument.wordprocessingml.document','text/plain';
         process.env.MAX_FILES_PER_REQUEST = '10';
     });
 
