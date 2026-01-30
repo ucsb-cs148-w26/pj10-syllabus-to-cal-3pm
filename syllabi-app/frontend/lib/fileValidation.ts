@@ -64,7 +64,7 @@ export function validateFile(file: File): ValidationResult {
  */
 
 export function validateMultipleFiles(files: File[]): ValidationResult {
-  const maxFiles = parseInt(process.env.MAX_FILES_PER_REQUEST || '5');
+  const maxFiles = parseInt(process.env.MAX_FILES_PER_REQUEST || '10');
 
   if (files.length === 0) {
     return { valid: false, error: 'No files provided' };
