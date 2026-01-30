@@ -47,7 +47,7 @@ A brief description of what constitutes your change/experiment
   
 A brief assessment of how its results (did it improve things? move the needle at all?)
 - We expect to see results in PR descriptions and team discussions. (Before experiment happens)
-- Results: TBD in next retro
+- Results: There was some improvement in the specificity in (mostly) our PRs, and the daily scrums. It was easier to understand the progress of the project at the current moment by explaining each of our parts, making the integration of them easier to conduct. Although there is still for improvement, it seems that our group is heading in the right direction. 
   
 A decision going forward: keep the change, revert to previous procedure, make a new change?
 - Decision: TBD in next retro
@@ -65,3 +65,4 @@ What advice would you give to the next person leading a retro based on what you 
 - Consistently ask for how the group wants to tackle the retro before starting.
 - Give ample time to each team member to give their own points/comments.
 - Try to initiate discussion on the points just given by a team member - hard to make everyone comment on them, but at least trying to spark a lengthier discussion.
+

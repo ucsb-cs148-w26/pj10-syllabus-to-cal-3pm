@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { FileStorage } from '@/lib/fileStorage';
-import { validateFile, sanitizeFilename } from '@/lib/fileValidation';
-import { UploadResponse, UploadedFileInfo } from '@/types/upload';
+import { FileStorage } from '../../../../lib/fileStorage';
+import { validateFile, sanitizeFilename } from '../../../../lib/fileValidation';
+import { UploadResponse, UploadedFileInfo } from '../../../../types/upload';
 
 const storage = new FileStorage();
 
