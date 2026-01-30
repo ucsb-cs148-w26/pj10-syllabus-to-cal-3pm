@@ -13,7 +13,7 @@ export const config = {
   upload: {
     maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '10485760'),
     maxFileSizeMB: parseInt(process.env.MAX_FILE_SIZE || '10485760') / 1048576,
-    maxFiles: parseInt(process.env.MAX_FILES_PER_REQUEST || '5'),
+    maxFiles: parseInt(process.env.MAX_FILES_PER_REQUEST || '10'),
     allowedTypes: (process.env.ALLOWED_FILE_TYPES || 'application/pdf').split(','),
     uploadDir: process.env.UPLOAD_DIR || 'uploads',
   },
@@ -25,7 +25,7 @@ export const config = {
 
   app: {
     name: 'Syllabus to Calendar',
-    version: '1.0.0',
+    version: '0.1.0',
     environment: process.env.NODE_ENV || 'development',
     port: parseInt(process.env.PORT || '3000'),
   },
