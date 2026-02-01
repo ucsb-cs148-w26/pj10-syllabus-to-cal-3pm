@@ -1,5 +1,6 @@
 import { put, list } from '@vercel/blob';
 import { NextRequest, NextResponse } from 'next/server';
+import { sanitizeFilename } from '@/lib/fileValidation';
 
 export const runtime = 'nodejs';
 
@@ -29,7 +30,12 @@ export async function POST(request: NextRequest) {
   const uploadedFiles = [];
 
   for (const file of files) {
-    const blob = await put(file.name, file, { access: 'public', contentType: file.type });    uploadedFiles.push({
+    const safeName = sanitizeFilename(file.name);
+    const uniqueName = `${Date.now()}-${safeName}`;
+
+    const blob = await put(uniqueName, file, { access: 'public', contentType: file.type });
+
+    uploadedFiles.push({
       filename: blob.pathname,
       url: blob.url,
     });
