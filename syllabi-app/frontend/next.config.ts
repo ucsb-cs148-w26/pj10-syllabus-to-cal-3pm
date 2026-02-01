@@ -27,6 +27,11 @@ const nextConfig: NextConfig = {
   },
 
   /**
+   * Ensure outputFileTracingRoot matches Turbopack root
+   */
+  outputFileTracingRoot: __dirname,
+  
+  /**
    * Experimental features
    * serverActions.bodySizeLimit handles file upload size limits
    */
