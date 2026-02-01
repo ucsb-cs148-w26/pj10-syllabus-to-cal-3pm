@@ -4,7 +4,7 @@ import { validateFile, sanitizeFilename } from '../../../../lib/fileValidation';
 import { UploadResponse, UploadedFileInfo } from '../../../../types/upload';
 
 const storage = new FileStorage();
-
+export const runtime = 'nodejs';
 /**
  * Handle file upload requests
  *
@@ -128,3 +128,4 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 }
+
