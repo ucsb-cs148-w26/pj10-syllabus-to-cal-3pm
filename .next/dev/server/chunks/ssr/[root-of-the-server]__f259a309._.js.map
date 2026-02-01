@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 10, "column": 0}, "map": {"version":3,"sources":["file:///Users/constantine/Documents/pj10-syllabus-to-cal-3pm/app/components/navbar.tsx"],"sourcesContent":["\"use client\"; // required if you plan to add any interactivity\n\nimport Link from \"next/link\";\n\nexport default function Navbar() {\n  return (\n    <nav className=\"bg-gray-800 text-white p-4 flex justify-center gap-8\">\n      <Link href=\"/has_navbar/upload\" className=\"hover:underline\">\n        Upload\n      </Link>\n      <Link href=\"/has_navbar/calendar\" className=\"hover:underline\">\n        Calendar\n      </Link>\n      <Link href=\"/has_navbar/tasks\" className=\"hover:underline\">\n        Tasks\n      </Link>\n      <Link href=\"/has_navbar/profile\" className=\"hover:underline\">\n        Profile\n      </Link>\n      <Link href=\"/\" className=\"hover:underline\">\n        Logout\n      </Link>\n    </nav>\n  );\n}\n"],"names":[],"mappings":";;;;;AAEA;AAFA,cAAc,gDAAgD;;;AAI/C,SAAS;IACtB,qBACE,8OAAC;QAAI,WAAU;;0BACb,8OAAC,uKAAI;gBAAC,MAAK;gBAAqB,WAAU;0BAAkB;;;;;;0BAG5D,8OAAC,uKAAI;gBAAC,MAAK;gBAAuB,WAAU;0BAAkB;;;;;;0BAG9D,8OAAC,uKAAI;gBAAC,MAAK;gBAAoB,WAAU;0BAAkB;;;;;;0BAG3D,8OAAC,uKAAI;gBAAC,MAAK;gBAAsB,WAAU;0BAAkB;;;;;;0BAG7D,8OAAC,uKAAI;gBAAC,MAAK;gBAAI,WAAU;0BAAkB;;;;;;;;;;;;AAKjD"}}]
+}
