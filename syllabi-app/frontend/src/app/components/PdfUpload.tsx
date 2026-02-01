@@ -17,6 +17,8 @@ export default function PdfUpload() {
 
     const formData = new FormData();
     formData.append("file", file);
+    
+    console.log('FormData contents:', Array.from(formData.entries())); // THIS LINE IS BEING ADDED TO ATTEMPT TO FIX VERCEL UPLOAD ERROR
 
     const res = await fetch("/api/upload", {
       method: "POST",
