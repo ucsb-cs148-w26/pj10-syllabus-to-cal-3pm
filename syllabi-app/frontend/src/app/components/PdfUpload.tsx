@@ -62,15 +62,12 @@ export default function PdfUpload() {
       
       const obj = await res.json();
       const uploadedFiles = obj.uploadedFiles;
-      // var allText = "";
+      var allText = "";
       for(var i = 0; i < uploadedFiles.length; i++){
-        // allText = allText + await getPdfTextFromURL(uploadedFiles[0].url);
-        console.log(uploadedFiles[i].url);
-        console.log("\n");
+        allText = allText + await getPdfTextFromURL(uploadedFiles[0].url);
       }
-      console.log("ran!!!!!!");
-      setMessage("✅ You've completed an upload!");
-      // setMessage(allText);
+      // setMessage("✅ You've completed an upload!");
+      setMessage(allText);
     } else {
       setMessage("❌ Upload failed.");
     }
@@ -100,7 +97,7 @@ export default function PdfUpload() {
           hidden
           id="pdf-upload"
           onChange={(e) => {
-            const fileList = e.target.files;//!same issue where handleFile is only called on first file dropped in
+            const fileList = e.target.files;
             for(var i = 0; i < fileList.length; i++){
               if(!fileList){
                 return;
