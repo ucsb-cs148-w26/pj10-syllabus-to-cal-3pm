@@ -41,9 +41,10 @@ export default function PdfUpload() {
     setLoading(false);
 
     if (res.ok) {
-      setMessage("✅ You've completed an upload!");
       const text = await getPdfText(file);
-      console.log(text);
+      // console.log(text);
+      setMessage(text);
+      // setMessage("✅ You've completed an upload!");
     } else {
       setMessage("❌ Upload failed.");
     }
