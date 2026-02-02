@@ -1,33 +1,77 @@
 "use client";
 
 import { useState } from "react";
+import { extractText, getDocumentProxy } from 'unpdf';
 
 export default function PdfUpload() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleFile(file: File) {
-    if (file.type !== "application/pdf") {
-      setMessage("❌ Only PDF files are allowed.");
-      return;
+  async function getPdfTextFromFile(file: File){
+    /*==================================
+    in:
+      -file: file interface object corresponding to pdf uploaded by user
+    out:
+      -text: str of all text in the pdf file
+    ====================================*/
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = new Uint8Array(arrayBuffer);
+    const pdf = await getDocumentProxy(buffer);
+    const { text } = await extractText(pdf, { mergePages: true})
+
+    return text;
+  } 
+  async function getPdfTextFromURL(url: string){
+    /*==================================
+    in:
+      -url: string with blob url corresponding to pdf uploaded by user
+    out:
+      -text: str of all text in the pdf file
+    ====================================*/
+    const buffer = await fetch(url)
+      .then(res => res.arrayBuffer());
+    const pdf = await getDocumentProxy(new Uint8Array(buffer));
+    const { text } = await extractText(pdf, { mergePages: true})
+
+    return text;
+  }
+
+  async function handleFile(fileList: FileList) {
+    for(var i = 0; i < fileList.length; i++){
+      if(fileList[i].type !== "application/pdf"){
+        setMessage("❌ Only PDF files are allowed."); 
+        return;
+      }
     }
 
     setLoading(true);
     setMessage("");
 
     const formData = new FormData();
-    formData.append("file", file);
-    
-    console.log('FormData contents:', Array.from(formData.entries())); // THIS LINE IS BEING ADDED TO ATTEMPT TO FIX VERCEL UPLOAD ERROR
 
+    for(var i = 0; i < fileList.length; i++){
+      formData.append("file", fileList[i])
+    }
+    
     const res = await fetch("/api/upload", {
       method: "POST",
       body: formData,
     });
 
     setLoading(false);
-
     if (res.ok) {
+      
+      const obj = await res.json();
+      const uploadedFiles = obj.uploadedFiles;
+
+      /*
+      //example snippet that concatenates text from all files and displays it instead of the success message
+      var allText = "";
+      for(var i = 0; i < uploadedFiles.length; i++){
+        allText = allText + await getPdfTextFromURL(uploadedFiles[i].url);
+      }
+      setMessage(allText);
+      */
       setMessage("✅ You've completed an upload!");
     } else {
       setMessage("❌ Upload failed.");
@@ -36,8 +80,13 @@ export default function PdfUpload() {
 
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
+    const fileList = e.dataTransfer.files;
+    for(var i = 0; i < fileList.length; i++){
+      if(!fileList){
+        return;
+      }
+    }
+    handleFile(fileList);
   }
 
   return (
@@ -53,8 +102,13 @@ export default function PdfUpload() {
           hidden
           id="pdf-upload"
           onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) handleFile(file);
+            const fileList = e.target.files;
+            for(var i = 0; i < fileList.length; i++){
+              if(!fileList){
+                return;
+              }
+            }
+            handleFile(fileList);
           }}
         />
 

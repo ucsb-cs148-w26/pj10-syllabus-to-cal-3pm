@@ -1,12 +1,11 @@
+import { put, list } from '@vercel/blob';
 import { NextRequest, NextResponse } from 'next/server';
-import { FileStorage } from '../../../../lib/fileStorage';
-import { validateFile, sanitizeFilename } from '../../../../lib/fileValidation';
-import { UploadResponse, UploadedFileInfo } from '../../../../types/upload';
+import { sanitizeFilename } from '@/lib/fileValidation';
 
-const storage = new FileStorage();
 export const runtime = 'nodejs';
+
 /**
- * Handle file upload requests
+ * Handle file upload requests -- DOCUMENTATION IS OUT OF DATE
  *
  * Preconditions:
  * - Request must be POST with form-data
@@ -24,72 +23,37 @@ export const runtime = 'nodejs';
  * @param request - Next.js request object
  * @returns NextResponse with UploadResponse data
  */
-export async function POST(request: NextRequest): Promise<NextResponse<UploadResponse>> {
-  try {
-    const formData = await request.formData();
-    const uploadedFiles: UploadedFileInfo[] = [];
-    const errors: string[] = [];
+export async function POST(request: NextRequest) {
+  const formData = await request.formData();
+  const files = formData.getAll('file') as File[];
 
-    const files: File[] = [];
-    for (const [key, value] of formData.entries()) {
-      if (value instanceof File) {
-        files.push(value);
-      }
-    }
+  const uploadedFiles = [];
 
-    if (files.length === 0) {
-      return NextResponse.json(
-        { success: false, error: 'No files provided' },
-        { status: 400 }
-      );
-    }
+  for (const file of files) {
+    const safeName = sanitizeFilename(file.name);
+    const uniqueName = `${Date.now()}-${safeName}`;
 
-    for (const file of files) {
-      const validation = validateFile(file);
-      if (!validation.valid) {
-        errors.push(`${file.name}: ${validation.error}`);
-        continue;
-      }
+    const blob = await put(uniqueName, file, { access: 'public', contentType: file.type });
 
-      try {
-        const sanitized = sanitizeFilename(file.name);
-
-        const fileInfo = await storage.saveFile(file, sanitized);
-        uploadedFiles.push(fileInfo);
-
-      } catch (error) {
-        console.error(`Failed to save ${file.name}:`, error);
-        errors.push(`${file.name}: Upload failed`);
-      }
-    }
-
-    if (uploadedFiles.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: 'No files uploaded successfully',
-          message: errors.join(', ')
-        },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      files: uploadedFiles,
-      message: `Successfully uploaded ${uploadedFiles.length} file(s)`,
-      ...(errors.length > 0 && {
-        error: `${errors.length} file(s) failed: ${errors.join(', ')}`
-      })
+    uploadedFiles.push({
+      filename: blob.pathname,
+      url: blob.url,
     });
-
-  } catch (error) {
-    console.error('Upload error:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
   }
+
+  const { blobs } = await list();
+  const allFiles = blobs.map((b) => ({
+    filename: b.pathname,
+    url: b.url,
+    size: b.size,
+    uploadedAt: b.uploadedAt,
+  }));
+
+  return NextResponse.json({
+    success: true,
+    uploadedFiles,
+    allFiles,
+  });
 }
 
 /**
@@ -97,7 +61,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<UploadRes
  *
  * Preconditions:
  * - Request must be GET
- * - Upload directory exists
+ * - Vercel blob database active
  *
  * Postconditions:
  * - Return list of all filenames in storage, file count, and total storage size in bytes and MB
@@ -108,17 +72,25 @@ export async function POST(request: NextRequest): Promise<NextResponse<UploadRes
  * @param request - Next.js request object
  * @returns NextResponse with list of files
  */
-export async function GET(request: NextRequest): Promise<NextResponse> {
+export async function GET(request: NextRequest) {
   try {
-    const files = await storage.listFiles();
-    const totalSize = await storage.getTotalSize();
+    const { blobs } = await list();
+
+    const files = blobs.map((blob) => ({
+      filename: blob.pathname,   // the pathname you used when uploading
+      url: blob.url,             // public or accessible URL
+      size: blob.size,           // file size in bytes
+      uploadedAt: blob.uploadedAt, // upload timestamp
+    }));
+
+    const totalSize = files.reduce((acc, f) => acc + (f.size ?? 0), 0);
 
     return NextResponse.json({
       success: true,
-      files: files,
+      files,
       count: files.length,
-      totalSize: totalSize,
-      totalSizeMB: (totalSize / 1048576).toFixed(2)
+      totalSize,
+      totalSizeMB: (totalSize / 1048576).toFixed(2),
     });
   } catch (error) {
     console.error('Error listing files:', error);
@@ -128,4 +100,3 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
   }
 }
-
