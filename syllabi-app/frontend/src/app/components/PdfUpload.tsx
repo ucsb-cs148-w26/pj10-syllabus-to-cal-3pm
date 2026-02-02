@@ -82,7 +82,7 @@ export default function PdfUpload() {
     e.preventDefault();
     const fileList = e.dataTransfer.files;
     for(var i = 0; i < fileList.length; i++){
-      if(!fileList){
+      if(!fileList[i]){
         return;
       }
     }
