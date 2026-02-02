@@ -3,4 +3,5 @@
   "outputDirectory": "syllabi-app/frontend/.next",
   "installCommand": "cd syllabi-app/frontend && npm install",
   "framework": "nextjs",
+  "rootDirectory": "syllabi-app/frontend"
 }
