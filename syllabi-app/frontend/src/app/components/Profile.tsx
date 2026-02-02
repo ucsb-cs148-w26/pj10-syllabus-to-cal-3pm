@@ -1,4 +1,4 @@
-
+'use client';
 
 import { Award, BookOpen, Calendar, CheckCircle, Clock, FileText, Target, TrendingUp, User } from 'lucide-react';
 
