@@ -7,7 +7,7 @@ export default function PdfUpload() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function getPdfText(file: File){
+  async function getPdfTextFromFile(file: File){
     /*==================================
     in:
       -file: file interface object corresponding to pdf uploaded by user
@@ -21,6 +21,20 @@ export default function PdfUpload() {
 
     return text;
   } 
+  async function getPdfTextFromURL(url: string){
+    /*==================================
+    in:
+      -url: string with blob url corresponding to pdf uploaded by user
+    out:
+      -text: str of all text in the pdf file
+    ====================================*/
+    const buffer = await fetch(url)
+      .then(res => res.arrayBuffer());
+    const pdf = await getDocumentProxy(new Uint8Array(buffer));
+    const { text } = await extractText(pdf, { mergePages: true})
+
+    return text;
+  }
   async function handleFile(file: File) {
     if (file.type !== "application/pdf") {
       setMessage("❌ Only PDF files are allowed.");
@@ -40,12 +54,16 @@ export default function PdfUpload() {
 
     setLoading(false);
     if (res.ok) {
-      const text = await getPdfText(file);
+      
       const obj = await res.json();
       const uploadedFiles = obj.uploadedFiles;
-      console.log(uploadedFiles[0].url)
+      var allText = "";
+      for(var i = 0; i < uploadedFiles.length; i++){
+        allText = allText + await getPdfTextFromURL(uploadedFiles[0].url);
+      }
 
-      setMessage("✅ You've completed an upload!");
+      // setMessage("✅ You've completed an upload!");
+      setMessage(allText);
     } else {
       setMessage("❌ Upload failed.");
     }
