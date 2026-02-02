@@ -64,7 +64,7 @@ export default function PdfUpload() {
       const uploadedFiles = obj.uploadedFiles;
       var allText = "";
       for(var i = 0; i < uploadedFiles.length; i++){
-        allText = allText + await getPdfTextFromURL(uploadedFiles[0].url);
+        allText = allText + await getPdfTextFromURL(uploadedFiles[i].url);
       }
       // setMessage("✅ You've completed an upload!");
       setMessage(allText);
