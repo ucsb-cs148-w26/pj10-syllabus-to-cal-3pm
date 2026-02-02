@@ -35,17 +35,22 @@ export default function PdfUpload() {
 
     return text;
   }
-  async function handleFile(file: File) {
-    if (file.type !== "application/pdf") {
-      setMessage("❌ Only PDF files are allowed.");
-      return;
+  async function handleFile(fileList: FileList) {
+    for(var i = 0; i < fileList.length; i++){
+      if(fileList[i].type !== "application/pdf"){
+        setMessage("❌ Only PDF files are allowed."); 
+        return;
+      }
     }
 
     setLoading(true);
     setMessage("");
 
     const formData = new FormData();
-    formData.append("file", file);
+
+    for(var i = 0; i < fileList.length; i++){
+      formData.append("file", fileList[i])
+    }
     
     const res = await fetch("/api/upload", {
       method: "POST",
@@ -73,8 +78,13 @@ export default function PdfUpload() {
 
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
+    const fileList = e.dataTransfer.files;
+    for(var i = 0; i < fileList.length; i++){
+      if(!fileList){
+        return;
+      }
+    }
+    handleFile(fileList);
   }
 
   return (
@@ -90,8 +100,13 @@ export default function PdfUpload() {
           hidden
           id="pdf-upload"
           onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) handleFile(file);
+            const fileList = e.target.files;//!same issue where handleFile is only called on first file dropped in
+            for(var i = 0; i < fileList.length; i++){
+              if(!fileList){
+                return;
+              }
+            }
+            handleFile(fileList);
           }}
         />
 
