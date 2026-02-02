@@ -1,11 +1,26 @@
 "use client";
 
 import { useState } from "react";
+import { extractText, getDocumentProxy } from 'unpdf';
 
 export default function PdfUpload() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  async function getPdfText(file: File){
+    /*==================================
+    in:
+      -file: file interface object corresponding to pdf uploaded by user
+    out:
+      -text: str of all text in the pdf file
+    ====================================*/
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = new Uint8Array(arrayBuffer);
+    const pdf = await getDocumentProxy(buffer);
+    const { text } = await extractText(pdf, { mergePages: true})
+
+    return text;
+  } 
   async function handleFile(file: File) {
     if (file.type !== "application/pdf") {
       setMessage("❌ Only PDF files are allowed.");
@@ -27,6 +42,8 @@ export default function PdfUpload() {
 
     if (res.ok) {
       setMessage("✅ You've completed an upload!");
+      const text = await getPdfText(file);
+      console.log(text);
     } else {
       setMessage("❌ Upload failed.");
     }
