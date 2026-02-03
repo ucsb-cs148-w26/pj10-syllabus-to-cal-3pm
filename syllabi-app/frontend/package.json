@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@vercel/blob": "^2.0.1",
+    "googleapis": "^171.0.0",
     "next": "16.1.4",
     "next-auth": "^4.24.13",
     "react": "19.2.3",
