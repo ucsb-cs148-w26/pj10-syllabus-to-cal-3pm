@@ -28,15 +28,34 @@ Web app where users can recieve a complete class calendar by providing their syl
 | Saeed Arellano | saeed-ar |
 
 ## User Role(s) & Permissions
-
 ### Student
+Student user can only access the calendar process for themselves. They will not be able to control, nor be able to access, the calendar process for other student users.
   
 #### Permissions
 
 - Uploading (PDF, Text, PNG)
 - Calendar Generation
-- Selective Editing / Revision
-- Prompting / Filter Application
-- File Downloading (CSV)
 
-Student user can only access the calendar process for themselves. They will not be able to control, nor be able to access, the calendar process for other student users.
+## Dependencies
+
+TODO: List which libraries / add-ons you added to the project, and the purpose each of those add-ons serves in your app.
+- googleapis: google calendar access
+- next: next.js framework
+- next-auth: sign-in process
+- react: react framework
+- react-dom: routing
+- unpdf: pdf text extraction
+# Functionality
+- Log in
+- Drop files into uploader
+- Observe pdf text
+- Download .csv file
+- Click calendar button
+- Observe new google calendar events in Google Calendar
+
+# Known Problems
+## Only one event extracted
+- If upload pdf, sometimes only one event will be extracted
+## Inconsistent text to csv conversion
+- After uploading files, csv is not always available for use
+
