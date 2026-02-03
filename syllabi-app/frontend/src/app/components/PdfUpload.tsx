@@ -64,15 +64,14 @@ export default function PdfUpload() {
       const obj = await res.json();
       const uploadedFiles = obj.uploadedFiles;
 
-      /*
+      
       //example snippet that concatenates text from all files and displays it instead of the success message
       var allText = "";
       for(var i = 0; i < uploadedFiles.length; i++){
         allText = allText + await getPdfTextFromURL(uploadedFiles[i].url);
       }
       setMessage(allText);
-      */
-      setMessage("✅ You've completed an upload!");
+      
     } else {
       setMessage("❌ Upload failed.");
     }
@@ -82,7 +81,7 @@ export default function PdfUpload() {
     e.preventDefault();
     const fileList = e.dataTransfer.files;
     for(var i = 0; i < fileList.length; i++){
-      if(!fileList){
+      if(!fileList[i]){
         return;
       }
     }
