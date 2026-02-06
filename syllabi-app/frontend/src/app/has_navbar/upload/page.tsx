@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import PdfUpload from "../../components/PdfUpload";
-import { toGoogleCalendarCsv, downloadCsv } from "@/lib/csvExport";
+import { toGoogleCalendarCsv, downloadCsv, getDownloadBaseName } from "@/lib/csvExport";
 import type { CalendarEvent } from "@/types/events";
 
 export default function UploadPage() {
@@ -172,7 +172,8 @@ function UploadPageContent() {
   function handleDownloadCsv() {
     if (events.length === 0) return;
     const csv = toGoogleCalendarCsv(events);
-    downloadCsv(csv, "syllabus-events");
+    const baseName = getDownloadBaseName(events);
+    downloadCsv(csv, baseName);
   }
 
   return (
