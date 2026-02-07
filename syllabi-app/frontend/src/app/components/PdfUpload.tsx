@@ -21,7 +21,7 @@ export default function PdfUpload({ onTextExtracted }: PdfUploadProps) {
   async function handleFile(fileList: FileList) {
     for (let i = 0; i < fileList.length; i++) {
       if (fileList[i].type !== "application/pdf") {
-        setMessage("❌ Only PDF files are allowed.");
+        setMessage("Only PDF files are allowed.");
         return;
       }
     }
@@ -41,7 +41,7 @@ export default function PdfUpload({ onTextExtracted }: PdfUploadProps) {
       });
 
       if (!res.ok) {
-        setMessage("❌ Upload failed.");
+        setMessage("Upload failed.");
         setLoading(false);
         return;
       }
@@ -57,7 +57,7 @@ export default function PdfUpload({ onTextExtracted }: PdfUploadProps) {
       onTextExtracted(allText);
     } catch (err) {
       console.error(err);
-      setMessage("❌ Upload failed. See console.");
+      setMessage("Upload failed.");
     } finally {
       setLoading(false);
     }
