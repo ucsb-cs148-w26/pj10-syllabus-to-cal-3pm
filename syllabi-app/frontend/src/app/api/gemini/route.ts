@@ -32,16 +32,7 @@ export async function POST(req: NextRequest) {
     );
 
     const data = await response.json();
-
-    (data?.candidates || []).forEach((candidate, i) => {
-      console.log(`Candidate ${i}:`);
-      candidate?.content?.parts?.forEach((part, j) => {
-        console.log(`  Part ${j}:`);
-        console.log(part.text);
-        console.log("---END PART---");
-      });
-    });
-       
+    
     const csvText = (data?.candidates || [])
       .map(candidate =>
         candidate?.content?.parts?.map(part => part.text).join("") || ""
