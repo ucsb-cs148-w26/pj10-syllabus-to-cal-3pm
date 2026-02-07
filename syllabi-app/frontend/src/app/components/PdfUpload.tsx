@@ -1,45 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { extractText, getDocumentProxy } from 'unpdf';
+import { extractText, getDocumentProxy } from "unpdf";
 
-export default function PdfUpload() {
-  const [message, setMessage] = useState("");
+interface PdfUploadProps {
+  onTextExtracted: (text: string) => void;
+}
+
+export default function PdfUpload({ onTextExtracted }: PdfUploadProps) {
   const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
-  async function getPdfTextFromFile(file: File){
-    /*==================================
-    in:
-      -file: file interface object corresponding to pdf uploaded by user
-    out:
-      -text: str of all text in the pdf file
-    ====================================*/
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = new Uint8Array(arrayBuffer);
-    const pdf = await getDocumentProxy(buffer);
-    const { text } = await extractText(pdf, { mergePages: true})
-
-    return text;
-  } 
-  async function getPdfTextFromURL(url: string){
-    /*==================================
-    in:
-      -url: string with blob url corresponding to pdf uploaded by user
-    out:
-      -text: str of all text in the pdf file
-    ====================================*/
-    const buffer = await fetch(url)
-      .then(res => res.arrayBuffer());
+  async function getPdfTextFromURL(url: string) {
+    const buffer = await fetch(url).then((res) => res.arrayBuffer());
     const pdf = await getDocumentProxy(new Uint8Array(buffer));
-    const { text } = await extractText(pdf, { mergePages: true})
-
+    const { text } = await extractText(pdf, { mergePages: true });
     return text;
   }
 
   async function handleFile(fileList: FileList) {
-    for(var i = 0; i < fileList.length; i++){
-      if(fileList[i].type !== "application/pdf"){
-        setMessage("❌ Only PDF files are allowed."); 
+    for (let i = 0; i < fileList.length; i++) {
+      if (fileList[i].type !== "application/pdf") {
+        setMessage("Only PDF files are allowed.");
         return;
       }
     }
@@ -48,45 +30,42 @@ export default function PdfUpload() {
     setMessage("");
 
     const formData = new FormData();
-
-    for(var i = 0; i < fileList.length; i++){
-      formData.append("file", fileList[i])
+    for (let i = 0; i < fileList.length; i++) {
+      formData.append("file", fileList[i]);
     }
-    
-    const res = await fetch("/api/upload", {
-      method: "POST",
-      body: formData,
-    });
 
-    setLoading(false);
-    if (res.ok) {
-      
+    try {
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        setMessage("Upload failed.");
+        setLoading(false);
+        return;
+      }
+
       const obj = await res.json();
       const uploadedFiles = obj.uploadedFiles;
 
-      /*
-      //example snippet that concatenates text from all files and displays it instead of the success message
-      var allText = "";
-      for(var i = 0; i < uploadedFiles.length; i++){
-        allText = allText + await getPdfTextFromURL(uploadedFiles[i].url);
+      let allText = "";
+      for (let i = 0; i < uploadedFiles.length; i++) {
+        allText += await getPdfTextFromURL(uploadedFiles[i].url);
       }
-      setMessage(allText);
-      */
-      setMessage("✅ You've completed an upload!");
-    } else {
-      setMessage("❌ Upload failed.");
+
+      onTextExtracted(allText);
+    } catch (err) {
+      console.error(err);
+      setMessage("Upload failed.");
+    } finally {
+      setLoading(false);
     }
   }
 
   function handleDrop(e: React.DragEvent<HTMLDivElement>) {
     e.preventDefault();
-    const fileList = e.dataTransfer.files;
-    for(var i = 0; i < fileList.length; i++){
-      if(!fileList){
-        return;
-      }
-    }
-    handleFile(fileList);
+    handleFile(e.dataTransfer.files);
   }
 
   return (
@@ -101,22 +80,12 @@ export default function PdfUpload() {
           accept="application/pdf"
           hidden
           id="pdf-upload"
-          onChange={(e) => {
-            const fileList = e.target.files;
-            for(var i = 0; i < fileList.length; i++){
-              if(!fileList){
-                return;
-              }
-            }
-            handleFile(fileList);
-          }}
+          onChange={(e) => e.target.files && handleFile(e.target.files)}
         />
-
         <label htmlFor="pdf-upload" className="cursor-pointer">
           📄 Drag & drop a PDF here, or click to upload
         </label>
       </div>
-
       {loading && <p className="mt-4">Uploading…</p>}
       {message && <p className="mt-4">{message}</p>}
     </div>

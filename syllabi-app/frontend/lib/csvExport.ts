@@ -63,6 +63,19 @@ export function toGoogleCalendarCsv(events: CalendarEvent[]): string {
 }
 
 /**
+ * Derive a filename-safe base name from events (e.g. first event title).
+ */
+export function getDownloadBaseName(events: CalendarEvent[]): string {
+  const title = events[0]?.title?.trim();
+  if (!title) return 'syllabus-events';
+  const sanitized = title
+    .replace(/[^a-zA-Z0-9\s\-]/g, '')
+    .replace(/\s+/g, '-')
+    .slice(0, 50);
+  return sanitized || 'syllabus-events';
+}
+
+/**
  * Trigger browser download of a CSV file with a descriptive name.
  * @param csvContent - Raw CSV string
  * @param baseName - Optional base (e.g. "syllabus-events"); date will be appended.

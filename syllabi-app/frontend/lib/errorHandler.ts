@@ -161,7 +161,7 @@ export function errorResponse(error: unknown): NextResponse {
     responseBody.details = errorData.details;
   }
 
-  if (isDevelopment && 'stack' in errorData) {
+  if (isDevelopment && 'stack' in errorData && errorData.stack) {
     responseBody.stack = errorData.stack;
   }
 
