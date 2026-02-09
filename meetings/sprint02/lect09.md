@@ -35,7 +35,9 @@ Wilson:
 - Will be working on unit tests
 
 Saeed:
-- Reworked frontend
+- Finished front end  rework
+- Finshed connection to backend for supabase
+- Working on integrating the new changes to connect our backend logic to what we had previously
 
 Matthew:
 - Worked on integrating existing fucntionality new frontend
