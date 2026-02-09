@@ -1,4 +1,5 @@
 # Feedback Grouped and Sorted
+   
 ## UI 
 1. Make UI more intuitive
 2. Buttons should stand out more
@@ -27,6 +28,7 @@
 5. Color code events
 6. Use lexical/better parsing methods instead of AI
 7. Notifications
+
   
 ## Misc Features
 1. Trial for users without sign-in
@@ -39,7 +41,14 @@
   
 ## Counterpoints
 1. What makes this better than straight up just uploading this to google gemini?
-- How do you plan to manage costs of using api for a free app
-- Why is an LLM necessary just for text parsing?
+2. How do you plan to manage costs of using api for a free app
+3. Why is an LLM necessary just for text parsing?
   
 # Response Actions/Next Steps
+
+## Overall
+1. UI
+2. More accurate event creation
+3. User personalization
+4. Retroactive editing
+5. Study planner
