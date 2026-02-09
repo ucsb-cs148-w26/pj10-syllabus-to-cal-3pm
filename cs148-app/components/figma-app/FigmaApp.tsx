@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
 import { Landing } from "@/components/figma-app/components/features/Landing";
 import { Uploads } from "@/components/figma-app/components/features/Uploads";
 import { Calendar } from "@/components/figma-app/components/features/Calendar";
@@ -12,6 +11,25 @@ type View = "landing" | "uploads" | "calendar" | "study-plan" | "profile";
 
 export default function FigmaApp() {
   const [currentView, setCurrentView] = useState<View>("landing");
+  const [accessToken, setAccessToken] = useState<string | null>(null);
+
+  // When returning from Google OAuth (/api/callback), pick up access_token and clean URL
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const authSuccess = url.searchParams.get("auth_success");
+    const token = url.searchParams.get("access_token");
+
+    if (authSuccess === "true" && token) {
+      setAccessToken(token);
+      // remove query params from URL without reloading
+      url.searchParams.delete("auth_success");
+      url.searchParams.delete("access_token");
+      window.history.replaceState({}, "", url.toString());
+      // Take user straight to uploads view after connecting
+      setCurrentView("uploads");
+    }
+  }, []);
 
   if (currentView === "landing") {
     return <Landing onGetStarted={() => setCurrentView("uploads")} />;
@@ -79,7 +97,12 @@ export default function FigmaApp() {
       </nav>
 
       <main>
-        {currentView === "uploads" && <Uploads />}
+        {currentView === "uploads" && (
+          <Uploads
+            initialAccessToken={accessToken}
+            onAccessTokenChange={setAccessToken}
+          />
+        )}
         {currentView === "calendar" && <Calendar />}
         {currentView === "study-plan" && <StudyPlan />}
         {currentView === "profile" && <Profile />}

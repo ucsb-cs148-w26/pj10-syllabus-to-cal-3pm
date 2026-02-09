@@ -13,14 +13,20 @@
     "@radix-ui/react-slot": "^1.2.2",
     "@supabase/ssr": "latest",
     "@supabase/supabase-js": "latest",
+    "@vercel/blob": "^0.25.1",
+    "chrono-node": "^2.9.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "file-saver": "^2.0.5",
+    "googleapis": "^171.4.0",
     "lucide-react": "^0.511.0",
     "next": "latest",
+    "next-auth": "^5.0.0-beta.6",
     "next-themes": "^0.4.6",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "tailwind-merge": "^3.3.0"
+    "tailwind-merge": "^3.3.0",
+    "unpdf": "^0.11.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
