@@ -14,8 +14,6 @@ The output had some problems:
 5. The train set omits crucial details about lectures or assignments even when they are in the doc text
 ### Notes:
 This tool created a large amount of training data quickly, but the data was definitely flawed. I'd have to manually check and fix each generated ent for the sets to actually be useful; at that point, it would be easier and more consistent to use the annotation script I wrote to generate sets. DeepSeek is better for suggesting libraries, functions, and algorithms to solve certain problems than it is for creating datasets, so I do not think it can help the NLP part of this project much. 
-<<<<<<< lucy_aicoding
-
 
 ## Lucy Deng
 
@@ -51,5 +49,3 @@ However, the AI-generated tests were not immediately correct. I needed to someti
 Fair Use & Code Quality Considerations:
 I ensured that the final test code was adapted to our own implementation and understood every test case before including it.
 Going forward, I believe AI tools can significantly improve productivity for generating boilerplate tests and exploring edge cases. However, they should be used as a drafting assistant rather than a replacement for understanding the underlying logic.
-=======
->>>>>>> main
