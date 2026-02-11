@@ -112,6 +112,9 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   const [lastProcessOk, setLastProcessOk] = useState(false);
 
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFileMeta[]>([]);
+  const uploadedFilesRef = useRef<UploadedFileMeta[]>([]);
+  const deleteSnapshotsRef = useRef<Map<string, UploadedFileMeta[]>>(new Map());
+
   const [hasSynced, setHasSynced] = useState(false);
 
   const [syncBurst, setSyncBurst] = useState(false);
@@ -152,6 +155,10 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       setCalendarMessage('Connected. Ready to sync your events.');
     }
   }, [onAccessTokenChange]);
+
+  useEffect(() => {
+    uploadedFilesRef.current = uploadedFiles;
+  }, [uploadedFiles]);
 
   const progress = useMemo(() => {
     const hasUpload = !!pendingText || uploadedFiles.length > 0;
@@ -207,34 +214,29 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   }
 
   async function handleDeleteUploadedFile(filename: string) {
-    // Optimistic remove
-    const snapshot = uploadedFiles;
-    const next = uploadedFiles.filter((f) => f.filename !== filename);
-    setUploadedFiles(next);
+    // Capture a snapshot for THIS filename so rapid deletes don't clobber each other.
+    deleteSnapshotsRef.current.set(filename, uploadedFilesRef.current);
 
-    // If the last uploaded file was removed, clear the upload-derived state so the UI resets.
-    if (next.length === 0) {
-      setPendingText(null);
-      setLastProcessOk(false);
-      // If we were in an error state tied to uploads, clear it.
-      if (step === 1) {
-        setCalendarStatus('idle');
-        setCalendarMessage('');
-      }
-    }
+    // Optimistic remove (functional update to avoid stale closures)
+    setUploadedFiles((prev) => prev.filter((f) => f.filename !== filename));
 
     try {
       const res = await fetch(`/api/upload?filename=${encodeURIComponent(filename)}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
+
       if (!res.ok || !data?.success) {
-        setUploadedFiles(snapshot);
+        const snapshot = deleteSnapshotsRef.current.get(filename);
+        if (snapshot) setUploadedFiles(snapshot);
         setCalendarStatus('error');
         setCalendarMessage(data?.error || 'Failed to delete file');
       }
     } catch {
-      setUploadedFiles(snapshot);
+      const snapshot = deleteSnapshotsRef.current.get(filename);
+      if (snapshot) setUploadedFiles(snapshot);
       setCalendarStatus('error');
       setCalendarMessage('Failed to delete file');
+    } finally {
+      deleteSnapshotsRef.current.delete(filename);
     }
   }
 

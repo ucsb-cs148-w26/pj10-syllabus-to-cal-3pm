@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { extractText, getDocumentProxy } from "unpdf";
 import { Upload as UploadIcon, Loader2, Trash2, FileText } from "lucide-react";
 
@@ -20,6 +20,34 @@ export default function PdfUpload({
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);
+
+  // When the uploaded file list changes (e.g. deletions), recompute the combined text
+  // from the remaining files so removed files don’t continue contributing to processing.
+  useEffect(() => {
+    if (!uploadedFiles || uploadedFiles.length === 0) return;
+
+    const files = uploadedFiles;
+
+    let cancelled = false;
+
+    async function recompute() {
+      try {
+        setMessage("");
+        const texts = await Promise.all(files.map((f) => getPdfTextFromURL(f.url)));
+        if (cancelled) return;
+        onTextExtracted(texts.join(""), files);
+      } catch {
+        // Silent: deletions shouldn't spam errors; the next upload/process will refresh.
+      }
+    }
+
+    void recompute();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uploadedFiles?.map((f) => f.filename).join("|")]);
 
   async function getPdfTextFromURL(url: string) {
     const buffer = await fetch(url).then((res) => res.arrayBuffer());
