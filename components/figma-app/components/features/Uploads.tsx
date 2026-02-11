@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FileText, FolderOpen, Sparkles, CheckCircle2, CalendarCheck, Trash2 } from 'lucide-react';
+import { FileText, FolderOpen, Sparkles, CheckCircle2, CalendarCheck, Trash2, User } from 'lucide-react';
 import PdfUpload from '@/components/PdfUpload';
 import type { CalendarEvent } from '@/lib/googleCalendar';
 
@@ -123,6 +123,17 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   const hasEvents = events.length > 0;
   const isGoogleConnected = !!accessToken;
 
+  // Use a single derived flag for connection UI so it never depends on other state.
+  const showConnectedUi = isGoogleConnected;
+
+  // Reset any "synced" UI if connection is removed.
+  useEffect(() => {
+    if (!accessToken) {
+      setHasSynced(false);
+      setSyncBurst(false);
+    }
+  }, [accessToken]);
+
   const canJumpToReviewFromUpload = hasEvents && step === 1;
   const canProcessFromUpload = !!pendingText && calendarStatus !== 'loading' && step === 1;
 
@@ -151,15 +162,41 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       url.searchParams.delete('auth_success');
       url.searchParams.delete('access_token');
       window.history.replaceState({}, '', url.toString());
-      setStep(3);
+      // Don't force step changes if user navigated away; just ensure token state is set.
       setCalendarStatus('idle');
-      setCalendarMessage('Connected. Ready to sync your events.');
+      setCalendarMessage('');
     }
   }, [onAccessTokenChange]);
 
   useEffect(() => {
     uploadedFilesRef.current = uploadedFiles;
   }, [uploadedFiles]);
+
+  // Centralize button styles to keep colors consistent.
+  // Keep Sync and Connect/Connected EXACTLY the same dimensions.
+  const connectSyncSizeClass = 'h-10 w-32 px-0';
+
+  const syncButtonClassName =
+    'inline-flex items-center justify-center rounded-lg ' +
+    connectSyncSizeClass +
+    ' text-xs font-semibold shadow-sm leading-none ' +
+    'transition-[background-color,color,border-color,box-shadow,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ';
+
+  // Match other stages' button sizing + tone
+  const secondaryActionClassName =
+    'inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors';
+
+  const primaryPurple = 'bg-indigo-600 text-white hover:bg-indigo-700';
+  const primaryPurpleDisabled = 'bg-indigo-400/60 text-white cursor-not-allowed opacity-60';
+  const syncedWhite = 'bg-white text-gray-900 border border-gray-200 shadow-none';
+
+  // New Upload should match other stages (same size as Review buttons)
+  const newUploadClassName =
+    'inline-flex items-center justify-center rounded-lg px-3 py-2 text-xs font-semibold shadow-sm ' +
+    'transition-[background-color,color,border-color,box-shadow,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ';
+
+  const newUploadNeutral = 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50';
+  const newUploadPurple = 'bg-indigo-600 text-white hover:bg-indigo-700';
 
   const progress = useMemo(() => {
     const hasUpload = !!pendingText || uploadedFiles.length > 0;
@@ -192,6 +229,8 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
   function handleSyllabusText(rawText: string, uploaded?: string[] | UploadedFileMeta[]) {
     setPendingText(rawText);
+    setHasSynced(false);
+    setSyncBurst(false);
     setLastProcessOk(false);
     setUploadPulse(true);
     window.setTimeout(() => setUploadPulse(false), 650);
@@ -325,6 +364,9 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
+        // Ensure synced visual state doesn't get stuck on failure.
+        setHasSynced(false);
+        setSyncBurst(false);
         setCalendarStatus('error');
         setCalendarMessage(data.error || `Failed to add events (${res.status})`);
         return;
@@ -339,6 +381,8 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       window.setTimeout(() => setSyncBurst(false), 900);
     } catch (err) {
       console.error(err);
+      setHasSynced(false);
+      setSyncBurst(false);
       setCalendarStatus('error');
       setCalendarMessage('Error adding events. See console.');
     }
@@ -396,12 +440,17 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     setLastProcessOk(false);
     setUploadedFiles([]);
     setHasSynced(false);
+    setSyncBurst(false);
     localStorage.removeItem('calendarEvents');
   }
 
   function goToPreviousStep() {
     if (step === 2) setStep(1);
     if (step === 3) setStep(2);
+    if (step === 3) {
+      setHasSynced(false);
+      setSyncBurst(false);
+    }
   }
 
   function goToReviewFromUpload() {
@@ -422,6 +471,8 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     if (calendarStatus === 'ok' || lastProcessOk) return 'ok';
     return 'neutral';
   }, [calendarStatus, lastProcessOk]);
+
+  const isSyncComplete = hasSynced && calendarStatus === 'ok';
 
   return (
     <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -453,7 +504,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
         <div className="mb-8 transition-all duration-500 ease-out animate-[fadeInUp_260ms_ease-out]">
           <div className="bg-white/80 backdrop-blur rounded-2xl shadow-sm border border-gray-200/80 p-8">
             <div className="mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Step 1 · Upload</h3>
+              <h3 className="text-lg font-semibold text-gray-900">Upload Syllabus</h3>
               <p className="text-sm text-gray-500">
                 Drag and drop, or click to upload a syllabus PDF. Then process it to extract important dates.
               </p>
@@ -529,7 +580,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
         <div className="mb-8 space-y-6 transition-all duration-500 ease-out animate-[fadeInUp_260ms_ease-out]">
           <div className="bg-white/90 backdrop-blur rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900 text-lg">Review extracted events</h3>
+              <h3 className="font-semibold text-gray-900 text-lg">Review Extracted Events</h3>
               <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
                 {events.length} event{events.length === 1 ? '' : 's'}
               </span>
@@ -619,55 +670,58 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       {step === 3 && (
         <div className="mb-8 space-y-6 transition-all duration-500 ease-out animate-[fadeInUp_260ms_ease-out]">
           <div className="bg-white/90 backdrop-blur rounded-2xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Step 3 · Sync to Google Calendar</h3>
-                <p className="text-sm text-gray-500 mt-1">Connect your Google account and add the extracted events.</p>
-              </div>
-              <button
-                type="button"
-                onClick={goToPreviousStep}
-                className="shrink-0 inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-              >
-                Back to Review
-              </button>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Sync to Google Calendar</h3>
+              <p className="text-sm text-gray-500 mt-1">Connect your Google account and add the extracted events.</p>
             </div>
 
             <div className="mt-6 grid gap-3">
               <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex min-h-[44px] items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-gray-900">Connection</p>
-                    <p className="text-xs text-gray-500">
-                      {accessToken ? 'Connected to Google Calendar.' : 'Not connected yet.'}
-                    </p>
+                    {showConnectedUi ? (
+                      <button
+                        type="button"
+                        onClick={() => void handleSwitchGoogleAccount()}
+                        className="mt-1 inline-flex items-center text-xs font-semibold text-indigo-700 hover:text-indigo-900 underline underline-offset-4"
+                      >
+                        Switch account
+                      </button>
+                    ) : (
+                      <p className="text-xs text-gray-500">Not connected yet.</p>
+                    )}
                   </div>
-                  {accessToken ? (
-                    <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-200">
-                      <CheckCircle2 className="h-4 w-4" />
-                      Connected
+                  {showConnectedUi ? (
+                    <span
+                      className={
+                        'inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white ' +
+                        connectSyncSizeClass +
+                        ' text-xs font-semibold leading-none text-gray-800 shadow-sm'
+                      }
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        Connected
+                      </span>
                     </span>
                   ) : (
                     <button
                       type="button"
                       onClick={() => void handleGoogleCalendarAuth()}
-                      className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700 transition-colors"
+                      className={
+                        'inline-flex items-center justify-center rounded-lg bg-indigo-600 text-xs font-semibold leading-none text-white ' +
+                        connectSyncSizeClass +
+                        ' hover:bg-indigo-700 transition-colors'
+                      }
                     >
-                      Connect
+                      <span className="inline-flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        Connect
+                      </span>
                     </button>
                   )}
                 </div>
-                {accessToken && (
-                  <div className="mt-2 text-xs text-gray-600">
-                    <button
-                      type="button"
-                      onClick={() => void handleSwitchGoogleAccount()}
-                      className="text-indigo-700 hover:text-indigo-900 underline underline-offset-4"
-                    >
-                      Switch account
-                    </button>
-                  </div>
-                )}
               </div>
 
               <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
@@ -684,22 +738,22 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                     onClick={() => void handleAddToGoogleCalendar()}
                     disabled={!hasEvents || !isGoogleConnected || calendarStatus === 'loading'}
                     className={
-                      'inline-flex items-center justify-center rounded-lg px-4 py-2 text-xs font-semibold text-white transition-colors ' +
+                      syncButtonClassName +
                       (!hasEvents || !isGoogleConnected || calendarStatus === 'loading'
-                        ? 'bg-indigo-400/60 cursor-not-allowed opacity-60'
-                        : 'bg-indigo-600 hover:bg-indigo-700')
+                        ? primaryPurpleDisabled
+                        : isSyncComplete
+                          ? syncedWhite
+                          : primaryPurple) +
+                      (!isSyncComplete && hasEvents && isGoogleConnected && calendarStatus !== 'loading'
+                        ? ' hover:-translate-y-[1px]'
+                        : '')
                     }
                     aria-disabled={!hasEvents || !isGoogleConnected || calendarStatus === 'loading'}
                     title={!isGoogleConnected ? 'Connect your Google account to enable syncing.' : undefined}
                   >
                     <span className="inline-flex items-center gap-2">
-                      <CalendarCheck
-                        className={
-                          'h-4 w-4 ' +
-                          (calendarStatus === 'loading' ? 'animate-pulse' : '')
-                        }
-                      />
-                      {calendarStatus === 'loading' ? 'Syncing…' : 'Sync'}
+                      <CalendarCheck className={'h-4 w-4 ' + (calendarStatus === 'loading' ? 'animate-pulse' : '')} />
+                      {calendarStatus === 'loading' ? 'Syncing…' : isSyncComplete ? 'Synced' : 'Sync'}
                     </span>
                   </button>
                 </div>
@@ -708,7 +762,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
               {hasSynced && (calendarMessage || calendarStatus !== 'idle') && (
                 <div
                   className={
-                    'rounded-xl border px-4 py-3 text-sm ' +
+                    'rounded-xl border px-4 py-3 text-sm transition-colors duration-500 ease-out ' +
                     (calendarStatus === 'error'
                       ? 'border-rose-200 bg-rose-50 text-rose-800'
                       : calendarStatus === 'ok'
@@ -718,7 +772,12 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                 >
                   <div className="flex items-start gap-2">
                     {calendarStatus === 'ok' ? (
-                      <Sparkles className={"mt-0.5 h-4 w-4 " + (syncBurst ? 'animate-bounce text-emerald-700' : 'text-emerald-700')} />
+                      <Sparkles
+                        className={
+                          'mt-0.5 h-4 w-4 ' +
+                          (syncBurst ? 'animate-bounce text-emerald-700' : 'text-emerald-700')
+                        }
+                      />
                     ) : calendarStatus === 'error' ? (
                       <Trash2 className="mt-0.5 h-4 w-4 text-rose-700" />
                     ) : (
@@ -727,7 +786,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                     <div className="min-w-0">
                       <p className="font-medium">
                         {calendarStatus === 'ok'
-                          ? 'Sync complete.'
+                          ? 'Sync Complete.'
                           : calendarStatus === 'error'
                             ? 'Something went wrong'
                             : 'Working…'}
@@ -738,16 +797,29 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                 </div>
               )}
             </div>
-          </div>
 
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={resetFlow}
-              className="inline-flex items-center justify-center rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-800 hover:bg-gray-50 transition-colors"
-            >
-              Start over
-            </button>
+            <div className="mt-6 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={goToPreviousStep}
+                className={secondaryActionClassName}
+              >
+                Back to Review
+              </button>
+
+              <button
+                type="button"
+                onClick={resetFlow}
+                className={
+                  newUploadClassName +
+                  ' ' +
+                  (isSyncComplete ? newUploadPurple : newUploadNeutral) +
+                  (isSyncComplete ? ' hover:-translate-y-[1px]' : '')
+                }
+              >
+                New Upload
+              </button>
+            </div>
           </div>
         </div>
       )}
