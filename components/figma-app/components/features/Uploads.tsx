@@ -121,6 +121,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
   const accessToken = initialAccessToken;
   const hasEvents = events.length > 0;
+  const isGoogleConnected = !!accessToken;
 
   const canJumpToReviewFromUpload = hasEvents && step === 1;
   const canProcessFromUpload = !!pendingText && calendarStatus !== 'loading' && step === 1;
@@ -672,23 +673,33 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
               <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900">Sync</p>
-                    <p className="text-xs text-gray-500">{hasEvents ? `${events.length} event(s) ready to send.` : 'No events yet.'}</p>
+                    <p className="text-sm font-semibold text-gray-900">Syncing</p>
+                    <p className="text-xs text-gray-500">
+                      {hasEvents ? `${events.length} event(s) ready to send.` : 'No events yet.'}
+                      {!isGoogleConnected ? ' Connect Google to enable sync.' : ''}
+                    </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => void handleAddToGoogleCalendar()}
-                    disabled={!hasEvents || calendarStatus === 'loading'}
+                    disabled={!hasEvents || !isGoogleConnected || calendarStatus === 'loading'}
                     className={
                       'inline-flex items-center justify-center rounded-lg px-4 py-2 text-xs font-semibold text-white transition-colors ' +
-                      (!hasEvents || calendarStatus === 'loading'
-                        ? 'bg-indigo-400/80 cursor-not-allowed'
+                      (!hasEvents || !isGoogleConnected || calendarStatus === 'loading'
+                        ? 'bg-indigo-400/60 cursor-not-allowed opacity-60'
                         : 'bg-indigo-600 hover:bg-indigo-700')
                     }
+                    aria-disabled={!hasEvents || !isGoogleConnected || calendarStatus === 'loading'}
+                    title={!isGoogleConnected ? 'Connect your Google account to enable syncing.' : undefined}
                   >
                     <span className="inline-flex items-center gap-2">
-                      <CalendarCheck className={"h-4 w-4 " + (calendarStatus === 'loading' ? 'animate-pulse' : '')} />
-                      {calendarStatus === 'loading' ? 'Syncing…' : 'Sync now'}
+                      <CalendarCheck
+                        className={
+                          'h-4 w-4 ' +
+                          (calendarStatus === 'loading' ? 'animate-pulse' : '')
+                        }
+                      />
+                      {calendarStatus === 'loading' ? 'Syncing…' : 'Sync'}
                     </span>
                   </button>
                 </div>
