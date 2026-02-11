@@ -195,7 +195,7 @@ def is_valid_annotation(annotation_no, annotation):
     return "good"
 
 #THIS ONE IS PROBABLY THE MOST CONVENIENT
-#Skips over lines that do not have the right syntax, so you can also just leave comments to keep the annotation text files organized.
+#Skips over lines that do not have the right syntax, so you can also just leave comments to keep the annotation text files organized, but do not leave blank lines because that is how eof is detected
 def create_data_manually_file(text, annotations_path, spacy_fname):
     """===================================================================================================================================
     behavior:
