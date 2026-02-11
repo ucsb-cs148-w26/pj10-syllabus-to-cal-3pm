@@ -30,6 +30,9 @@ function UploadPageContent() {
   >("idle");
   const [calendarMessage, setCalendarMessage] = useState("");
   const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [includeLectures, setIncludeLectures] = useState(true);
+  const [includeAssignments, setIncludeAssignments] = useState(true);
+  const [includeExams, setIncludeExams] = useState(true);
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -66,7 +69,12 @@ function UploadPageContent() {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: allText }),
+        body: JSON.stringify({
+          text: allText,
+          includeLectures,
+          includeAssignments,
+          includeExams,
+        }),
       });
 
       if (!res.ok) {
@@ -186,6 +194,42 @@ function UploadPageContent() {
           <p className="text-gray-600 text-center mb-6">
             Please upload a PDF file to continue.
           </p>
+
+          <div className="mb-6">
+            <p className="text-sm font-medium text-zinc-700 mb-3">
+              Include in calendar extraction:
+            </p>
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={includeLectures}
+                  onChange={(e) => setIncludeLectures(e.target.checked)}
+                  className="rounded border-zinc-300"
+                />
+                <span className="text-sm text-zinc-700">Lectures</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={includeAssignments}
+                  onChange={(e) => setIncludeAssignments(e.target.checked)}
+                  className="rounded border-zinc-300"
+                />
+                <span className="text-sm text-zinc-700">Assignments</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={includeExams}
+                  onChange={(e) => setIncludeExams(e.target.checked)}
+                  className="rounded border-zinc-300"
+                />
+                <span className="text-sm text-zinc-700">Tests/Exams</span>
+              </label>
+            </div>
+          </div>
+
           <PdfUpload onTextExtracted={handleSyllabusCsv} />
         </div>
 

@@ -1,12 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
-  const { text } = await req.json();
+  const body = await req.json();
+  const {
+    text,
+    includeLectures = true,
+    includeAssignments = true,
+    includeExams = true,
+  } = body;
+
   if (!text) {
     return NextResponse.json({ error: "Failed to provide text" }, { status: 400 });
   }
 
-  const prompt = `You will receive a transcript of a syllabus from a class. Your task is to output a CSV file with all class events (assignments, lectures, test/exams) that can be imported into Google Calendar.  Only provide the CSV content; no markdown or extra text. Here is the syllabus transcript:"""${text}"""`;
+  const types: string[] = [];
+  if (includeLectures) types.push("lectures");
+  if (includeAssignments) types.push("assignments");
+  if (includeExams) types.push("test/exams");
+  const eventTypesStr =
+    types.length === 0
+      ? "assignments, lectures, test/exams"
+      : types.length === 1
+        ? types[0]
+        : types.length === 2
+          ? `${types[0]} and ${types[1]}`
+          : `${types[0]}, ${types[1]}, and ${types[2]}`;
+
+  const prompt = `You will receive a transcript of a syllabus from a class. Your task is to output a CSV file with all class events (${eventTypesStr}) that can be imported into Google Calendar. Only include the event types requested. Only provide the CSV content; no markdown or extra text. Here is the syllabus transcript:"""${text}"""`;
 
   try {
     const response = await fetch(
