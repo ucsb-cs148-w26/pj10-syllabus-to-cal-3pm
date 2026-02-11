@@ -13,12 +13,12 @@ def clean_text(text):
     in:
         -text: str
     out:
-        -text: removed stopwords, excess spaces, and newlines
+        -text: removed excess spaces, and newlines
     ===============================================================
     """ 
     text = text.lower() #lowercase, may or may not be necessary
-    for word in stopwords.words('english'): #remove stopwords
-        text = text.replace(f" {word} ", " ")
+    # for word in stopwords.words('english'): #remove stopwords
+        # text = text.replace(f" {word} ", " ")
     text = text.replace("\\n", " ")
     text = text.replace("(", "")
     text = text.replace(")", "")
@@ -170,7 +170,7 @@ def create_data_manually_file(text, fname):
     db.to_disk(f"./{fname}")
 
 def is_valid_annotation(annotation_no, annotation):
-    """
+    """==============================================================
     helper for create_data_manually_file(text, spacy_fname, ents_path)
     in:
         -annotation_no: line number that the annotation corresponds to
@@ -180,7 +180,7 @@ def is_valid_annotation(annotation_no, annotation):
             -message: str about what is wrong with the annotation
         if annotation is valid:
             -message: "good"
-    """
+    ==================================================================="""
     if len(annotation) <= 3:
         return f'Line no: {annotation_no} not long enough (should be at least 3).'
     if annotation[-3:-1] != ">>":
@@ -225,7 +225,7 @@ def create_data_manually_file(text, annotations_path, spacy_fname):
                 ents = []
             annotation_validation_message = is_valid_annotation(annotation_no, annotation)
             if annotation_validation_message != "good":
-                # print(annotation_validation_message)
+                print(annotation_validation_message)
                 annotation_no += 1
                 annotation = file.readline().strip()
                 #adding docs in case end of annotation file
@@ -257,9 +257,10 @@ def create_data_manually_file(text, annotations_path, spacy_fname):
         db.to_disk(spacy_fname)
 
 #example use case
-text = get_pdf_text("data/GEOG 3 - Damilola Eyelade - Summer 2020.pdf") 
+name = "GEOG 3 - Damilola Eyelade - Summer 2020"
+text = get_pdf_text(f"data/{name}.pdf") 
 text = clean_text(text)
 text = text.split("\n")
-create_data_manually_file(text, "annotations/GEOG 3 - Damilola Eyelade - Summer 2020.txt", "train/GEOG 3 - Damilola Eyelade - Summer 2020.spacy")
+create_data_manually_file(text, "annotations/{name}.txt", "train/{name}.spacy")
 
 
