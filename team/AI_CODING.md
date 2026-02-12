@@ -15,37 +15,39 @@ The output had some problems:
 ### Notes:
 This tool created a large amount of training data quickly, but the data was definitely flawed. I'd have to manually check and fix each generated ent for the sets to actually be useful; at that point, it would be easier and more consistent to use the annotation script I wrote to generate sets. DeepSeek is better for suggesting libraries, functions, and algorithms to solve certain problems than it is for creating datasets, so I do not think it can help the NLP part of this project much. 
 
+
 ## Lucy Deng
 
-### Tool Used
+### AI Tool Used: ChatGPT (OpenAI)
 
-* ChatGPT (GPT-4)
 
-### What I Did
+### Task / Experiment
+I used ChatGPT to redesign the UI of the existing component:
 
-I used ChatGPT to assist in generating unit tests for our syllabus parsing logic. Specifically, I prompted the model to help create Jest test cases for functions that extract assignment names and due dates from raw syllabus text.
+`cs148-app/components/figma-app/components/features/Profile.tsx`
 
-I first provided a simplified version of our parsing function and asked the model to generate:
+The goal was to explore AI’s ability to generate improved UI prototypes while keeping the same theme (student profile, progress tracking, and achievements). The experiment focused on visual design and interactivity.
 
-* Basic correctness tests
-* Edge case tests (missing dates, malformed input, empty strings)
-* Negative test cases (text without assignment keywords)
 
-After reviewing the generated tests, I refined them to better match our actual implementation and adjusted input/output expectations to align with our real data structure.
 
-### Outcome
+### Prompt Used
+Redesign this React/Next.js Profile.tsx component to make it more modern, interactive, and visually appealing while keeping the same theme and Tailwind styling. Add UI improvements such as better layout hierarchy and smoother visual feedback. Functionality does not need to change.
 
-* Implemented 3 working Jest unit tests in our codebase
-* Improved coverage for edge cases (e.g., undefined input, unexpected formatting)
-* Identified one small bug in our parsing logic while testing
 
-Using AI accelerated the brainstorming process for test scenarios and helped me think more systematically about edge conditions. It reduced manual trial-and-error debugging time.
+### Outcomes Produced
+ChatGPT generated a redesigned layout with clearer visual hierarchy and improved organization of profile statistics and progress indicators. This helped quickly prototype alternative UI ideas without manually redesigning from scratch.
 
-### Reflection
-ChatGPT was very useful for generating an initial structure for unit tests and suggesting edge cases I might not have considered immediately. It helped speed up the process of writing test scaffolding and improved my awareness of corner cases.
 
-However, the AI-generated tests were not immediately correct. I needed to sometimes manually verify expected outputs and remove or rewrite assumptions that did not match our implementation. AI sometimes made assumptions about return types or function behavior that were slightly incorrect. Therefore, careful human review and local testing were necessary before committing the code.
+### Reflection on Usefulness
+ChatGPT was very useful for rapid UI brainstorming and prototyping. It allowed me to quickly generate multiple design ideas and explore different layouts. This is helpful during early development stages when we want to experiment with UI improvements efficiently.
 
-Fair Use & Code Quality Considerations:
-I ensured that the final test code was adapted to our own implementation and understood every test case before including it.
-Going forward, I believe AI tools can significantly improve productivity for generating boilerplate tests and exploring edge cases. However, they should be used as a drafting assistant rather than a replacement for understanding the underlying logic.
+However, the generated code still required manual review to ensure it matched our project structure and styling conventions.
+
+
+### Steps Taken to Ensure Correctness, Clarity, and Fair Use
+To ensure the AI output was correct and appropriate:
+- Verified it did not introduce unsafe logic or external dependencies
+- Ensured the design remained consistent with the original component’s theme
+- Treated AI output as a draft and manually refined it before use
+
+In the future, ChatGPT could help with rapid UI prototyping and generating documentation. It is most effective as a support tool rather than a replacement for developer judgment.
