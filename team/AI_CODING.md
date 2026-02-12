@@ -37,6 +37,8 @@ Redesign this React/Next.js Profile.tsx component to make it more modern, intera
 ### Outcomes Produced
 ChatGPT generated a redesigned layout with clearer visual hierarchy and improved organization of profile statistics and progress indicators. This helped quickly prototype alternative UI ideas without manually redesigning from scratch.
 
+<img width="533" height="526" alt="截屏2026-02-12 下午3 38 26" src="https://github.com/user-attachments/assets/afb4bad5-9e7d-4bd9-856f-63aebe47a3d0" />
+
 
 ### Reflection on Usefulness
 ChatGPT was very useful for rapid UI brainstorming and prototyping. It allowed me to quickly generate multiple design ideas and explore different layouts. This is helpful during early development stages when we want to experiment with UI improvements efficiently.
