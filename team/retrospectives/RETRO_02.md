@@ -29,7 +29,7 @@ Absent: n/a
 - Start: documenting files and organizing (e.g. write acceptance tests for PR and better description to convey the purpose of PR)
 - Stop: leaving PRs hanging
 - Continue: doing issue weekly + frequent communication
-Nataly:
+### Nataly:
 - Start: writing better PR descriptions
 - Stop: leaving PRs unapproved for long time
 - Continue: communicating with team frequently
