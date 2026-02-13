@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react@0.487.0";
-import { DayPicker } from "react-day-picker@8.10.1";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { DayPicker } from "react-day-picker";
 
 import { cn } from "./utils";
 import { buttonVariants } from "./button";
@@ -60,11 +60,35 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconLeft: ({ className, ...props }) => (
-          <ChevronLeft className={cn("size-4", className)} {...props} />
+        PreviousMonthButton: ({ className, ...buttonProps }) => (
+          <button
+            type="button"
+            aria-label="Previous month"
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "size-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+              "absolute left-1",
+              className,
+            )}
+            {...buttonProps}
+          >
+            <ChevronLeft className="size-4" />
+          </button>
         ),
-        IconRight: ({ className, ...props }) => (
-          <ChevronRight className={cn("size-4", className)} {...props} />
+        NextMonthButton: ({ className, ...buttonProps }) => (
+          <button
+            type="button"
+            aria-label="Next month"
+            className={cn(
+              buttonVariants({ variant: "outline" }),
+              "size-7 bg-transparent p-0 opacity-50 hover:opacity-100",
+              "absolute right-1",
+              className,
+            )}
+            {...buttonProps}
+          >
+            <ChevronRight className="size-4" />
+          </button>
         ),
       }}
       {...props}

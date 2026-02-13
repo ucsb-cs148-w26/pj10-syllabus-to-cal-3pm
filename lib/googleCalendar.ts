@@ -30,6 +30,17 @@ export const getAuthUrl = async (options: AuthUrlOptions = {}): Promise<string> 
   });
 };
 
+export const getTokenFromCode = async (code: string) => {
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET,
+    redirectUri,
+  );
+
+  const { tokens } = await oauth2Client.getToken(code);
+  return tokens;
+};
+
 export const createCalendarEvents = async (
   accessToken: string,
   events: CalendarEvent[]
