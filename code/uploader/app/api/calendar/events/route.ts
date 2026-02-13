@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createCalendarEvents } from '@/lib/googleCalendar';
-import type { CalendarEvent } from '@/types/events';
+import { createCalendarEvents, CalendarEvent } from '@/lib/googleCalendar';
 
 export async function POST(request: NextRequest) {
   try {
