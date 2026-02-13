@@ -53,3 +53,41 @@ To ensure the AI output was correct and appropriate:
 - Treated AI output as a draft and manually refined it before use
 
 In the future, ChatGPT could help with rapid UI prototyping and generating documentation. It is most effective as a support tool rather than a replacement for developer judgment.
+
+
+## Nataly
+### AI Tool: Claude (Anthropic)
+### Experiment Procedure:
+Instead of focusing on the functionality of our app, we wanted to test how different AI tools redesigned the Profile page component (located in file `Profile.tsx`) such as what UI improvements, layout changes, and more, could be done for a better user experience.
+
+The idea is to keep the same theme of the current Figma styling but improving the layout or seeing what items can be emphasized.
+
+First, I gave Claude a simple, general prompt detailing what I wanted to receive back, given a screenshot of the current profile page.
+
+1. Prompt used:
+   > Redesign this Next.js profile page to make it more user-interactive while maintaining visual appeal. Keep the same (tailwind/css) style.
+Attached Screenshot:
+   <img width="372" height="385" alt="image" src="https://github.com/user-attachments/assets/40c08105-593c-493c-b377-8f65010b4e31" />
+
+### Results
+#### First prompt results
+Given the first prompt, the AI returned a slightly modified profile page. The biggest changes were that the profile card which had the 'Level' feature was extended, and the colors for specific areas were more accentuated.
+
+<img width="439" height="687" alt="image" src="https://github.com/user-attachments/assets/4b6cfc07-3611-462b-aba3-dab84272e503" />
+
+Since there wasn't really a layout improvement, I gave back another prompt (in the same session) in order to see what additional changes it could make.
+
+2. Prompt used:
+   > Now, consider adding some improvements to the UI - is there a better layout for users to interact with?
+
+#### Second prompt results
+With this prompt, the Claude AI did return a redesigned layout of the profile page.
+
+<img width="363" height="325" alt="image" src="https://github.com/user-attachments/assets/6f7eec5c-9213-432b-8827-928039418dee" /> <img width="357" height="327" alt="image" src="https://github.com/user-attachments/assets/2341690a-bf33-49ee-8af5-b2164f9c945d" /> <img width="359" height="325" alt="image" src="https://github.com/user-attachments/assets/b5514c7f-e11f-4d50-aa44-28bce483528d" /> <img width="350" height="326" alt="image" src="https://github.com/user-attachments/assets/c6c26674-f633-40d0-8e84-79a8f9229bbd" />
+
+### Reflection
+#### Usefulness
+I think that Claude AI was a useful tool in redesigning the UI. The AI wasn't restricted by not having the original code to recreate the theme, which was very helpful in simply focusing on brainstorming new layour ideas and color schemes (if that's what we were looking for). As a tool to view different layouts and themes, I think it is a great tool for developers in the early stages of development or for quick UI changes that may serve to elevate user experience.
+
+#### Steps taken for AI Tool
+In order to make sure that the AI was correct and fair use, I engineered the first prompt to make sure that only the theme we currently have was the one being used. That is, making sure that there were no external imports to the code that was generated other than what our codebase currently has, and that the theme was visually in accordance to what was first provided. If it were to be used in our project, we would also have to refine it in a way where we use change what was given to better fit our project as well as making sure we are not simply copy-pasting this code and claiming it is ours.
