@@ -91,3 +91,19 @@ I think that Claude AI was a useful tool in redesigning the UI. The AI wasn't re
 
 #### Steps taken for AI Tool
 In order to make sure that the AI was correct and fair use, I engineered the first prompt to make sure that only the theme we currently have was the one being used. That is, making sure that there were no external imports to the code that was generated other than what our codebase currently has, and that the theme was visually in accordance to what was first provided. If it were to be used in our project, we would also have to refine it in a way where we use change what was given to better fit our project as well as making sure we are not simply copy-pasting this code and claiming it is ours.
+
+
+## Wilson Lau 
+### AI Tool: Claude (Sonnet 4.5) 
+### Goal: 
+I used Claude to redesign the Profile page component. The goal was to make the UI more professional and student-oriented (Notion-like), and to make the "Recent Completions" section more functional by adding Canvas/Gradescope links and completion dates for each assignment.
+### Procedure: 
+Asked Claude "Redesign the profile page to make it more professional and student-like (similar to Notion). Make the recent completions section specific: for each assignment or lab report, show that it can be linked and opened in Canvas or Gradescope, along with the date completed." 
+### Results: 
+Claude produced a Notion-inspired redesign with:
+1. More subtle colors for the page to give a "productive feel"
+2. Better layout, less clutter
+3. Each item in the recent completion tab has a clickable link to canvas/gradescope 
+<img width="1022" height="1164" alt="Image" src="https://github.com/user-attachments/assets/9e12d426-6da1-428e-9ea3-32bd38094133" />
+### Reflection: 
+Claude is helpful for rapidly exploring new aesthetics and translating design ideas into Tailwind CSS. It undestands designs without manually importing image designs by simply mentioning "Notion".  It reduced the time spent on layout, spacing, and component structure. 
