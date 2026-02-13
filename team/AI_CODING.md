@@ -104,6 +104,6 @@ Claude produced a Notion-inspired redesign with:
 1. More subtle colors for the page to give a "productive feel"
 2. Better layout, less clutter
 3. Each item in the recent completion tab has a clickable link to canvas/gradescope 
-<img width="1022" height="1164" alt="Image" src="https://github.com/user-attachments/assets/9e12d426-6da1-428e-9ea3-32bd38094133" />
+<img width="766" height="873" alt="Image" src="https://github.com/user-attachments/assets/9e12d426-6da1-428e-9ea3-32bd38094133" />
 ### Reflection: 
 Claude is helpful for rapidly exploring new aesthetics and translating design ideas into Tailwind CSS. It undestands designs without manually importing image designs by simply mentioning "Notion".  It reduced the time spent on layout, spacing, and component structure. 
