@@ -186,4 +186,53 @@ TO ensure that AI is used for correctness is to have it build prootypes of the p
 
 **AI tools** From the AI tools provided, was using Chat GPT/CodeX,  I was most excited to use chatgpt since it looks the most promsing. One tip is to be direct, give examples of what you expect, or give clear directions of the ui youd like and a clear output. THe more specfic you are on what you want the better CodeX/Chatgpt is at understanding.  
 
+## Matthew Ahmadpour
 
+### Model: 
+
+Grok Code Fast 1
+
+## Procedure:
+
+For our experiment, we will test the interface generation capabilites of Grok's model. Moreover, we will measure the model's ability to design an appealing interface and come up with valuable features, without the constraint of functionality. 
+
+### Prompt 1
+
+
+Redesign the profile page to become more appealing as well as interactive and more practical for users. Keep the style the same as the current theme. This should be a prototype; it does not have to be a functional. The design is most salient. Write as many lines of code as needed to accomplish the task.
+
+### Result 1
+
+
+- Less changes than expected
+- Appealing design, albeit minimalistic
+- Decent features
+- Reasonable, organized layout
+- Very fast generation
+
+To have the model provide a more advanced interface design, we provided the model with a second prompt.
+
+### Prompt 2
+
+The current changes are too minimal. Design more significant changes for the protoype. Write as much code needed for a significant redesign that provides all that a user might need in a syllabus to calendar/planner app within the profile page.
+
+
+### Result 2
+
+<img width="1509" height="865" alt="Screenshot 2026-02-13 at 7 24 25 PM" src="https://github.com/user-attachments/assets/f75f7ee1-bed2-467e-a5a5-1a1cead3633a" />
+<img width="1512" height="865" alt="Screenshot 2026-02-13 at 7 24 42 PM" src="https://github.com/user-attachments/assets/e89f6f4c-cf5e-4218-8847-31811932a85c" />
+<img width="1512" height="865" alt="Screenshot 2026-02-13 at 7 25 25 PM" src="https://github.com/user-attachments/assets/63d67b92-830e-4ede-8161-12613bac8433" />
+<img width="1511" height="865" alt="Screenshot 2026-02-13 at 7 25 00 PM" src="https://github.com/user-attachments/assets/e65fccfa-f198-4c8d-97c8-ff8e5858bf67" />
+<img width="1512" height="865" alt="Screenshot 2026-02-13 at 7 26 06 PM" src="https://github.com/user-attachments/assets/b92b9c64-d191-4c69-af12-3ea6e8cd6b1f" />
+
+- Significant changes providing new layout and functionality
+- New tabs provide a general, course, planner, achievement, and activity section within the profile page
+- Design is more fleshed-out, provides user with a more engaging interface
+- Layout is inuitive and easy to navigate
+- Slower, but still fast given the scale of change
+- 
+  ## Reflections
+
+  Grok's model executes commands quite fast, and produced accurate and reasonable code on its first attempt. However, it may lack depth in certain instances, as it initially produced a small amount of changes and had to be prompted again for the redesign. For developers valuing quick execution and small fixes, this model appears ideal. In the future, given a simple task or a series of quick changes (e.g. editing text throughout a file), this model could be very valuable. It may however end up taking more time by having to give mulitple prompts for larger scale changes. Despite the initial lack of depth, the model still produces impressive interface results given the right guidance.
+
+  To ensure accurate and reasonable results, it is imperative that we provided prompts that were highly specific. The model still made mistakes even with lack of specificity, therefore we made sure to test and provide a new prompt that emphasized its errors and our objectives even further. Given that the model only produced a prototype and not functionality, fair use was addressed as we received general ideas rather than specific code that went into our program.
