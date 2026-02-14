@@ -248,3 +248,6 @@ I broke down the frameworks for our website(Next.js, Figma, App Router) to the L
 ### Results:
 The result was impressive. I specified colors Blue and Gold and it delivered. It did not break any existing code, instead it was able to take the old Profile page and rerwork it visually to make it more appealing with different colors. It failed in providing me a properly integrated file so I needed to manually switch around import statements, but overall it works well. Ran into an issue where Gemini would agree with me to a fault, often backtracking on statements regarding logistics.
 This can be problematic if I do not specify the correct framework, or if there is a production obstacle in the way as Gemini will not straight up tell you about it, rather making stuff up and sending you on a wild goose chase.
+
+<img width="640" height="449" alt="image" src="https://github.com/user-attachments/assets/9f8613e0-c656-462a-bf34-145cf4a309d9" />
+
