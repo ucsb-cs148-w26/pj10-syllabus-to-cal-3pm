@@ -149,9 +149,14 @@ The changes were subtle but made the interface feel more polished.
 **Prompt 2:**  
 > Make it more personal to students and give it a sleek design.
 
+ <img width="1357" height="839" alt="Screenshot 2026-02-13 at 3 31 01 PM" src="https://github.com/user-attachments/assets/9962d518-6b64-4d21-92e9-44cf02aa4bdc" />
+
+
 This prompt was more targeted toward the users for our website, and it was more direct since ChatGPT is great at producing outputs with direct intentions.
 
 It was more personilzed and created a student driven UI that showed their progress and assignments. It also was great on spacing the page. 
+
+
 
 ---
 
