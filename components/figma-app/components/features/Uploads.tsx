@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FileText, FolderOpen, Sparkles, CheckCircle2, CalendarCheck, Trash2, User } from 'lucide-react';
 import PdfUpload from '@/components/PdfUpload';
+import { Checkbox } from '@/components/ui/checkbox';
 import type { CalendarEvent } from '@/lib/googleCalendar';
 
 interface UploadsProps {
@@ -118,6 +119,10 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   const [hasSynced, setHasSynced] = useState(false);
 
   const [syncBurst, setSyncBurst] = useState(false);
+
+  const [includeLectures, setIncludeLectures] = useState(true);
+  const [includeAssignments, setIncludeAssignments] = useState(true);
+  const [includeExams, setIncludeExams] = useState(true);
 
   const accessToken = initialAccessToken;
   const hasEvents = events.length > 0;
@@ -290,7 +295,12 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       const res = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: pendingText }),
+        body: JSON.stringify({
+          text: pendingText,
+          includeLectures,
+          includeAssignments,
+          includeExams,
+        }),
       });
 
       if (!res.ok) {
@@ -516,10 +526,10 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
               onDeleteUploadedFile={handleDeleteUploadedFile}
             />
 
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
               <div
                 className={
-                  'inline-flex items-center gap-2 rounded-md border px-3 py-2 text-xs transition-colors ' +
+                  'inline-flex w-fit items-center gap-2 rounded-md border px-3 py-2 text-xs transition-colors ' +
                   (statusTone === 'error'
                     ? 'border-rose-200 bg-rose-50 text-rose-700'
                     : statusTone === 'ok'
@@ -540,7 +550,32 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                 <span>{statusText}</span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-1 items-center justify-center gap-4">
+                <span className="text-xs font-medium text-gray-500">Include:</span>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <Checkbox
+                    checked={includeLectures}
+                    onCheckedChange={(c) => setIncludeLectures(c === true)}
+                  />
+                  <span className="text-xs text-gray-700">Lectures</span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <Checkbox
+                    checked={includeAssignments}
+                    onCheckedChange={(c) => setIncludeAssignments(c === true)}
+                  />
+                  <span className="text-xs text-gray-700">Assignments</span>
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <Checkbox
+                    checked={includeExams}
+                    onCheckedChange={(c) => setIncludeExams(c === true)}
+                  />
+                  <span className="text-xs text-gray-700">Tests/Exams</span>
+                </label>
+              </div>
+
+              <div className="flex w-fit shrink-0 items-center gap-2">
                 <button
                   type="button"
                   onClick={goToReviewFromUpload}

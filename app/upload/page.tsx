@@ -20,6 +20,10 @@ function UploadPageContent() {
   const [uploadsLoading, setUploadsLoading] = useState(false);
   const [uploadsError, setUploadsError] = useState<string | null>(null);
 
+  const [includeLectures, setIncludeLectures] = useState(true);
+  const [includeAssignments, setIncludeAssignments] = useState(true);
+  const [includeExams, setIncludeExams] = useState(true);
+
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -109,7 +113,12 @@ function UploadPageContent() {
       const res = await fetch("/api/gemini", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: allText }),
+        body: JSON.stringify({
+          text: allText,
+          includeLectures,
+          includeAssignments,
+          includeExams,
+        }),
       });
 
       if (!res.ok) {
@@ -246,6 +255,39 @@ function UploadPageContent() {
         </div>
 
         <PdfUpload onTextExtracted={handleSyllabusText} />
+
+        <div className="flex flex-col items-center justify-center gap-3 py-4">
+          <p className="text-sm font-medium text-slate-700">Include in calendar</p>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={includeLectures}
+                onChange={(e) => setIncludeLectures(e.target.checked)}
+                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span className="text-sm text-slate-700">Lectures</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={includeAssignments}
+                onChange={(e) => setIncludeAssignments(e.target.checked)}
+                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span className="text-sm text-slate-700">Assignments</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={includeExams}
+                onChange={(e) => setIncludeExams(e.target.checked)}
+                className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span className="text-sm text-slate-700">Tests/Exams</span>
+            </label>
+          </div>
+        </div>
 
         <div className="space-y-3">
           <div className="flex items-center justify-between">
