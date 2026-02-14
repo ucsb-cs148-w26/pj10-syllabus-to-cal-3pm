@@ -1,0 +1,732 @@
+University of California, Santa Barbara 
+ 
+Dept. of Computer Science 
+ 
+ 
+© Z. Matni 2025 
+CS64 Syllabus, S25 v0 (DRAFT) 
+Page 1 of 12 
+CMPSC 64 – Computer Organization and Digital Logic Design 
+Syllabus – Spring 2025 
+Class Time: 
+Mon. & Wed.  3:30 – 4:45 PM  
+Location: 
+HFH 1104 
+Instructor: 
+Dr. Ziad Matni 
+Email: 
+ziad.matni@ucsb.edu 
+Office Hours: 
+TBA in HFH 1123 or by appointment (email the prof) 
+Lab Sections: 
+Tuesdays, 3, 4, and 5 PM in PHELPS 3525 
+Teaching 
+Assistants: 
+Kirill Aristarkhov 
+Setareh Najafikhoshnoo 
+kya@ucsb.edu  
+setareh@ucsb.edu  
+ 
+CHECK CANVAS PAGE FOR 
+TIMES AND LOCATIONS OF 
+OFFICE HOURS 
+Undergraduate 
+Learning 
+Assistants: 
+Riya Gupta 
+Tom Shangguan 
+Laszlo Zim, 
+riyagupta@ucsb.edu  
+shangguan@ucsb.edu 
+karanina@ucsb.edu  
+Class Main Website:   
+Assignment Submissions: 
+Q&A/Discussion Site:   
+ 
+Canvas                Canvas website  
+Gradescope         Gradescope website  
+Piazza                  Piazza website for CS64 S25  
+ 
+Syllabus Contents 
+A. 
+Class Overview and Pre-Requisites ................................................................................................. 2 
+B. 
+What you need to know BEFORE you take this course .................................................................... 2 
+C. 
+What you will learn by the end of this course ................................................................................... 2 
+D. 
+How to succeed in this course .......................................................................................................... 2 
+E. 
+A Note on Conduct: A Shared Expectation of Respect ..................................................................... 3 
+F. 
+Where Do I Find Stuff? ..................................................................................................................... 3 
+G. 
+Assistance to Students ....................................................................................................................... 4 
+H. 
+Textbooks and Other Learning Material .......................................................................................... 5 
+I. 
+Coding and Software Particulars for this Course ............................................................................ 5 
+J. 
+Class Lectures and Lab Sections ...................................................................................................... 5 
+K. 
+Participation and Attendance ........................................................................................................... 5 
+L. 
+Assignments ...................................................................................................................................... 6 
+M. 
+Quizzes and Exams ........................................................................................................................... 6 
+N. 
+Late Policy and Make Up Policy – PLEASE READ! ....................................................................... 7 
+O. 
+Grading ............................................................................................................................................. 7 
+P. 
+Class Grade Distributions ................................................................................................................ 7 
+Q. 
+Note to Students with Disabilities ..................................................................................................... 7 
+R. 
+Class Schedule .................................................................................................................................. 8 
+S. 
+UCSB and Instructor’s Policies on Academic Integrity and Honesty .............................................. 9 
+T. 
+Use of LLMs in the course .............................................................................................................. 10 
+U. 
+Non-discrimination policies ........................................................................................................... 10 
+V. 
+Statement on sexual harassment ..................................................................................................... 10 
+W. 
+Mandatory reporting ...................................................................................................................... 10 
+X. 
+Mental health .................................................................................................................................. 11 
+Y. 
+Additional Campus Resources ........................................................................................................ 11 
+ 
+University of California, Santa Barbara 
+ 
+Dept. of Computer Science 
+ 
+ 
+© Z. Matni 2025 
+CS64 Syllabus, S25 v0 (DRAFT) 
+Page 2 of 12 
+A. Class Overview and Pre-Requisites 
+Have you ever wondered how a computer actually computes? Deep beneath your phone’s glossy exterior 
+and flashy screen, a network of literally miles of wires carries information between many billions of little 
+switches that, when working properly, allow you to run your favorite app. This class is the beginning of 
+the story of how that happens. We will explore the fundamental principles of computing hardware, what it 
+“means” for a program to actually run on a computer, and start to drill down through intricately stacked 
+layers of abstraction that make what you call a “computer” even possible. Along the way you will learn 
+some assembly language programming, you will better understand how and why computers are organized 
+the way they are, and how to actually start to build your own computers using the basic digital logic design 
+elements of gates, combinational circuits, flip-flops, and much more. You are expected to have taken and 
+passed (i.e., C grade or higher) CMPSC 16 before you take this course, as well as MATH 3C/4A. 
+ 
+B. What you need to know BEFORE you take this course 
+It is very important that you took CMPSC 16 as we will be referring a lot to memory maps, pointers, and 
+C/C++ code. You are also expected to be familiar with using the UNIX command line to navigate 
+folders, view files, and compile and run programs. In addition, you must have a College of Engineering 
+UNIX account ready to use by the end of the first week of class. 
+ 
+C. What you will learn by the end of this course  
+You’ll have the opportunity to learn all of these things (though not necessarily in this order): 
+• 
+Computer organization concepts 
+• 
+Binary arithmetic and logic operations 
+• 
+Assembly programming language for 32-bit MIPS architecture, including: 
+o Basic arithmetic & variable use 
+o Flow control (branching) 
+o Memory addressing 
+o Functions and function calls 
+• 
+Basic digital logic design, including: 
+o Logic gates and truth tables 
+o Combinatorial logic 
+o Sequential logic 
+o Finite state machine 
+ 
+D. How to succeed in this course   
+Come to all the lectures, take good notes, PRACTICE the examples done in lecture, start your homework 
+early, and ask us questions often: post on Piazza and come to office hours!! 
+ 
+ 
+University of California, Santa Barbara 
+ 
+Dept. of Computer Science 
+ 
+ 
+© Z. Matni 2025 
+CS64 Syllabus, S25 v0 (DRAFT) 
+Page 3 of 12 
+E. A Note on Conduct: A Shared Expectation of Respect 
+Our opportunity to go through this really interesting material together is something that I very much enjoy 
+teaching. I truly believe every student entering my class is more than capable of mastering this material 
+with some hard work, curiosity, and persistence. Your instructional team will be working hard for you, 
+and while we are far from perfect, you should never expect anything less than dignity and respect in 
+100% of our interactions. We, in turn, expect the same from you. As professionals, or professionals in 
+training, we are all responsible to treat the members of this academic community (e.g. your peers, our 
+staff and faculty, and even yourself) respectfully and professionally. With this as our foundation I know 
+we can build some wonderful things. 
+ 
+Additionally, I do expect you to be responsible for your own learning and to ask questions. We will 
+always strive to make the classroom, the lab, and our offices safe spaces for you to ask questions and to 
+learn and, yes, even to make mistakes. Believe it or not, making mistakes is one of the most effective ways 
+to learn!  
+ 
+Finally, I do expect you to do your own work at all times. Please familiarize yourselves with the 
+university’s policies on academic integrity and honesty and READ the section in this syllabus that details 
+this further (on pg. 9). Failure to comply with these policies will result in a zero grade and likely incur 
+additional penalties. 
+ 
+F. Where Do I Find Stuff? 
+All information you need about what today’s lecture is, to what homework or lab is due today, is found in 
+THIS SYLLABUS! Please read this syllabus in its entirety as it contains all the important information on 
+how this class runs and what my policies are – I will quiz you about it (for points!) 
+ 
+All material (class slides, example codes, all assignments, grades, etc.) will be listed on our main website 
+(Canvas). Please check out our website and familiarize yourselves with it as soon as possible. 
+ 
+All questions you have should be posted on our class’ Piazza site. I encourage EVERYONE to participate 
+on Piazza and answer each other’s questions to the best of your ability. My team and I will observe Piazza 
+postings and chime-in when needed! 
+ 
+ 
+University of California, Santa Barbara 
+ 
+Dept. of Computer Science 
+ 
+ 
+© Z. Matni 2025 
+CS64 Syllabus, S25 v0 (DRAFT) 
+Page 4 of 12 
+G. Assistance to Students 
+01. Office Hours 
+I very highly recommend that you come to office hours! Not just for the professor, but also for 
+the instructional staff (TAs and ULAs). And not just for this course, but for all of them! 
+It can help clarify course material for you and help you how to best study for the course, approach 
+your assignments, and prepare for quizzes and exams. It furthermore creates and facilitates 
+professional relationships between yourself and the professor and the instructional staff. 
+Educational research shows that student engagement is associated with academic success! 
+ 
+Do’s of Office Hours: 
+Do go to office hours regularly starting in the first week! 
+Do prepare some specific questions: these may be related to the material or syllabus (do read the 
+syllabus!) 
+Do ask how the professor recommends approaching or preparing for the work you have to do 
+Do talk about your aspirations or goals! 
+Do feel comfortable asking the professor about how they got into their field and their professional 
+life journey 
+ 
+Dont’s of Office Hours: 
+Don’t be too intimidated: you really can ask anything you like about the course 
+Don’t expect to be tutored or given direct answers to the assignments 
+ 
+02. Lab Sections 
+The lab sections are run by the TAs and ULAs. These are excellent spaces to ask questions and 
+seek help too! 
+ 
+03. Piazza 
+If you have particular questions, you can also ask them on Piazza, day or night. Someone from 
+the instructional staff will get back to you quickly, usually within 24 hours. Get into the habit of 
+helping out your peers if they ask a question that you know the answer to! You can also see if 
+anyone’s asked the same question and received an answer, so make it a habit to check Piazza 
+many times a week. See if you can answer your fellow students’ questions yourself! Please do 
+not use Piazza to post outright solutions to homework problems – you can, of course, discuss the 
+exercises and ways to solve the problems all you like! 
+ 
+04. Email 
+If you need to email the professor because you’d rather not share your question on Piazza with 
+anyone else, please feel free to do so, but please indicate which course you are in (i.e., put 
+“CS64” in the subject line!). Please use direct email and do not send messages thru Canvas, as we 
+don’t always read those in time. 
+ 
+All office hours (prof’s, TAs’, ULAs’) are listed on the 1st page of the course’s Canvas site. 
+We try not to change them once they’re established in Week 1, but sometimes we unfortunately have to:  
+if that happens we will make an announcement on Piazza and we will update the Canvas page. 
+ 
+University of California, Santa Barbara 
+ 
+Dept. of Computer Science 
+ 
+ 
+© Z. Matni 2025 
+CS64 Syllabus, S25 v0 (DRAFT) 
+Page 5 of 12 
+H. Textbooks and Other Learning Material 
+(also used in CS 154 – so keep this copy!!) 
+This textbook is very highly recommended (especially if you also decide to take 
+CMPSC 154, the follow up to this course). The book is also available to be checked 
+out at the UCSB library: 
+Patterson, D.A., & Hennessy, J.L. (2013). Computer Organization and Design: The 
+Hardware/Software Interface, 5th edition. Morgan Kaufmann. 
+ 
+You can get the (newer) 6th edition instead, if you want to. 
+ 
+ 
+I will also give you several handouts to read. These will be also announced in class and posted on Canvas. 
+ 
+I. Coding and Software Particulars for this Course 
+For a large part of this course, we will be programming in MIPS assembly language. We will use a MIPS 
+emulator software to run our programs – more will be explained in lecture. This software is available for 
+use on the CSIL machines, which students can also access remotely via ssh. 
+ 
+J. Class Lectures and Lab Sections 
+This is a lecture class that meets in-person twice a week and is accompanied by a weekly lab section. 
+Attending lectures is VERY important to doing well. Even though I will only take attendance in the 1st week 
+of lecture, we will have several participation activities during the scheduled class that cannot be made up 
+later. We will take attendance in the first few weekly labs. You cannot make up missed labs sections. 
+ 
+The purpose of the lectures in this course is to guide you through the readings and assignments. 
+Especially as it pertains to: 
+• 
+providing an overview of how everything fits together, 
+• 
+providing hands-on demonstrations of things that you'll do on your own later, 
+• 
+providing additional information that is not in the textbook/handouts (and to sometimes clarify 
+the textbook/handouts), and 
+• 
+providing an opportunity to ask questions, and hear answers to questions asked by others. 
+ 
+This course moves quickly, so keeping up with the course material every week is very important and is 
+key to doing well in this class.  
+ 
+Labs will be conducted in PHELP 3525 on Tuesdays. I will put up the assignments on our main website and 
+you will turn them in online by the posted due date. Lab TAs/ULAs will be available for help in the lab 
+sessions. 
+ 
+K. Participation and Attendance 
+I will often ask for participation from students. Your active participation will make a difference in your 
+learning and your final class grade! 
+Students are expected to keep up their attendance of lectures, although I will not actively take attendance 
+in class (after Week 1). Attendance is taken in the lab sections and students are allowed to miss up to 2 
+sections without penalty. 
+University of California, Santa Barbara 
+ 
+Dept. of Computer Science 
+ 
+ 
+© Z. Matni 2025 
+CS64 Syllabus, S25 v0 (DRAFT) 
+Page 6 of 12 
+L. Assignments 
+The homework assignments are released on Canvas and Gradescope and students are expected to adhere 
+to the course's strict late policy. Assignments have to be submitted ONLY using the Gradescope tool. 
+We will not accept nor grade assignments emailed to us.  
+ 
+Most of your assignments will be given to you as a PDF document on the class website. You can print 
+this PDF, write your answers on it, then re-scan it, or alternatively you can edit the assignment PDF 
+directly using various different software applications (I will list some of these for you on a Piazza post). 
+You then have to submit your assignment as your own PDF document on Gradescope. Make absolutely 
+sure that you strictly follow the template given to you in the original PDF. Note that only PDF 
+submissions that follow the template will be accepted and graded.  
+ 
+The only exception to this, is that a few assignments will be programming-based (C++, MIPS assembly), 
+in which case, you’ll be given directions on how to upload them onto Gradescope. 
+ 
+Students are allowed to work together on homework in groups of two (but not more!), and may discuss 
+assignment solution details within the group and with other class members. However, each member of the 
+group is still accountable for their own work (and every individual should turn in a separate 
+assignment). Students may change groups between assignments, though not within an assignment. 
+Forming groups is optional; students may work alone if they want. 
+ 
+Please, do not copy material from somewhere else (including online sources, other people, LLMs like 
+ChatGPT etc…) WITHOUT giving it proper citation/prompt used – otherwise, it WILL be considered to be 
+plagiarism (please familiarize yourselves with my policy and the University’s policy on plagiarism).  
+You do not have to cite something the instructor or the TAs explicitly said in lecture or lab. 
+ 
+If you believe that a grade on an assignment question is wrong, you may ask for a review for a possible 
+re-grade using Gradescope’s “Regrade Request” feature. Note that such requests will only be made 
+available for 3 days after an assignment grade has been released. You should have a good reason to ask 
+for a regrade and understand that it is not a guarantee of a grade change. You can ask questions like “why 
+did I get this wrong?” or “can you please double-check your grading on this”, but please don’t ask 
+questions like, “why did you make this worth X pts? I think you should make it worth Y points instead” 
+(reason: assigning points is our prerogative). 
+ 
+M. Quizzes and Exams 
+This course has 4 quizzes and 1 final exam:  
+• 
+The quizzes will take place on the Wednesdays of Weeks 2, 4, 6, and 8. 
+• 
+a final exam on Friday, June 13 at 4:00 PM (as set by the University). 
+All quizzes and exams will be in-person and in our classroom.  
+There are absolutely NO make ups for missed quizzes or exams.  
+More details on these quizzes and the final exam will be provided at a later date. 
+ 
+ 
+ 
+University of California, Santa Barbara 
+ 
+Dept. of Computer Science 
+ 
+ 
+© Z. Matni 2025 
+CS64 Syllabus, S25 v0 (DRAFT) 
+Page 7 of 12 
+N. Late Policy and Make Up Policy – PLEASE READ! 
+A late assignment submission means submitting 24 hours after a deadline. Late submissions will result 
+in a 20% penalty. Anything submitted beyond the deadline + 24 hours will receive a zero. No makeup is 
+allowed for assignments except in rare cases, if there is a documented family emergency, documented 
+extended illness, documented required court appearance, or other situation beyond the students' control 
+(with documentation), then the professor may grant additional make up days entirely at the instructor's 
+discretion – but this is not a guarantee or a right.  
+No makeup is allowed for missed quizzes, tests, or exams whatsoever. 
+ 
+O. Grading  
+Item 
+Grade % 
+Notes 
+In-class Participation 
+* 
+Lack of this is noted by the professor 
+Assignments 
+30% 
+All assignments are equally weighed. 
+Quizzes  
+30% 
+See pg. 6 for dates. In-person, required, no makeup. 
+Final Exam 
+40% 
+See pg. 6 for date. In-person, required, no makeup. 
+TOTAL 
+100 % 
+ 
+ 
+P. Class Grade Distributions 
+These are calculated to 2 decimal places and very strictly assigned. 
+Range 
+Grade 
+ 
+Range 
+Grade 
+[93 – 100] 
+A 
+ 
+[77 – 80) 
+C+ 
+[90 – 93) 
+A- 
+ 
+[73 – 77) 
+C 
+[87 – 90) 
+B+ 
+ 
+[70 – 73) 
+C- 
+[83 – 87) 
+B 
+ 
+[60 – 70) 
+D 
+[80 – 83) 
+B- 
+ 
+< 60 
+F 
+[X – Y) means “X to Y inclusive of X (but not Y)” 
+A+ grades: These may be awarded to the very best performing students in the class—but the cutoff for 
+A+ grades will be determined at the end of the course at the discretion of the instructor (there is no pre-
+determined cutoff---an average of 97 or more doesn't guarantee you an A+ grade.) If I decide to curve the 
+grade (it’s not guaranteed that I will), I will do so on the final class scores and not on any individual item. 
+ 
+F grades: If you miss your final exam, you will receive an F, regardless of your running score in the 
+class. If you feel that I or the TAs have made a mistake (like adding up a grade incorrectly), then you 
+should certainly bring that to my attention in an expedient fashion (within one week’s time), but please do 
+not engage in grade-grubbing (for example, do NOT ask me to round up your final class grade at the 
+end of the quarter). If you have any questions about how grades are computed, please feel free to ask, and 
+I would be happy to explain further. 
+ 
+Q. Note to Students with Disabilities 
+Please register your accommodation requests with DSP at your very earliest opportunity – this is best 
+done by the first or second week of the quarter. Make sure that you submit your DSP request no later than 
+one week before a scheduled exam. The instructor will accommodate students only according to 
+information gotten from the DSP office. See Section Y (Additional Campus Resources) for contact 
+details for the DSP Office. 
+University of California, Santa Barbara 
+ 
+Dept. of Computer Science 
+ 
+ 
+© Z. Matni 2025 
+CS64 Syllabus, S25 v0 (DRAFT) 
+Page 8 of 12 
+R. Class Schedule 
+The lecture topics are subject to change or re-arrangement.  
+Week 
+Topic(s) 
+Readings from 
+Book or 
+Handouts 
+Assignments 
+Due 
+1 
+Intro to the course; Numerical bases 
+Binary Arithmetic & 2s complement 
+Handout #1 
+- 
+2 
+Binary logic operations 
+Assembly: intro; processing a program  
+Handout #1 
+Assignment 1 
+3 
+Assembly: i/o and types of instructions  
+Assembly: flow control (branches & loops) 
+Handout #2 
+Assignment 2 
+4 
+Assembly: accessing memory 
+Assembly: representing instructions 
+Ch. 2.7 
+Assignment 3 
+5 
+Assembly: functions and the stack 
+Assembly: MIPS calling convention  
+Ch. 2.5, 2.8 
+Assignment 4 
+6 
+Assembly: recursive functions 
+Intro to Digital Design 
+Ch. 2.8 
+Assignment 5 
+7 
+Digital Design: Logic Design & Simplification techniques 
+- 
+Handout #3 
+None 
+8 
+Digital Design: Logic Design & Simplification techniques 
+Digital Design: Combinatorial logic, Muxes, ALUs 
+Handout #3 
+Appendix B.1 
+thru B.4 
+Assignment 6 
+9 
+No Class on Monday, 5/26 – Memorial Day 
+Digital Design: Sequential logic 
+Appendix B.5 
+thru B.10 
+Assignment 7 
+10 
+Digital Design: FSMs 
+Appendix B.5 
+thru B.10 
+Assignment 8 
+11 
+FINAL EXAM on Friday, June 13 at 4:00 PM 
+ 
+NOTE:  
+This syllabus and schedule are subject to change. The professor will do his best to convey changes in a 
+timely fashion to the students, if they occur. If a change is made to the syllabus it will be announced AND 
+the version of the syllabus will be incremented (e.g. from v0 to v1). 
+ 
+ 
+ 
+University of California, Santa Barbara 
+ 
+Dept. of Computer Science 
+ 
+ 
+© Z. Matni 2025 
+CS64 Syllabus, S25 v0 (DRAFT) 
+Page 9 of 12 
+S. UCSB and Instructor’s Policies on Academic Integrity and Honesty 
+Academic Integrity 
+It is expected that students attending the University of California understand and subscribe to the ideal of 
+academic integrity, and are willing to bear individual responsibility for their work. Any work (written or 
+otherwise) submitted to fulfill an academic requirement must represent a student's original work. Any act 
+of academic dishonesty, such as cheating or plagiarism, will subject a person to University 
+disciplinary action. Using or attempting to use materials, information, study aids, or commercial 
+"research" services not authorized by the instructor of the course constitutes cheating. Representing the 
+words, ideas, or concepts of another person without appropriate attribution is plagiarism – this includes 
+utilizing answers obtained from artificial intelligence (AI) programs and applications. Whenever 
+another person's written work is utilized, whether it be a single phrase or longer, quotation marks must be 
+used and sources cited. Paraphrasing another's work, i.e., borrowing the ideas or concepts and putting 
+them into one's "own" words, must also be acknowledged.  
+I will report the violation to the Associate Dean of Students for possible referral to the Conduct 
+Committee. That committee has the authority to impose a range of sanctions, including suspension. 
+Further information is available at: https://studentconduct.sa.ucsb.edu/academic-integrity  
+ 
+Cheating on exams/quizzes 
+I have never released an exam/quiz from a previous quarter. Thus, any exam/quiz from a previous quarter 
+that you get hold of must have been illegally obtained.  If you come across a previous quarter’s quiz or 
+midterm or final, you are under the obligation of the university’s “code of conduct” to surrender it (and all 
+copies of it) to me. If, however, you choose to study from a previous quarter’s midterm or final, no matter 
+how that exam came into your possession, be aware that you are cheating, and if found out will receive a 
+zero. Furthermore, if I discover that a particular organization (e.g., sorority, fraternity, or other club) 
+provides to students or maintains an archive of any of my previous exams, I will file a code of conduct 
+complaint with the University against the organization.  
+During exams, you may not look at another student’s test or answers, share your answers/test with 
+another student, nor remove a test from the exam room. All of these behaviors are forms of cheating and 
+will result in a zero on the exam, at minimum. 
+Inappropriate Use of Course Materials 
+My lectures and course materials, including PowerPoint presentations, tests, outlines, and similar 
+materials, are protected by U.S. copyright law and by University policy. I am the exclusive owner of the 
+copyright in those materials I create. You may take notes and make copies of course materials for your 
+own use. You may also share those materials with another student who is enrolled in or auditing this 
+course. 
+ 
+You may not reproduce, distribute or display (post/upload) lecture notes or recordings or course 
+materials in any other way — whether or not a fee is charged — without my express prior written 
+consent. You also may not allow others to do so. If you do so, you may be subject to student conduct 
+proceedings under the UC Santa Barbara Student Code of Conduct. Similarly, you own the copyright 
+in your original papers and exam essays. If I am interested in posting your answers or papers on the 
+course web site, I will ask for your written permission. 
+ 
+ 
+University of California, Santa Barbara 
+ 
+Dept. of Computer Science 
+ 
+ 
+© Z. Matni 2025 
+CS64 Syllabus, S25 v0 (DRAFT) 
+Page 10 of 12 
+T. Use of LLMs in the course 
+Large Language Models (LLM), like ChatGPT and others, are very commonly used by students and I, for 
+one, do not want to ban their use. However, like any powerful tool, these LLMs have to be used 
+responsibly by the students. This means that if you do use an LLM in your assignments, you have to (a) 
+use the tool sparingly (i.e., in a small way only), (b) check that the answer given is indeed correct (they 
+aren’t always!), (c) cite the use of the tool in your answer, along with the prompt(s) you used to get your 
+answer, and (d) be prepared to answer an oral question by the professor to demonstrate your 
+understanding of your answer. Failure to do any of these steps can and will result in plagiarism charges 
+and the consequences spelled out in Section S of this syllabus. 
+ 
+U. Non-discrimination policies 
+Under Title IX, university students are protected from harassment and discrimination based on gender and 
+sex. If a student feels uncomfortable or in need of support at any time related to their gender, sex, and/or 
+sexual orientation, please contact your TA and/or course instructor immediately. If a student would like to 
+disclose information related to pronouns, name changes, or identities, we encourage you to do so. UCSB's 
+Resource Center for Sexual and Gender Diversity on the 3rd floor of the Student Resource Building is 
+also available to advocate and be of and support to students. You can also specify your preferred 
+pronouns on GOLD. Similarly, you can check others' pronouns when responding to refer to them properly 
+in this class. Remember that it is always okay to use someone's name to avoid using the wrong pronouns 
+for them. For more information, visit http://rcsgd.sa.ucsb.edu/education/pronouns  
+ 
+All students have the right to learn and participate in a classroom environment free of intimidation, 
+harassment, and discrimination based on characteristics such as gender, race, age, sexual orientation, 
+disability, religious or political beliefs and affiliations. I will address any related issues that surface 
+immediately; please help me to cultivate a positive classroom environment by communicating any 
+concerns that you have. 
+ 
+V. Statement on sexual harassment 
+UCSB does not tolerate sexual harassment/sexual violence, which is prohibited by University policy and 
+state and federal law. The Title IX Compliance and Sexual Harassment Policy Compliance Office 
+(TIX/SHPC) assists in preventing and resolving and investigating complaints of sexual harassment/sexual 
+violence and gender discrimination. https://titleix.ucsb.edu/  
+ 
+W. Mandatory reporting 
+As an instructor, one of my responsibilities is to help create a safe learning environment on our campus. I 
+want to ensure that students feel they can speak to me, but I also want students to be informed that I have 
+a mandatory reporting responsibility related to my role as an instructor. I am required to share information 
+regarding sexual misconduct or information about a crime that may have occurred on UCSB's campus or 
+in the community. A result of my mandated report will be that students will receive outreach and 
+resources from the campus Title IX office. Students may speak to someone confidentially by contacting 
+CARE, Campus Advocacy, Resources & Education at the 24/7 advocacy line at (805) 893-4613 or visit 
+them in person at the Student Resource Building. 
+ 
+University of California, Santa Barbara 
+ 
+Dept. of Computer Science 
+ 
+ 
+© Z. Matni 2025 
+CS64 Syllabus, S25 v0 (DRAFT) 
+Page 11 of 12 
+X. Mental health 
+On top of the usual stress factors, switching to in-person education may require some mental adjustment 
+or create additional stress. Personal concerns such as stress, anxiety, relationships, depression, cultural 
+differences, can interfere with the ability of students to succeed and thrive. For helpful resources, please 
+contact UCSB Counseling & Psychological Services (CAPS) at 805-893-4411 or visit 
+https://caps.sa.ucsb.edu/  
+ 
+Y. Additional Campus Resources 
+If you experience difficulty in this course for any reason, please don't hesitate to contact your instructor. 
+The following campus services might also be beneficial to you. Please use them as needed.  
+ 
+Disabled Students Program 
+Location: 2120 Student Resources Building | 805.893.2668 | http://dsp.sa.ucsb.edu/ 
+The Disabled Students Program offers many services, such as reading services, notetaking assistance, 
+test-taking accommodations, and registration assistance. For more information on these services, 
+eligibility, and registration, please call or visit the Disabled Students Program office.  
+ 
+CSO Safety Escorts 
+805.893.2000 | https://www.police.ucsb.edu/cso/cso-safety-escorts  
+The CSO (Community Service Organization) Escort Program is a free service provided to all students, 
+faculty and community members during the evening and early morning hours. The objective of the escort 
+service is to provide a safer mode of transportation through campus and Isla Vista. The escort service is 
+based on the "buddy" system which is to simply provide another person to travel with you to your 
+destination. The CSO Escort Service can be used by simply calling the Police Dispatch through the Escort 
+Phone Line at 893-2000. Escorts can also be requested through the Red Emergency Phones located all 
+over campus. 
+ 
+Food For All 
+If you are facing any challenges securing food or housing, and believe this may affect your performance 
+in the class, you are urged to meet with a Food Security and Calfresh Advocate, who is aware of the broad 
+variety of resources that UCSB has to offer (see their drop-in hours at food.ucsb.edu). You are also urged 
+to contact the professor or teaching assistant if you are comfortable doing so. Please visit food.ucsb.edu 
+for additional resources including Calfresh, and the AS Food Bank. 
+ 
+Campus Learning Assistance Service  
+Location: Student Resource Building 3210 | 805.893.3269 | http://clas.sa.ucsb.edu/  
+CLAS helps students increase their mastery of course material through course-specific tutoring and 
+academic skills development. The tutorial groups and drop-in tutoring schedules are posted on the 
+website. CLAS also provides workshops and counseling in test-taking as well as paper-writing skills.  
+ 
+Counseling Services (CAPS) 
+Location: Building 599 | 805.893.4411 | http://caps.sa.ucsb.edu/  
+Counseling Services offers counseling for personal concerns and crisis intervention, stress management, 
+self-help information, and connections to off-campus mental health resources.  
+University of California, Santa Barbara 
+ 
+Dept. of Computer Science 
+ 
+ 
+© Z. Matni 2025 
+CS64 Syllabus, S25 v0 (DRAFT) 
+Page 12 of 12 
+There is a Mental Health Peer Services in CAPS that offers drop-in peer counseling, massage & egg 
+chairs, workshops on managing stress (and many other topics), as well as one-on-one sessions with a peer 
+to help students learn coping skills to reduce anxiety (School Anxiety Program). 
+ 
+CARE (Campus Advocacy, Resources & Education) 
+Location: Student Resource Building, 1st Floor | http://wgse.sa.ucsb.edu/Care/  
+ 
+Provides confidential advocacy and support to anyone impacted by sexual assault, dating/domestic 
+violence and stalking. 
+ 
+Student Engagement and Leadership (SEAL) 
+Location: Student Resource Building 1104 & 2260 | 805.893.4569 | https://seal.sa.ucsb.edu/  
+promotes undergraduate and graduate student engagement and development through co-curricular 
+programs, including campus organizations, fraternities and sororities, leadership development, and civic 
+engagement. 
+ 
+ONDAS Student Center 
+Location: Kerr Hall 1150 | 805.893.3457| http://ondas.ucsb.edu/  
+The OSC offers academic support, mentoring, special programming, and community for all UCSB 
+students, especially first-generation students. 
+ 
+Transfer Student Center 
+Location: UCSB Library, First Floor, Ocean Side | http://www.transfercenter.ucsb.edu/    
+A space for transfer students to make connections, find academic support, mentoring, and special 
+programs. 
+ 
+Undocumented Student Services 
+Location: 2210 Student Resource Building | 805.893.5609 http://www.sa.ucsb.edu/DreamScholars/  
+USS provides general counseling to undocumented and mixed status students. Services include access to 
+student mentors, programs and legal service referrals. 
+ 
+Educational Opportunity Program 
+Location: Student Resource Building, Room 2210 | 805.893.4758 | http://eop.sa.ucsb.edu/  
+EOP provides advising, mentoring, and programming for first generation and income eligible students. 
+ 
+Office of International Students & Scholars 
+Location: Student Resource Building, Room 3130 | 805.893.2929 | http://oiss.sa.ucsb.edu/oiss-home 
+OISS provides immigration support for the UCSB community, advising for international students, and 
+cultural programming. 
+ 
+Academic Initiatives 
+Number: 805.893.2720 | http://academics.sa.ucsb.edu/ 
+Student Affairs Academic Initiatives facilitates student academic and leadership opportunities, and 
+community engagement. 
+ 
