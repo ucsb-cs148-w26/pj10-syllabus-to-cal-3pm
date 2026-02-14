@@ -236,3 +236,15 @@ The current changes are too minimal. Design more significant changes for the pro
   Grok's model executes commands quite fast, and produced accurate and reasonable code on its first attempt. However, it may lack depth in certain instances, as it initially produced a small amount of changes and had to be prompted again for the redesign. For developers valuing quick execution and small fixes, this model appears ideal. In the future, given a simple task or a series of quick changes (e.g. editing text throughout a file), this model could be very valuable. It may however end up taking more time by having to give mulitple prompts for larger scale changes. Despite the initial lack of depth, the model still produces impressive interface results given the right guidance.
 
   To ensure accurate and reasonable results, it is imperative that we provided prompts that were highly specific. The model still made mistakes even with lack of specificity, therefore we made sure to test and provide a new prompt that emphasized its errors and our objectives even further. Given that the model only produced a prototype and not functionality, fair use was addressed as we received general ideas rather than specific code that went into our program.
+
+
+## Rocky Gao - Gemini:
+### Background 
+I am working on upgrading the frontend to make it more appealing. Specifically I am testing Gemini features on the Profile Page, as it is the most content-heavy and personalized part of the webapp. 
+### Goal: 
+use AI to generate a UI that is is engaging and cohesive. Stretch the nuances of the LLM to see just how fine grain the customization can get.
+### Procedure:
+I broke down the frameworks for our website(Next.js, Figma, App Router) to the LLM, then specified what changes I wanted through precise diction, then let it parse through an existing typescript file so it could line-by-line edit/delete/add to what the core code already had. Then I tried integrating it into the actual app on my own branch.
+### Results:
+The result was impressive. I specified colors Blue and Gold and it delivered. It did not break any existing code, instead it was able to take the old Profile page and rerwork it visually to make it more appealing with different colors. It failed in providing me a properly integrated file so I needed to manually switch around import statements, but overall it works well. Ran into an issue where Gemini would agree with me to a fault, often backtracking on statements regarding logistics.
+This can be problematic if I do not specify the correct framework, or if there is a production obstacle in the way as Gemini will not straight up tell you about it, rather making stuff up and sending you on a wild goose chase.
