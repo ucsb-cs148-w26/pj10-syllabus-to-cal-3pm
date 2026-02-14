@@ -108,3 +108,77 @@ Claude produced a Notion-inspired redesign with:
 
 ### Reflection: 
 Claude is helpful for rapidly exploring new aesthetics and translating design ideas into Tailwind CSS. It undestands designs without manually importing image designs by simply mentioning "Notion".  It reduced the time spent on layout, spacing, and component structure. 
+
+## Saeed – OpenAI Codex
+
+### AI Tool Used  
+OpenAI Codex (via CodeX interface)
+
+---
+
+### Goal  
+
+Instead of focusing on backend functionality, I wanted to experiment with how AI could improve and redesign our frontend components. Our pull request feedback indicated that the frontend needed improvement, and since AI models are particularly strong at generating polished UI layouts, I wanted to evaluate how effectively AI could enhance our design with minimal instruction.
+
+The main goal was to test:
+- Whether AI could meaningfully improve our UI
+- How much iteration would be required to get useful output
+- Whether AI could help speed up frontend refinement
+
+---
+
+### Procedure  
+
+**Prompt 1:**  
+> Make any improvements you believe need to be done.
+
+This was intentionally broad to see what the AI would change without heavy constraints and how creative AI is. 
+
+**Result:**  
+- Improved spacing and alignment  
+- Cleaner layout hierarchy  
+- More consistent button styling  
+- Better visual balance across sections  
+
+The changes were subtle but made the interface feel more polished.
+
+<img width="1364" height="750" alt="Screenshot 2026-02-13 at 4 21 53 PM" src="https://github.com/user-attachments/assets/c34047c6-f6cb-4d3a-8a21-f5a0c780e352" />
+
+---
+
+**Prompt 2:**  
+> Make it more personal to students and give it a sleek design.
+
+This prompt was more targeted toward the users for our website, and it was more direct since ChatGPT is great at producing outputs with direct intentions.
+
+It was more personilzed and created a student driven UI that showed their progress and assignments. It also was great on spacing the page. 
+
+---
+
+### Reflection on Usefulness  
+
+Codex was very useful for UI prototyping and iterative refinement. It also can help with small developments but lacks the human intution on how to test. For steps to take to product the correct output, I gave it specific insturctions and a clear output goal. This is a constraint used by AI, and sometimes this is not possible if that chat is too long, so as developer you must know each component of your code to build a project and help fix bugs. 
+
+**Strengths:**
+- Quickly generated improved layouts
+- Helped reframe content tone for students
+- Reduced time spent experimenting with CSS adjustments
+- Provided a modern, consistent aesthetic
+
+**Limitations:**
+- Output can feel generic without specific prompting
+- Creativity is limited unless guided step-by-step
+- Does not understand full project context automatically
+- Requires manual refinement before integration
+
+Overall, this tool is highly valuable for speeding up app development but it still requires developer judgment to produce a final product. If I were to use this for my app moving foward, I would only use it as a tool for simple coding functions or as startup build for prototyping. 
+
+---
+
+### Steps Taken to Ensure Correctness, Clarity, and Fair Use  
+
+TO ensure that AI is used for correctness is to have it build prootypes of the products but as a developer you should learn the code and how it connects with the project as a whole. If you blindly, believe the code is what you expected from the given output, you can get errors since Chatgpt and any AI is prone to hallucinating. 
+
+**AI tools** From the AI tools provided, was using Chat GPT/CodeX,  I was most excited to use chatgpt since it looks the most promsing. One tip is to be direct, give examples of what you expect, or give clear directions of the ui youd like and a clear output. THe more specfic you are on what you want the better CodeX/Chatgpt is at understanding.  
+
+
