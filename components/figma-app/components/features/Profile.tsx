@@ -1,6 +1,17 @@
 'use client';
 
-import { Award, CheckCircle, Target, TrendingUp } from 'lucide-react';
+import { Award, Calendar, CheckCircle, ExternalLink, FileText, Target, TrendingUp } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+
+type Platform = 'canvas' | 'gradescope';
+
+interface RecentCompletion {
+  name: string;
+  course: string;
+  completedAt: string;
+  platform: Platform;
+  url: string;
+}
 
 export function Profile() {
   const totalAssignments = 12;
@@ -8,134 +19,116 @@ export function Profile() {
   const progressPercentage = (completedAssignments / totalAssignments) * 100;
 
   const stats = [
-    {
-      label: 'Assignments Completed',
-      value: completedAssignments,
-      icon: CheckCircle,
-      color: 'text-green-600'
-    },
-    {
-      label: 'Total Assignments',
-      value: totalAssignments,
-      icon: Target,
-      color: 'text-indigo-600'
-    },
-    {
-      label: 'Study Streak',
-      value: '5 days',
-      icon: TrendingUp,
-      color: 'text-orange-600'
-    },
-    {
-      label: 'Level',
-      value: '8',
-      icon: Award,
-      color: 'text-purple-600'
-    }
+    { label: 'Completed', value: completedAssignments, icon: CheckCircle, color: 'text-emerald-600' },
+    { label: 'Total', value: totalAssignments, icon: Target, color: 'text-slate-600' },
+    { label: 'Streak', value: '5 days', icon: TrendingUp, color: 'text-amber-600' },
+    { label: 'Level', value: '8', icon: Award, color: 'text-violet-600' },
   ];
 
-  const recentCompletions = [
-    { name: 'Math Homework 3', course: 'MATH 201', date: '2 days ago' },
-    { name: 'Reading Assignment', course: 'ENG 150', date: '3 days ago' },
-    { name: 'Lab Report 2', course: 'CS 101', date: '5 days ago' },
-    { name: 'Discussion Post', course: 'ENG 150', date: '6 days ago' },
-    { name: 'Quiz 2', course: 'MATH 201', date: '1 week ago' }
+  const recentCompletions: RecentCompletion[] = [
+    { name: 'Math Homework 3', course: 'MATH 201', completedAt: 'Feb 4, 2025', platform: 'canvas', url: 'https://canvas.instructure.com/' },
+    { name: 'Reading Assignment', course: 'ENG 150', completedAt: 'Feb 3, 2025', platform: 'canvas', url: 'https://canvas.instructure.com/' },
+    { name: 'Lab Report 2', course: 'CS 101', completedAt: 'Feb 1, 2025', platform: 'gradescope', url: 'https://gradescope.com/' },
+    { name: 'Discussion Post', course: 'ENG 150', completedAt: 'Jan 31, 2025', platform: 'canvas', url: 'https://canvas.instructure.com/' },
+    { name: 'Quiz 2', course: 'MATH 201', completedAt: 'Jan 30, 2025', platform: 'gradescope', url: 'https://gradescope.com/' },
   ];
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="mb-8">
-        <h2 className="text-3xl font-semibold text-gray-900 mb-2">Your Profile</h2>
-        <p className="text-gray-600">Track your progress and achievements</p>
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10">
+      {/* Header */}
+      <div className="mb-10">
+        <h1 className="text-2xl font-semibold text-slate-900 tracking-tight">Profile</h1>
+        <p className="text-slate-500 mt-1 text-sm">Your progress and completed work</p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6 mb-8">
-        <div className="md:col-span-1">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-            <div className="w-32 h-32 mx-auto mb-4 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center shadow-lg">
-              <div className="text-6xl">🎓</div>
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-1">Student Scholar</h3>
-            <p className="text-gray-600 text-sm mb-4">Level 8 Achiever</p>
-            <div className="bg-gray-100 rounded-full h-2 mb-2">
-              <div className="bg-gradient-to-r from-indigo-600 to-purple-600 h-2 rounded-full" style={{ width: '65%' }}></div>
-            </div>
-            <p className="text-xs text-gray-500">65% to Level 9</p>
-          </div>
-        </div>
-
-        <div className="md:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-900 text-lg">Assignment Progress</h3>
-              <span className="text-2xl font-bold text-indigo-600">
-                {Math.round(progressPercentage)}%
-              </span>
-            </div>
-            <div className="bg-gray-200 rounded-full h-6 mb-2 overflow-hidden">
-              <div 
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 h-6 rounded-full transition-all duration-500 flex items-center justify-end px-2"
-                style={{ width: `${progressPercentage}%` }}
-              >
-                <span className="text-white text-xs font-medium">
-                  {completedAssignments}/{totalAssignments}
-                </span>
-              </div>
-            </div>
-            <p className="text-sm text-gray-600">
-              You've completed {completedAssignments} out of {totalAssignments} assignments this semester
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            {stats.map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`${stat.color}`}>
-                      <Icon className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">{stat.label}</p>
-                      <p className="text-xl font-semibold text-gray-900">{stat.value}</p>
-                    </div>
+      {/* Stats row */}
+      <div className="grid grid-cols-4 gap-3 mb-8">
+        {stats.map((stat) => {
+          const Icon = stat.icon;
+          return (
+            <Card key={stat.label} className="border-slate-200/80 bg-white shadow-none">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg bg-slate-100 ${stat.color}`}>
+                    <Icon className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-2xl font-semibold text-slate-900 tabular-nums">{stat.value}</p>
+                    <p className="text-xs text-slate-500">{stat.label}</p>
                   </div>
                 </div>
-              );
-            })}
-          </div>
-        </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="font-semibold text-gray-900 text-lg mb-4">Recent Completions</h3>
-        <div className="space-y-3">
-          {recentCompletions.map((item, index) => (
-            <div key={index} className="flex items-center gap-4 py-3 border-b border-gray-100 last:border-0">
-              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <CheckCircle className="w-5 h-5 text-green-600" />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-gray-900">{item.name}</p>
-                <p className="text-sm text-gray-600">{item.course}</p>
-              </div>
-              <div className="text-sm text-gray-500">{item.date}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-6 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl p-6 text-white">
-        <div className="flex items-center gap-4">
-          <div className="text-4xl">🏆</div>
-          <div>
-            <h3 className="font-semibold text-lg mb-1">Keep up the great work!</h3>
-            <p className="text-white/90 text-sm">
-              You're on a 5-day study streak. Complete one more assignment to unlock a special achievement!
-            </p>
+      {/* Progress section */}
+      <Card className="border-slate-200/80 bg-white shadow-none mb-8">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-base font-medium text-slate-900">Assignment progress</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-slate-800 rounded-full transition-all duration-500"
+              style={{ width: `${progressPercentage}%` }}
+            />
           </div>
-        </div>
+          <p className="text-sm text-slate-500">
+            {completedAssignments} of {totalAssignments} assignments done this semester
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Recent completions */}
+      <Card className="border-slate-200/80 bg-white shadow-none">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-medium text-slate-900">Recent completions</CardTitle>
+          <p className="text-sm text-slate-500 font-normal">Open in Canvas or Gradescope</p>
+        </CardHeader>
+        <CardContent>
+          <div className="divide-y divide-slate-100">
+            {recentCompletions.map((item, index) => (
+              <div
+                key={index}
+                className="group flex items-center gap-4 py-4 first:pt-0 last:pb-0 hover:bg-slate-50/80 -mx-2 px-2 rounded-lg transition-colors"
+              >
+                <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center">
+                  <FileText className="w-4 h-4 text-emerald-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-slate-900 truncate">{item.name}</p>
+                  <div className="flex items-center gap-2 mt-0.5 text-sm text-slate-500">
+                    <span>{item.course}</span>
+                    <span className="text-slate-300">·</span>
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3.5 h-3.5" />
+                      {item.completedAt}
+                    </span>
+                  </div>
+                </div>
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-md transition-colors"
+                  title={`Open in ${item.platform === 'canvas' ? 'Canvas' : 'Gradescope'}`}
+                >
+                  <span className="capitalize">{item.platform}</span>
+                  <ExternalLink className="w-3.5 h-3.5 opacity-70" />
+                </a>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Streak reminder */}
+      <div className="mt-6 p-4 rounded-lg bg-slate-50 border border-slate-100">
+        <p className="text-sm text-slate-600">
+          <span className="font-medium text-slate-900">5-day streak.</span> Complete one more assignment to unlock a badge.
+        </p>
       </div>
     </div>
   );
