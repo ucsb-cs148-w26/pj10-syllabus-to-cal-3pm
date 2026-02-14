@@ -5,7 +5,7 @@ import spacy
 from spacy.tokens import DocBin
 from nltk.corpus import stopwords
 
-POSSIBLE_LABELS = ["ASSIGNMENT", "ASSESSMENT", "LECTURE", "SECTION"]
+POSSIBLE_LABELS = ["ASSIGNMENT", "ASSESSMENT", "LECTURE", "SECTION", "IRRELEVANT"]
 
 def clean_text(text):
     """
@@ -20,13 +20,13 @@ def clean_text(text):
     # for word in stopwords.words('english'): #remove stopwords
         # text = text.replace(f" {word} ", " ")
     text = text.replace("\\n", " ")
-    text = text.replace("(", "")
-    text = text.replace(")", "")
-    text = re.sub(r"https\S+", "", text) #removing urls
+    text = re.sub(" +", " ", text)
+    text = re.sub("\t+", " ", text)
     text = re.sub(r"\\.{3}", "", text) #removing weird pdf stuff
     #set of valid chars are going to be alphanumeric all case, colon, forward slash, period, comma, newline?
     return text
 
+#note, these newlines are also used to split
 def get_pdf_text(pdfdir):
     """
     ===================================
@@ -60,8 +60,8 @@ def append_spans(span_list, text, ent_text, label_idx, nlp_doc):
     behavior: fills list with span objs for every match of ent_text in text
     in:
         -span_list: list that you want to add the char spans to
-        -text: training text
-        -ent_text: what is being searched for
+        -text: training text str
+        -ent_text: what is being searched for str
         -label_idx: label idx corresponding to the ent_text
         -nlp_doc: nlp doc obj corresponding to text
     out:
@@ -70,11 +70,19 @@ def append_spans(span_list, text, ent_text, label_idx, nlp_doc):
     start = text.find(ent_text)
     count = 0
     while start != -1:
-        count += 1
         end = start + len(ent_text)
+        overlap = False
+        for ent in span_list:#!logic is wrong and not truly preventing ccollisions
+                if start >= ent.start_char and start < ent.end_char:
+                    overlap = True
+                if end <= ent.end_char and end > ent.start_char:
+                    overlap = True
         span = nlp_doc.char_span(start, end, label=POSSIBLE_LABELS[label_idx - 1])
-        span_list.append(span)
+        if not overlap and span is not None:
+            span_list.append(span)
+            count += 1
         start = text.find(ent_text, end)
+        #error throws when doc.ents = ents is run
     return count
 
 def create_data_manually_str(text):
@@ -195,7 +203,8 @@ def is_valid_annotation(annotation_no, annotation):
     return "good"
 
 #THIS ONE IS PROBABLY THE MOST CONVENIENT
-#Skips over lines that do not have the right syntax, so you can also just leave comments to keep the annotation text files organized, but do not leave blank lines because that is how eof is detected
+#Skips over lines that do not have the right syntax, so you can also just leave comments to keep the annotation text files organized.
+#todo add a check to the insert func to see if the ent thatt you want to add overlaps with any pre-existing ones
 def create_data_manually_file(text, annotations_path, spacy_fname):
     """===================================================================================================================================
     behavior:
@@ -215,6 +224,7 @@ def create_data_manually_file(text, annotations_path, spacy_fname):
         annotation = file.readline().strip()
         text_idx = 0
         while annotation != "":
+            print(f"a{annotation_no} t{text_idx}")
             if text_idx >= len(text):
                 break
             if len(text[text_idx]) == 0 or text[text_idx].isspace():
@@ -239,10 +249,12 @@ def create_data_manually_file(text, annotations_path, spacy_fname):
             occurences = append_spans(ents, text[text_idx], ent_text, label_idx, doc)
             if occurences == 0:
                 # print(f"{ent_text} not found. Moving to the next text piece") #!good for debug
+                # print("\n\n\n", ent_text, "\n", text[text_idx], "\n\n\n")
                 doc.ents = ents
                 db.add(doc)
                 text_idx += 1
                 same_doc = False
+                continue
             else:
                 annotation = file.readline().strip()
                 annotation_no += 1
@@ -253,14 +265,14 @@ def create_data_manually_file(text, annotations_path, spacy_fname):
                 db.add(doc)
                 break
             
-
         db.to_disk(spacy_fname)
 
-#example use case
-name = "GEOG 3 - Damilola Eyelade - Summer 2020"
-text = get_pdf_text(f"data/{name}.pdf") 
-text = clean_text(text)
-text = text.split("\n")
-create_data_manually_file(text, "annotations/{name}.txt", "train/{name}.spacy")
+def create_set(name):
+    text = get_pdf_text(f"data/{name}.pdf") 
+    text = clean_text(text)
+    text = text.split("\n")
+    text = [text_piece[2:-2] for text_piece in text]
+    create_data_manually_file(text, f"annotations/{name}.txt", f"train/{name}.spacy")
 
-
+name = "GEOG 115A - Joe McFadden - Fall 2019"
+create_set(name)
