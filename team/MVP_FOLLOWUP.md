@@ -45,6 +45,11 @@
 3. Why is an LLM necessary just for text parsing?
   
 # Response Actions/Next Steps
+1. Increment the MVP with Saeed's UI protoype
+2. Add a profile/account option
+3. Provide the option to choose what type of events get scanned
+4. Provide the option to look over generated events and revise mistakes; a validation step
+5. Provide an option to decide where and how the events are synced with calendar
 
 ## Overall
 1. UI
