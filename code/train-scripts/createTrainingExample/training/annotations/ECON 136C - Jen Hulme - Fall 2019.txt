@@ -1,0 +1,51 @@
+CHUNK 1
+-
+econ 136c fall 2019 1 econ 136c intermediate accounting (fall 2019) instructor: jen hulme email: jen.hulme@ucsb.edu office hours (nh3015): t/th 11:00am-12:00pm or by appointment>>5
+lecture: t/th 12:30-1:45pm nh 1110>>3
+sept 26 th introduction>>3
+oct 1 t revenue recognition (ch. 18)>>3
+hmwk #1>>1
+oct 3 th revenue recognition (ch. 18)>>3
+hmwk #2>>1
+oct 8 t accounting for income taxes (ch. 19)>>3
+hmwk #3>>1
+oct 10 th accounting for income taxes (ch. 19)>>3
+hmwk #4>>1
+oct 15 t accounting for income taxes (ch. 19)>>3
+hmwk #5>>1
+oct 17 th midterm #1>>2
+oct 22 t accounting for pensions (ch. 20)>>3
+hmwk #6>>1
+oct 24 th accounting for pensions (ch. 20)>>3
+hmwk #7>>1
+oct 29 t accounting for pensions (ch. 20)>>3
+hmwk #8>>1
+oct 31 th accounting for leases (ch. 21)>>3
+hmwk #9>>1
+nov 5 t accounting for leases (ch. 21)>>3
+hmwk #10>>1
+nov 7 th midterm #2>>2
+nov 12 t investments (ch. 17)>>3
+hmwk #11>>1
+nov 14 th accounting changes and error analysis (ch. 22)>>3
+hmwk #12>>1
+nov 19 t accounting changes and error analysis (ch. 22)>>3
+hmwk #13>>1
+nov 21 th statement of cash flows (ch. 23)>>3
+hmwk #14>>1
+nov 26 t no class>>3
+nov 28 th no class>>3
+dec 3 t statement of cash flows (ch. 23)>>3
+hmwk #15>>1
+dec 5 th statement of cash flows (ch. 23)>>3
+hmwk #16>>1
+final exam: monday, december 9th, 12:00-2:00pm>>2
+course grade: your grade will be based upon the total points you earn during the quarter. the breakdown follows: midterm #1 250 midterm #2 250 final 350 homework (wileyplus) 150 1,000 final letter grades are determined based on the grading scale as posted on the class gauchospace site.>>5
+-
+CHUNK 2
+-
+econ 136c fall 2019 2 required textbook and materials: 1. intermediate accounting, kieso-weygandt-warfield, 16th edition, wiley, 2016 (available at the bookstore). 2. powerpoint slides (available on the textbook publisher web site, http://www.wiley.com/college/kieso). 3. non-programmable calculator. the use of a programmable calculator on the exams will result in a loss of points. slides and handouts: before each lecture, students should print the applicable powerpoint slides. it will be helpful to follow the course lectures with the slides. the slides are available on the class gauchospace site and at http://www.wiley.com/college/kieso. wileyplus (wp) assignments: chapter homework must be completed and submitted using wileyplus. ! wileyplus is on online feature that allows access to the textbook electronically and allows the homework to be completed online. each student will need a registration code to use wileyplus. the textbooks sold at the bookstore come with a registration code for wileyplus. if you obtain the textbook from a source other than the university bookstore you will need to purchase the wileyplus registration code separately. ! you can purchase a code at http://www.wiley.com/college/buywileyplus/. if you purchase a wileyplus access code you will have access to the textbook online. ! class section url: www.wileyplus.com/class/730328 wileyplus times out after 20 minutes of inactivity. i encourage you to print out your assignments rather than lose any of your work. note: not all assignments may be due at the same time of day. be sure to make note of the due date and time for each assignment. i recommend you complete the assignments well in advance of the due date to avoid unexpected circumstances like illness, work commitment, computer difficulties or the need to be out of town. loss of points by not following the directions will not be corrected. rounding errors will only be corrected for adjustments that exceed 1 point. if for any reason you miss the due date of an assignment you can complete it after the due date for half credit. if you have any difficulty with registration, please do not attempt to resolve via email to the instructor. there are two means of resolving the problem that are far more effective: (1) the online chat with tech. support at the wileyplus site is staffed by persons far more knowledgeable about the online software than the instructor and has proven to be very effective; (2) come to office hours. in order to register for wileyplus, you must have purchased an access code (see links above for purchasing separately if you did not purchase the textbook at bookstore). grading: within wileyplus you will be able to track your progress by reviewing your scores under the gradebook link. the homework within wileyplus will be worth 15% or 150 points out of 1,000 points for the course. there will not be exactly 150 points allocated to the assignments within wileyplus, but your % of the total points on assignments will be converted to the same % of 150 points for that portion of your grade. e-mail: in lieu of leaving me handwritten notes under my office door or in my box in the econ office, i ask that you send any questions through email (jen.hulme@ucsb.edu). please keep your questions sent by e-mail to an administrative nature. technical questions related to class material should be asked in class or during office hours.>>5
+-
+CHUNK 3
+-
+econ 136c fall 2019 3 exams: the format of the exams may include true/false, multiple-choice, short-answer, exercise or problem type questions. the topics covered in lecture, the textbook, and the homework assignments should be your guide for topics tested on the exams. use your textbook to reinforce topics covered in lecture. there are no practice exams available for study. for the exams you will need the following:  scantron (small green)  pencil for scantron. pen for all other questions.  non-programmable calculator. programmable calculators, cell phones, or other electronic devices are not allowed during the exams. if you are found using any electronic device other than a non-programmable calculator it will be considered cheating and there will be a loss of points and possibly a zero score for the exam. exams will not be returned in class, but you will have the opportunity to review the exam solution to confirm that your exam was scored correctly in office hours. the review must be completed before the next exam is taken. regrades for less than 5 points will not be considered. exams must be taken as scheduled on the syllabus. if you miss an exam, you can file for an incomplete and take the equivalent exam with the class the following quarter. you must inform the instructor by email prior to the scheduled exam date that will be missed. incomplete petitions can be obtained from the office of the registrar. grade posting: periodically throughout the quarter the grade sheet will be posted on the class gauchospace site so each student can review their scores to determine they have been recorded accurately. for privacy reasons, the scores will be posted using a portion of each students perm number. if you prefer your scores not be posted in this fashion please let me know. for privacy reasons, scores will not be distributed via e-mail. honors section: there is not an honors section to accompany the course this quarter. if you would like to complete an honors contract instead, please email the instructor by the end of the first week of the quarter. students with temporary and permanent disabilities: the disabled students program (dsp) has the responsibility of coordinating academic support services for students with temporary or permanent disabilities. if you have a disability and would like to consider academic support for this class, you are responsible for ensuring that the disabled students program (dsp) is aware of your disability and for providing dsp with appropriate documentation. the disabled students program is located in the student resource building (srb). the srb is located along the pardall road bike path, at the intersection of ocean road (along the ucsb/ isla vista border). scholastic dishonesty: instances of scholastic dishonesty will be handled in the most extreme fashion, as prescribed by university policy. absolutely no cheating will be tolerated. attendance: attendance will not be taken, however you are responsible for all that is said and done in lecture. should you enroll? if the schedule for the exams and assignments conflicts with other activities you have planned, including ucsb team sports obligations, you should not take this course this quarter. by enrolling in this course you are accepting the class schedule and conditions as stated above.>>5

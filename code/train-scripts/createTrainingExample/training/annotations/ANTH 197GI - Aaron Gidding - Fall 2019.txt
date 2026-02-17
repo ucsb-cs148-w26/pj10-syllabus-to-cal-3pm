@@ -1,0 +1,94 @@
+CHUNK 1
+-
+1 geographic information system spatial analysis - anth 197gi summary: this course serves as an introduction to the concepts and techniques of geographic information systems (gis) and their employment in social scientic scholarship. gis brings together traditional cartographic principles, computer-assisted analytical cartography, relational database design, and digital image processing and analysis to enable people to develop geospatial databases, analyze those databases, and use maps and other visual representations as part of this analysis. in this course, you will develop conceptual and applied understandings of how to 1) represent spatial objects in gis using different data models; 2) analyze these objects in order to address social scientic questions; and 3) assemble maps that present clear arguments based on your analysis. no previous work in gis or computer programming is necessary. the class will use open source software that can t any operating system. some knowledge of using a command line interface could be useful, but is not necessary. knowledge of how to use a command line interface and basic programming would be of most benet for your own work beyond the scope of this course. each week students will develop a deeper understanding of different capabilities of gis. this will be done through the application of tools and methods to analyze sample datasets. over the course these methods will build and layer to facilitate the development of a nal, independent project that uses gis to better understand a dataset of the students choice. through this process students will understand how to build a gis database and manipulate geospatial data to make locationally aware conclusions to address social scientic research questions. course information: instructor: aaron gidding contact and ofce: agidding@ucsb.edu - north hall 1036 ofce hours : tuesday - 1:30 pm - 2:30 pm or by appointment>>5
+time and place: tuesdays and thursdays: 3:30 pm - 4:45 pm - phelps hall 1513>>3
+final: thursday december 12 4-7 pm>>2
+necessary software: qgis ltr - version 3.4 - follow install instructions at: https://qgis.org/en/site/forusers/ download.html usb drive to carry data between lab computers and home computer. students with disabilities: if you are a student with a documented disability (registered with the dsp program: 893-2668, www.sa.ucsb.edu/dsp) and would like to arrange accommodations, please contact me after class and i will be happy to discuss alternative arrangements. general academic support: campus learning assistance services (clas) offers instructional groups, drop- in tutoring, writing and esl services, skills workshops and one-on-one consultations. clas is located on the third oor of the student resource building.>>5
+-
+CHUNK 2
+-
+2 course goals: 1. understand and apply the use of gis to represent spatial and attribute data to represent geographic information. based on experience, critically analyze and engage with cartographic and gis applications to evaluate and assess their potential social science research. 2. to make full use of spatial data and associated attributes it is necessary to consider the data in a synthetic manner. this course will go over different data models and explore how they can be used in conjunction in different situations to conduct synthetic spatial analyses to apply spatial statistics such as clustering, least cost paths and other tools. course components: the course grade will be determined by ve components: 6 lab assignments (30%), a midterm (20%), a project proposal (10%), nal project presentation (10%), and a nal project-poster (30%). make up exams can be scheduled if it is not possible to attend on an exam day for an excusable reason. this should be arranged before the exam is given; otherwise a penalty may be assessed (a valid excuse, with documentation, such as illness or a family emergency will never be penalized). the class presentations will take place during week 10. on monday of week 9 i expect a digital copy of a proposal for the nal project that we will review during a scheduled meeting week 9. please bring a hard copy of the proposal with you to the meeting. grading scale:>>5
+-
+CHUNK 3
+-
+3 expectations: i will not be taking attendance in this class. you are all adults and are responsible for yourselves and your education; the decision to attend or not to attend is yours. that said, you are expected to attend all course meetings, to complete all of the assigned readings prior to each course meeting, to complete all written assignments by the designated due date/time, and to contribute actively to in-class discussions and activities. in class i will be presenting material that is not covered in the course texts. thus, you are responsible for attending class and taking notes. if you miss a class please come to ofce hours or arrange a meeting outside of class to discuss what you missed. you can expect that on the exams there will be content both from the readings and content from my lectures. you are also expected to be respectful toward your fellow students and the instructor and to abide by the code of student conduct. all students are expected to understand and comply with university policies regarding plagiarism and originality of work. plagiarism occurs when a writer deliberately passes off another's words or ideas without acknowledging their source. for example, turning another's work as your own is plagiarism. plagiarized assignments (including copying of a friends homework) will receive a grade of 0 and may result in additional disciplinary action. you can view the universitys policy on student conduct at http:// www.sa.ucsb.edu/regulations/student_conduct.aspx.. plagiarism is different from misuse of sources, occasions when a writer does not properly cite a source, misuses quotations, includes too much of an original source in a paraphrase or summary, or commits similar unintentional violations of academic protocol. if you misuse sources, we will work together on appropriately incorporating and/or citing the sources. note that some audiences/instructors will consider misuse of sources to be plagiarism; for this reason, it is extreme important for you to identify the conventions associated with source use and citations in any class. i plan on posting powerpoints for this class to gauchospace after class. the best time to discuss questions you have about course content and assignments is in ofce hours. i will also answer questions via email within 3 days of you sending me the question. if you need an answer to your question more urgently, it is best to come to ofce hours. if you cannot attend ofce hours, email me with the subject heading request for meeting outside of ofce hours. schedule changes: the schedule is subject to change depending on the progress of the course. extra credit: i will not offer extra credit assignments or tasks, so do not ask.>>5
+-
+CHUNK 4
+-
+4 books and other resources: it is highly recommended (basically required) that you have a usb/thumb drive that you can use to move your work between your home computer and the lab computer. the readings used in the class is informed by two factors. first, the software that we will be using, qgis, is open-source. second, most summary literature on gis that focuses in a general, introductory way with anthropology and archaeology applications is old and not up to date. this means that the source material will also come from sources that are freely available. i will use sections of an open-source textbook, newer articles that utilize modern methods, and expect you to consult resources on the internet for additional help. open source software means that the documentation is typically done by volunteers, so it can be less comprehensive. at the same time, there are also good resources of written by people trying to achieve the same objectives using a simple google search. websites such as https://gis.stackexchange.com usually offer good advice. usually just searching by method with qgis added will provide resources with explanations of how to perform different tasks. this is also true for problems with getting different modules to work on your computer. there is usually a work around that you should always look to troubleshoot yourself. below i also have links to a variety of sources on youtube that have tutorials that can be followed. required texts: essentials of geographic information systems - https://open.umn.edu/opentextbooks/textbooks/essentials- of-geographic-information-systems assigned articles and chapters found in schedule recommended additional books: wheatley, david and mark gillings (2002). spatial technology and archaeology. taylor & francis, new york. - library reserve aldenderfer, mark and herbert d.g. maschner, editors (1996). anthropology, space, and geographic information systems. oxford university press, oxford. - library reserve connolly, james and mark lake (2006). geographical information systems in archaeology. manuals in archaeology. cambridge university press, cambridge, uk. goodchild, michael f., and donald g. janelle (2004). spatially integrated social science. oxford: oxford university press. https://escholarship.org/uc/item/7wp0k0bb lock, gary r., editor (2000). beyond the map: archaeology and spatial technologies. ios press, washington, dc westcott, konnie l. and r. joe brannon, editors (2000). practical applications of gis for archaeologists: a predictive modeling toolkit. taylor & francis, n.y. bevan, andrew and lake, mark (2013). computational approaches to archaeological spaces. left coast press, walnut creek ca zieler, m. (1999). modeling our world. esri press. http://downloads2.esri.com/support/documentation/ao_/ modeling_our_world.pdf>>5
+-
+CHUNK 5
+-
+5 class schedule (subject to change): week 0 ->>5
+9/26 : introduction to gis for anthropology and archaeology>>3
+thursday lab: introduction to gis, history of gis, and basic theory; introduction to gis software and functions, displaying data>>4
+assigned reading: brondizio and van holt - geospatial analysis in handbook of methods in cultural anthropology, edited by h. russell bernard, and clarence c. gravlee, rowman & littleeld publishers, 2014. proquest ebook central, https://ebookcentral-proquest-com.proxy.library.ucsb.edu:9443/lib/ucsb-ebooks/ detail.action?docid=1734036.>>1
+concepts of space and place - https://www.vox.com/identities/2019/7/24/20706930/mauna-kea-hawaii>>1
+10/1>>3
+10/3>>3
+tuesday lecture: introduction to gis, history of gis, and basic theory>>3
+thursday lab: introduction to gis software and functions, displaying data>>4
+assigned reading: brouwer burg, m. 2017 it must be right, gis told me so! questioning the infallibility of gis as a methodological tool. journal of archaeological science 84: 115120. https://storymaps.arcgis.com/stories/b441a28ea5844d7bafbd47d3471166c9>>4
+10/8>>3
+10/10>>3
+tuesday lecture: coordinate systems and map projections. cartographic goals and principles.>>3
+thursday lab: understanding coordinate systems, modifying symbology and making maps>>4
+assigned reading: essentials chapter 2>>1
+https://www.researchgate.net/publication/304788339_mapping_cultures_a_spatial_anthropology>>1
+10/15>>3
+10/17>>3
+tuesday lecture: what is spatial data? what are spatial databases and what types are there?>>3
+thursday lab: creating shapeles and geodatabases, attribute tables, editing features, vector digitization>>4
+assigned reading: essentials chapter 4 : vector section, chapter 5>>1
+10/22>>3
+10/24>>3
+tuesday lecture: downloading data, cleaning data, joins and relates, attribute and spatial queries>>3
+thursday lab: sourcing data, data transformations, sorting data, joins and relates>>4
+assigned reading: essentials chapter 5, 6 laura k. harrison. 2018. a roadmap to applied digital heritage: introduction to the special issue on digital heritage technologies, applications and impacts. sdh, 3, 1, 40-45. doi: 10.14434/sdh.v3i1.27552>>1
+http://guides.archaeologydataservice.ac.uk/g2gp/createdata_1-0 : read: the project lifecycle, basic components except digital video/audio, and in data analysis and visualization - gis. feel free to also look at any other section as they might interest you.>>1
+10/29>>3
+10/31>>3
+tuesday lecture: rasters and surfaces>>3
+thursday lab: midterm>>2
+assigned reading: essentials chapter 4 : raster and satellite sections also - https://www.juancole.com/2019/07/restricting-satellite-environmental.html>>1
+-
+CHUNK 6
+-
+11/5>>3
+11/7>>3
+tuesday lecture: spatial analysis: introduction to complex data manipulation>>3
+thursday lab: contour production, raster calculator and cost surface>>3
+assigned reading: essentials chapter 8>>1
+11/12>>3
+11/14>>3
+tuesday lecture: spatial analysis theory case study>>3
+thursday lab: integrating vectors to study rasters - modeling>>3
+assigned reading: wescott, k. l. and kuiper, j. a. 1999 using a gis to model prehistoric site distributions in the upper chesapeake bay. pp. 5972 in practical applications of gis for archaeologists: a predictive modelling toolkita predictive modelling toolkit, eds. k. l. wescott, and r. j. brandon. london: crc press. available on when using ucsb internet at https://doi.org/10.1201/b16822>>1
+11/19>>3
+11/21 - homework>>1
+tuesday lecture: theory for anthropological gis applications>>3
+no class>>3
+final project proposals due week 9>>1
+assigned reading: ebert, j. i. 1999 the state of the art in inductive predictive modeling: seven big mistakes (and lots of smaller ones). practical applications of gis for archaeologists: a predictive modelling toolkit 129134. available on when using ucsb internet at https://doi.org/10.1201/b16822>>1
+11/26>>3
+monday: hand in proposal on gauchospace>>3
+tuesday: in lieu of lecture, students will meet with instructor to consult on their final project proposals and receive approval - see gauchospace to schedule>>3
+thursday lab: happy thanksgiving!>>4
+assigned reading: review readings and other resources for material relevant to your nal project>>5
+12/3>>3
+12/5>>3
+tuesday: student presentations>>2
+thursday: student presentations>>2
+assigned reading: review readings for material relevant to your nal project>>1
+final project poster due monday of finals week by 7:00pm>>1
+final : thursday december 10 4-7 pm>>2
+hand in poster via gauchospace by 7 pm>>1
+class presentations: the class presentations will be a dry-run for the nal posters. it is here that you will be able to show drafts of the maps that you plan to present in the nal project poster. additionally, you will have a chance to present a narrative for those maps. time will be short, 5 minutes for each presentation, so be prepared to quickly move though the maps and be sure to tell a story! an image might say 1000 words, but you need to make sure>>5
+-
+CHUNK 7
+-
+7 that you are able to guide us through which of those words matter most and provide the narrative structure that you want. i do not want the presentations to take the form of the poster, instead i expect a powerpoint made up of key images/maps that tell the story. you should not need text on the slides, other than what is in the map, and rely on your presentation skills to tell the story. consult some of the arcgis story maps (storymaps.arcgis.com) for inspiration on how one might tell a narrative using maps. final project: the nal project poster should follow the common standards for an academic poster. i do not want it printed out, a digital rendering as a pdf is perfect. it should be formatted to correct poster dimensions (max 36 by 48 inches), etc. so that i can treat it as a real academic poster. as you will see in the guide below, an academic poster is a specic genre of reporting research that is distinct from the academic paper. good guides on the traditional poster: https://guides.nyu.edu/posters https://urc.ucdavis.edu/sites/g/les/dgvnsk3561/les/local_resources/documents/pdf_documents/ how_to_make_an_effective_poster2.pdf some new thoughts on how to format a poster - https://youtu.be/1rwjbhkca58 other resources: some useful web resources: cool example of gis applications - orbis - http://orbis.stanford.edu/ tutorials: https://www.qgistutorials.com documentation (includes training manual and other tools): https://docs.qgis.org ultra beginner video: https://youtu.be/kcnnwyl9qse map-making tools: https://www.youtube.com/user/klakar70/ grass and older version of qgis: https://www.youtube.com/channel/ucnxyzpb1odik44tv2w9ypva/videos or search for isaac ullah on youtube sources of data: check the ucsb library http://guides.library.ucla.edu/c.php?g=180243&p=1189041>>5
+-
+CHUNK 8
+-
+8 https://catalog.data.gov/ https://www.nesdis.noaa.gov/content/imagery-and-data https://mcid.mcah.columbia.edu/art-atlas/mapping-mesopotamian-monuments https://daahl.ucsd.edu>>5

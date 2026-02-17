@@ -1,0 +1,19 @@
+CHUNK 1========================================================================
+lab assignments: in-lab work and homework are considered individual assignments. you are encouraged to work with fellow students to help each other understand the material and the techniques taught in lab; however, you are expected to complete your own work independently. a digital version of each lab assignment will be available on gauchospace prior to the lab. completed assignments must be submitted through gauchospace before the deadline. no emailed assignments will be accepted. all assignments must be submitted in pdf format only. lab assignments are due on gauchospace no later than 11:59 p.m. the night before your next lab meeting as noted in the schedule below. ten percent of the total possible score on the lab will be deducted for every day late. no late assignments will be accepted after a given lab has been graded and returned to the class. grading: the lab assignments represent 40% of your course grade. each lab will be weighted equally to derive your score for the lab portion of the course. it is your responsibility to follow ucsb policies on student conduct, including academic dishonesty and plagiarism: http://www.sa.ucsb.edu/regulations/student-conduct-code. please note that you must avoid plagiarism in every aspect of your course work, including lab assignments, and that the use of information sources on the internet follows the same rules as any other source. if you have any question about the denition of plagiarism or how to properly cite information you want to use in an assignment, please see prof. mcfadden. general note: important things (i.e., extensions, excused absences) should be conrmed via email in addition to being discussed verbally; this is so that you have a record of proof, and so that your ta has a written reminder. section schedule: week lab week lab topic>>5
+sep. 30 lab 1: hard-copy aerial photography and stereoscopy>>4
+oct. 7 lab 2: land-use change detection>>4
+lab 1>>1
+oct. 14 lab 3: digital image processing>>4
+lab 2>>1
+oct. 21 exam #1 review session in lab>>4
+lab 3>>1
+oct. 28 lab 4: land-cover classication>>4
+nov. 4 lab 5: photogrammetry>>4
+lab 4>>1
+nov. 11 lab 6: multispectral image analysis (w & f sections)>>4
+lab 5 (due for all sections)>>1
+nov. 18 lab 6: multispectral image analysis (monday section)>>4
+nov. 25 exam #2 review session in lab>>4
+lab 6 (due for all sections)>>4
+dec. 2 no labs this week>>4
+*all lab assignments are due on gauchospace no later than 11:59 p.m. the night before your next lab meeting. note that the monday lab section on nov. 12 still has the usual due date to turn in lab 5, which is 11:59 p.m. on sunday, nov. 11. note that all lab sections have normal due dates before their lab meetings in week 9 for lab 6. please plan ahead to complete your work as the star lab will be closed over the thanksgiving holiday. please check regularly on gauchospace for any important announcements or schedule changes.>>5
