@@ -1,5 +1,0 @@
-text file line 9:
-lecture: mon., tue., wed., thur., 9:3010:35 am, online via video links>>3
-
-text file line 17:
-THIS LINE AND OTHER LINES WITHOUT >>label AT THE END WILL BE IGNORED
