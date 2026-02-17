@@ -276,13 +276,8 @@ def create_set(name):
 
 name = "ENGL 50 - Felice Blake - Winter 2020"
 create_set(name)
-#*ENGL 22 - Ken Hiltner - Fall 2019 next probably
-#*CNCSP 101 - Miya Barnett - Winter 2020 next probably
-#*GLOBL 124 - Mark Juergensmeyer - Spring 2020 next probably
-#*CMPSC 138 - Zach Sisco - Summer 2020 next probably
-#*CMPSC 64 - Ziad Matni - Winter 2020
-#*ENGL 50 - Felice Blake - Winter 2020
 #!paths assume that this is run from scripts, not create-training or other dir
+
 
 
 
