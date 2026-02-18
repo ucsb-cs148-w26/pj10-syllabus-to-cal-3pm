@@ -1,0 +1,23 @@
+1
+MATH 108A: LINEAR ALGEBRA
+FALL QUARTER 2025
+Instructor: Therese Basa Landry, tlandry@ucsb.edu
+Course Meeting Place: Phelps 2516
+Office Hours: Tuesdays, 2:00-3:30PM, South Hall 4523
+Lectures: Tuesdays and Thursdays, 3:30 PM - 4:45 PM
+Textbook: Linear Algebra Done Right by Sheldon Axler
+Prerequisite(s): Math 4A and 8 each with a minimum grade of C.
+Official Course Description: Abstract vector spaces and subspaces, span and linear inde-
+pendence, basis and dimension, linear maps, eigenvalues and eigenvectors.
+Homework: Improvement in mathematics takes practice. Homework will be posted on the
+Canvas website. Assignments will be turned in via Gradescope. The lowest two scores will
+be dropped.
+Exams: Progress towards learning goals will be measured through exams. The midterm
+exam is preliminarily scheduled for Tuesday, November 4, 3:30 PM - 4:30 PM. The final
+exam is scheduled for Thursday, December 11, 4:00-7:00PM. Please contact the instructor in
+the event of a scheduling conflict.
+Grades: Grades will be determined by Homework (20%), Midterm (40%), and the Final
+(40%).
+Late Work and Excused Absences: The rationale for dropping the two lowest homework
+scores is to give students accommodation for the occasional emergency. No late assignments
+will be accepted.

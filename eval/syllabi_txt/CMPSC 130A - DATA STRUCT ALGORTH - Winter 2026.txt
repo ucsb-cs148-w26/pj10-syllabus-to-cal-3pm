@@ -1,0 +1,490 @@
+Recent Announcements
+Annotated slides for Lec05 and Lec06 posted
+(https://ucsb.instructure.com/courses/31236/discussion_topics/398756)
+Posted on:
+Jan 24, 2026, 8:14 AM
+PA1 released on Kattis and due on Friday, Feb 13th 11:59PM
+(https://ucsb.instructure.com/courses/31236/discussion_topics/398535)
+Posted on:
+Jan 23, 2026, 9:31 AM
+PA0 due on Kattis this Friday 11:59PM
+(https://ucsb.instructure.com/courses/31236/discussion_topics/398243)
+Posted on:
+Jan 22, 2026, 7:56 AM
+Hi all, I've uploaded the annotated slides for the past two lectures. Apologies for posting this late. I'll
+ensure future annotated slides are posted right after the lecture.  - Nabeel
+Hi all, The programming assignment (PA1) has been released on the W26 course page on Kattis. The
+deadline for PA1 is Friday, Feb 13th 11:59PM.  I would strongly recommend starting early, particularly
+because to get full credit your submissions need to pass ALL the test cases for both the problems. Please
+find the instructions to register yourself on the course and other important notes and policies here: Kattis
+Instructions.pdf (Week2 modules). If you have questions, please post on Piazza. - Nabeel
+Hi all, PA0 is due tomorrow, Friday 01/23 11:59PM. I'm just sending out a reminder.  Although it's
+ungraded, I would highly recommend submitting those problems for PA0. It will help you get familiarized
+with Kattis. Things like how to read inputs, etc. would come in handy when you're solving the problems
+for PA1.  - Nabeel
+
+1/25/26, 7:16 PM
+CMPSC 130A - DATA STRUCT ALGORTH - Winter 2026
+https://ucsb.instructure.com/courses/31236
+1/13
+CMPSC 130A - DATA STRUCT ALGORTH - Winter 2026
+Course Information
+Lectures: Tue/Thu, 2:00 PM - 3:15 PM (📍HFH 1104
+ (https://map.ucsb.edu/?id=1982#!m/618898) )
+Discussion Sections: Fridays 10AM (📍PHELPS 1508
+ (https://map.ucsb.edu/?id=1982#!m/618904) ),
+11AM (📍PHELPS 1508
+ (https://map.ucsb.edu/?id=1982#!m/618904) ), 12PM (📍ELLSN 2626
+(https://map.ucsb.edu/?id=1982#!m/618908) )
+Homework Assignment Submissions: https://www.gradescope.com/
+(https://www.gradescope.com/)
+Q&A/Discussion: https://piazza.com/ucsb/winter2026/cs130a
+(https://piazza.com/ucsb/winter2026/cs130a)
+Anonymous Feedback: https://forms.gle/KXLEERCBU9vgHtkJA
+(https://forms.gle/KXLEERCBU9vgHtkJA)
+Teaching Team Information
+Instructor: Nabeel Nasir (nabeeln@ucsb.edu)
+Office Hours: Mondays 3PM - 5PM, HFH 1115
+Teaching Assistants (TAs):
+Name
+Email
+Office Hours
+Grecia Castelazo gcastelazo@ucsb.edu
+Friday 9AM-11AM, Trailer 936 Room 103
+Alvin Liu
+ziyueliu@ucsb.edu
+Wednesday 10AM - 12PM, HFH 4110
+Saurabh Sharma saurabhsharma@ucsb.edu Monday, 8AM-10AM, HFH 2120A
+ 
+Undergraduate Learning Assistants (ULAs):
+Name
+Email
+Office Hours
+Om Mahesh
+ommahesh@ucsb.edu
+Thursday 3:30PM-5:30PM, CSIL Annex (Building 434, Room
+122A)
+Zoey Nielsen zanielsen@ucsb.edu
+Wednesday 2PM - 4PM, Trailer 936 Room 103
+
+1/25/26, 7:16 PM
+CMPSC 130A - DATA STRUCT ALGORTH - Winter 2026
+https://ucsb.instructure.com/courses/31236
+2/13
+Megumi
+Ondo
+megumiondo@ucsb.edu Thursday 11AM-1PM, Trailer 936 Room 103
+Discussion  Section Location TA ULA
+Fridays 10:00 AM
+Fridays 11:00 AM
+Fridays 12:00 PM
+ 
+Course Overview and Prerequisites
+In this course, you'll build on the strong foundation you've developed in CMPSC 16 and CMPSC 24,
+where you learned about data structures and algorithms, and CMPSC 40, where you honed your proof-
+writing skills. With these tools already in your arsenal, you'll expand your understanding by exploring
+new data structures and algorithms, applying them to real-world problems, and strengthening your
+ability to analyze and prove their correctness. This course is designed to enhance your problem-
+solving and reasoning skills, preparing you for more advanced topics in computing and algorithm
+design. 
+Learning Objectives
+By the end of this course, you will be able to:
+1. Build on your knowledge of data structures by implementing and analyzing data structures like hash
+tables, heaps, and balanced search trees, understanding their efficiency and real-world applications.
+2. Apply algorithmic analysis techniques with confidence, using Big-O, Theta, and Omega notation to
+evaluate performance and make informed decisions about data structure selection.
+3. Leverage graph algorithms to solve complex problems, mastering BFS, DFS, topological sorting,
+Dijkstra’s algorithm, and MST algorithms.
+4. Build on your ability to analyze algorithms by using techniques like induction, amortized analysis, and
+probabilistic reasoning to deepen your understanding of how and why algorithms work correctly and
+efficiently.
+5. Recognize and apply data structures in computing, understanding their critical role in designing
+efficient algorithms and solving real-world software challenges.
+
+1/25/26, 7:16 PM
+CMPSC 130A - DATA STRUCT ALGORTH - Winter 2026
+https://ucsb.instructure.com/courses/31236
+3/13
+Textbook
+Data Structures and Algorithm Analysis in C++ by Mark Allen Weiss, 4th Edition.
+Grading Scheme
+Your course grade will be calculated as follows: 
+Item
+Grade% Notes
+Discussion Section
+Attendance
+2%
+LeetCode-style algorithm brainstorming (1–2 problems per
+section)
+Attendance credit based on presence only
+Must be present for most of the section
+Up to two absences excused automatically
+Homework Assignments
+20%
+8 assignments (roughly 1 every week)
+All assignments equally weighted
+Lowest homework will be dropped
+Programming Assignments
+18%
+2 programming assignments equally weighted
+On the UCSB Kattis website
+Midterm Exam
+25%
+In-person, required, no makeup
+Final Exam
+35%
+Cumulative, in-person, required, no makeup
+Attendance and Participation
+Students are expected to keep up their attendance of lectures, although I will not actively take
+attendance during lectures. I will often ask for participation, usually in the form of answering poll
+questions in class using iClicker, a free tool that can be used from a smartphone or laptop computer.
+This link
+ (https://help.lsit.ucsb.edu/hc/en-us/articles/360054938191-iClicker-Cloud-for-Students) will tell
+you more about how to download and use iClicker as a UCSB student.
+Assignments
+This course has Homework and Programming Assignments. Usually, every week, you will have 1
+homework. 
+Homework
+
+1/25/26, 7:16 PM
+CMPSC 130A - DATA STRUCT ALGORTH - Winter 2026
+https://ucsb.instructure.com/courses/31236
+4/13
+The homework assignments are typically due every Tuesday (unless told otherwise) and have to be
+submitted on Gradescope. You can only turn in your assignments on Gradescope, so we will not accept
+nor grade assignments emailed to us. At the end of the quarter, I will drop the lowest homework
+grade.
+Your homework assignment will be given to you as a PDF document. You should submit your homework
+as a PDF file on Gradescope. No format other than PDF will be accepted and graded.
+Programming Assignments
+The programming assignments will be administered and handed in using the online programming
+platform Kattis (https://ucsb.kattis.com
+ (https://ucsb.kattis.com) ). 
+Exams
+This course has a midterm exam and a final exam. Both will be in-person and in our classroom. Taking
+both these exams is required to pass the course. There are NO make ups for missed exams. 
+Course Schedule
+Week
+Lecture
+Homework
+PA
+Week1
+L01: Course logistics + Review of algorithm analysis
+H01:
+Released
+L02: Review of Algorithm analysis
+Week2
+L03: Review of Algorithm analysis, BST review
+H01: Due
+H02:
+Released
+ 
+L04: AVL Trees
+PA0:
+Released
+Week3
+L05: AVL Trees Analysis, Heaps: Priority Queue ADT, basic
+operations, heapsort
+H02: Due
+H03:
+Released
+L06: Heaps: buildHeap, Leftist Heaps
+PA0: Due
+
+1/25/26, 7:16 PM
+CMPSC 130A - DATA STRUCT ALGORTH - Winter 2026
+https://ucsb.instructure.com/courses/31236
+5/13
+PA1:
+Released
+Week4
+L07: Leftist Heaps, Graphs
+H03: Due
+H04:
+Released
+L08: Graphs: topological sort, DFS, single-source shortest path on
+unweighted graphs (BFS)
+Week5
+L09: Graphs: single-source shortest path on weighted graphs
+(Dijkstra's)
+H04: Due
+H05:
+Released
+ 
+L10: Graphs: strongly connected components
+Week6
+L11: Graphs: biconnectivity
+H05: Due
+ 
+ 
+Midterm Exam (Thursday, February 12th)
+PA1: Due
+PA2:
+Released
+Week7
+L12: Minimum Spanning Tree: problem definition, prim's 
+H06:
+Released
+ 
+L13: Minimum Spanning Tree: kruskal's
+(No lecture, Recorded Video)
+Week8
+L14: Union-find
+H06: Due
+H07:
+Released
+
+1/25/26, 7:16 PM
+CMPSC 130A - DATA STRUCT ALGORTH - Winter 2026
+https://ucsb.instructure.com/courses/31236
+6/13
+L15: Union-find
+Week9
+L16: Hashing
+H07: Due
+H08:
+Released
+PA2: Due
+L17: Hashing
+Week10 L18: Hashing + Amortized Analysis (if time)
+H08: Due
+Exam Review
+Final Exam (Tuesday, March 17th 4PM)
+ 
+Notes: 
+The lecture topics, PAs, homework, and/or their dates are subject to change or re-arrangement.
+Homework and PAs are always due on Tuesdays by 11:59 PM unless told otherwise.
+Class Grade Distributions
+These are calculated to 2 decimal places and very strictly assigned.
+Range
+Grade Range
+Grade
+[93 - 100] A
+[77 - 80) C+
+[90 – 93) A-
+[73 - 77) C
+[87 – 90) B+
+[70 - 73) C-
+[83 – 87) B
+[60 - 70) D
+[80 – 83) B-
+< 60
+F
+
+1/25/26, 7:16 PM
+CMPSC 130A - DATA STRUCT ALGORTH - Winter 2026
+https://ucsb.instructure.com/courses/31236
+7/13
+A+ grades: These may be awarded to the very best performing students in the class—but the cutoff for
+A+ grades will be determined at the end of the course at the discretion of the instructor (there is no
+predetermined cutoff---an average of 97 or more doesn't guarantee you an A+ grade.) 
+F grades: If you miss your final exam, you will receive an F, regardless of your running score in
+the class. If you feel that I or the TAs have made a mistake (like adding up a grade incorrectly), then you
+should certainly bring that to my attention in an expedient fashion.
+Please do NOT ask me to round up your final class grade at the end of the quarter. Please know that I
+will not engage with you in these requests. If you have any questions about how grades are computed,
+please feel free to ask, and I would be happy to explain further.
+ 
+“Slip” days for Homework Assignments
+You have a total of 3 “slip” days to use throughout the quarter for homework assignments. You
+may use up to 2 slip days on any one homework. We will automatically apply the slip days if you
+submit the homework late. After using 2 slip days (or if you run out of slip days) there will be a 20%
+penalty for one day late. After that the homework will not be accepted.
+Late submissions will not be accepted for Programming Assignments.
+Make up Policy
+No makeup is allowed for assignments except in rare cases, if there is a documented family emergency,
+documented extended illness, documented required court appearance, or other situation beyond the
+students' control (with documentation), then the professor may grant additional make up days entirely at
+the instructor's discretion – but this is not a guarantee or a right.
+Again: No makeup is allowed for missed exams whatsoever.
+Regrade Requests
+If you believe that a grade on a homework assignment is wrong, you may ask for a review for a possible
+re-grade. For assignments, you have to place a request via Gradescope within 3 days from when the
+grade was issued.
+Assistance to Students
+This class has teaching assistants (TAs) and undergraduate learning assistants (ULAs). The TAs will
+lead labs and hold office hours. The ULAs will also be holding office hours and helping you during labs.
+
+1/25/26, 7:16 PM
+CMPSC 130A - DATA STRUCT ALGORTH - Winter 2026
+https://ucsb.instructure.com/courses/31236
+8/13
+You can also pose questions and answer each other’s questions on Piazza. Please do not use Piazza to
+post outright solutions to homework or lab problems – you can, of course, discuss the exercises and
+ways to solve the problems.
+If you have questions that you’d rather email us with (for example, those of a personal nature), then
+PLEASE put “CS130A” in the subject line.
+Note to Students with Disabilities
+Please register your accommodation requests with DSP at your very earliest opportunity – this is best
+done by the first or second week of the quarter. Make sure that you submit your DSP request no later
+than one week before a scheduled exam. The instructor will accommodate students only according to
+information gotten from the DSP office. 
+UCSB and Instructor’s Policies on Academic Integrity
+and Honesty
+Academic Integrity
+It is expected that students attending the University of California understand and subscribe to the ideal of
+academic integrity, and are willing to bear individual responsibility for their work. Any work (written or
+otherwise) submitted to fulfill an academic requirement must represent a student's original work. Any act
+of academic dishonesty, such as cheating or plagiarism, will subject a person to University
+disciplinary action. Using or attempting to use materials, information, study aids, or commercial
+"research" services not authorized by the instructor of the course constitutes cheating. Representing the
+words, ideas, or concepts of another person (or copied from an LLM like “ChatGPT”) without appropriate
+attribution is plagiarism. Whenever another person's written work is utilized, whether it be a single
+phrase or longer, quotation marks must be used and sources cited. Paraphrasing another's work, i.e.,
+borrowing the ideas or concepts and putting them into one's "own" words, must also be acknowledged.
+I will report the violation to the Associate Dean of Students for possible referral to the Conduct
+Committee. That committee has the authority to impose a range of sanctions, including suspension.
+Further information is available at: https://studentconduct.sa.ucsb.edu/academic-integrity
+(https://studentconduct.sa.ucsb.edu/academic-integrity)
+Cheating on exams
+If you come across a previous quarter’s midterm or final, you are under the obligation of the university’s
+“code of conduct” to surrender it (and all copies of it) to me. If, however, you choose to study from a
+previous quarter’s midterm or final, no matter how that exam came into your possession, be aware that
+you are cheating, and if found out will receive a zero. 
+
+1/25/26, 7:16 PM
+CMPSC 130A - DATA STRUCT ALGORTH - Winter 2026
+https://ucsb.instructure.com/courses/31236
+9/13
+During exams, you may not look at another student’s test or answers, share your answers/test with
+another student, nor remove a test from the exam room. All of these behaviors are forms of cheating
+and will result in a zero on the exam, at minimum.
+Non-discrimination Policies
+Under Title IX, university students are protected from harassment and discrimination based on gender
+and sex. If a student feels uncomfortable or in need of support at any time related to their gender, sex,
+and/or sexual orientation, please contact your TA and/or course instructor immediately. If a student would
+like to disclose information related to pronouns, name changes, or identities, we encourage you to do so.
+UCSB's Resource Center for Sexual and Gender Diversity on the 3rd floor of the Student Resource
+Building is also available to advocate and be of and support to students.
+You can specify your preferred pronouns on GOLD, these are shown in GauchoSpace. Similarly, you
+can check others' pronouns when responding to refer to them properly in this class. Remember that it is
+always okay to use someone's name to avoid using the wrong pronouns for them. For more information,
+visit http://rcsgd.sa.ucsb.edu/education/pronouns
+ (http://rcsgd.sa.ucsb.edu/education/pronouns) .
+All students have the right to learn and participate in a classroom environment free of intimidation,
+harassment, and discrimination based on characteristics such as gender, race, age, sexual orientation,
+disability, religious or political beliefs and affiliations. I will address any related issues that surface
+immediately; please help me to cultivate a positive classroom environment by communicating any
+concerns that you have.
+Statement on Sexual Harassment
+UCSB does not tolerate sexual harassment/sexual violence, which is prohibited by University policy and
+state and federal law. The Title IX Compliance and Sexual Harassment Policy Compliance Office
+(TIX/SHPC) provides assistance in preventing and resolving and investigating complaints of sexual
+harassment/sexual violence and gender discrimination. https://oeosh.ucsb.edu/titleix
+(https://oeosh.ucsb.edu/titleix)
+Mandatory Reporting
+As an instructor, one of my responsibilities is to help create a safe learning environment on our campus.
+I want to ensure that students feel they can speak to me, but I also want students to be informed that I
+have a mandatory reporting responsibility related to my role as an instructor. I am required to share
+information regarding sexual misconduct or information about a crime that may have occurred on
+UCSB's campus or in the community. A result of my mandated report will be that students will receive
+outreach and resources from the campus Title IX office. Students may speak to someone confidentially
+by contacting CARE, Campus Advocacy, Resources & Education at the 24/7 advocacy line at (805) 893-
+4613 or visit them in person at the Student Resource Building.
+
+1/25/26, 7:16 PM
+CMPSC 130A - DATA STRUCT ALGORTH - Winter 2026
+https://ucsb.instructure.com/courses/31236
+10/13
+Mental Health
+Personal concerns such as stress, anxiety, relationships, depression, cultural differences, can interfere
+with the ability of students to succeed and thrive. For helpful resources, please contact UCSB
+Counseling & Psychological Services (CAPS) at 805-893-4411 or visit http://counseling.sa.ucsb.edu
+ (http://counseling.sa.ucsb.edu) .
+Additional Campus Resources
+If you experience difficulty in this course for any reason, please don't hesitate to contact your instructor.
+The following campus services might also be beneficial to you. Please use them as needed.
+Disabled Students Program
+Location: 2120 Student Resources Building | 805.893.2668 | http://dsp.sa.ucsb.edu/
+(http://dsp.sa.ucsb.edu/)
+The Disabled Students Program offers many services, such as reading services, notetaking assistance,
+test-taking accommodations, and registration assistance. For more information on these services,
+eligibility, and registration, please call or visit the Disabled Students Program office.
+CSO Safety Escorts
+805.893.2000 | https://www.police.ucsb.edu/cso/cso-safety-escorts
+(https://www.police.ucsb.edu/cso/cso-safety-escorts)
+The CSO (Community Service Organization) Escort Program is a free service provided to all students,
+faculty and community members during the evening and early morning hours. The objective of the escort
+service is to provide a safer mode of transportation through campus and Isla Vista. The escort service is
+based on the "buddy" system which is to simply provide another person to travel with you to your
+destination. The CSO Escort Service can be used by simply calling the Police Dispatch through the
+Escort Phone Line at 893-2000. Escorts can also be requested through the Red Emergency Phones
+located all over campus.
+Food For All
+If you are facing any challenges securing food or housing, and believe this may affect your performance
+in the class, you are urged to meet with a Food Security and Calfresh Advocate, who is aware of the
+broad variety of resources that UCSB has to offer (see their drop-in hours at food.ucsb.edu). You are
+also urged to contact the professor or teaching assistant if you are comfortable doing so. Please visit
+food.ucsb.edu
+ (http://food.ucsb.edu) for additional resources including Calfresh
+(http://food.ucsb.edu/calfresh) , the AS Food Bank
+ (https://foodbank.as.ucsb.edu/) , and more
+(http://food.ucsb.edu/about/learn/resource-guides) .
+
+1/25/26, 7:16 PM
+CMPSC 130A - DATA STRUCT ALGORTH - Winter 2026
+https://ucsb.instructure.com/courses/31236
+11/13
+Campus Learning Assistance Service
+Location: Student Resource Building 3210 | 805.893.3269 | http://clas.sa.ucsb.edu/
+(http://clas.sa.ucsb.edu/)
+CLAS helps students increase their mastery of course material through course-specific tutoring and
+academic skills development. The tutorial groups and drop-in tutoring schedules are posted on the
+website. CLAS also provides workshops and counseling in test-taking as well as paper-writing skills.
+Counseling Services (CAPS)
+Location: Building 599 | 805.893.4411 | http://caps.sa.ucsb.edu/
+ (http://caps.sa.ucsb.edu/)
+Counseling Services offers counseling for personal concerns and crisis intervention, stress
+management, self-help information, and connections to off-campus mental health resources.
+There is a Mental Health Peer Services in CAPS that offers drop-in peer counseling, massage & egg
+chairs, workshops on managing stress (and many other topics), as well as one-on-one sessions with a
+peer to help students learn coping skills to reduce anxiety (School Anxiety Program).
+CARE (Campus Advocacy, Resources & Education)
+Location: Student Resource Building, 1st Floor | http://wgse.sa.ucsb.edu/Care
+(http://wgse.sa.ucsb.edu/Care)
+Provides confidential advocacy and support to anyone impacted by sexual assault, dating/domestic
+violence and stalking.
+Office of Student Life
+Location: Student Resource Building 1104 & 2260 | 805.893.4569 | http://osl.sa.ucsb.edu/
+(http://osl.sa.ucsb.edu/)
+The Office of Student Life provides assistance with student emergencies, administrative withdrawals,
+and other unique academic situations and options.
+ONDAS Student Center
+Location: Kerr Hall 1150 | 805.893.3457| http://ondas.ucsb.edu/
+ (http://ondas.ucsb.edu/)
+The OSC offers academic support, mentoring, special programming, and community for all UCSB
+students, especially first generation students.
+Transfer Student Center
+
+1/25/26, 7:16 PM
+CMPSC 130A - DATA STRUCT ALGORTH - Winter 2026
+https://ucsb.instructure.com/courses/31236
+12/13
+Location: UCSB Library, First Floor, Ocean Side | http://www.transfercenter.ucsb.edu/
+(http://www.transfercenter.ucsb.edu/)
+A space for transfer students to make connections, find academic support, mentoring, and special
+programs.
+Undocumented Student Services
+Location: 2210 Student Resource Building | 805.893.5609 http://www.sa.ucsb.edu/DreamScholars
+(http://www.sa.ucsb.edu/DreamScholars)
+USS provides general counseling to undocumented and mixed status students. Services include access
+to student mentors, programs and legal service referrals.
+Educational Opportunity Program
+Location: Student Resource Building, Room 2210 | 805.893.4758 | http://eop.sa.ucsb.edu/
+(http://eop.sa.ucsb.edu/)
+EOP provides advising, mentoring, and programming for first generation and income eligible students.
+Office of International Students & Scholars
+Location: Student Resource Building, Room 3130 | 805.893.2929 | http://oiss.sa.ucsb.edu/oiss-home
+ (http://oiss.sa.ucsb.edu/oiss-home) OISS provides immigration support for the UCSB community,
+advising for international students, and cultural programming.
+Academic Initiatives
+Number: 805.893.2720 | http://academics.sa.ucsb.edu/
+ (http://academics.sa.ucsb.edu/)
+Student Affairs Academic Initiatives facilitates student academic and leadership opportunities, and
+community engagement.
+ 
+
+1/25/26, 7:16 PM
+CMPSC 130A - DATA STRUCT ALGORTH - Winter 2026
+https://ucsb.instructure.com/courses/31236
+13/13
