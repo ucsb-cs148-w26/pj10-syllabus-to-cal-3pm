@@ -4,7 +4,9 @@ import re
 import spacy
 from spacy.tokens import DocBin
 
-POSSIBLE_LABELS = ["ASSIGNMENT", "ASSESSMENT", "LECTURE", "SECTION", "IRRELEVANT"]
+from pathlib import Path
+
+POSSIBLE_LABELS = ["ASSIGNMENT", "ASSESSMENT", "LECTURE", "SECTION"]
 
 def clean_text(text):
     """
@@ -267,17 +269,46 @@ def create_data_manually_file(text, annotations_path, spacy_fname):
             
         db.to_disk(spacy_fname)
 
-def create_set(name):
-    text = get_pdf_text(f"../data/pdfs/{name}.pdf") 
+def create_set(name, pdfs_path, annotations_path, train_path):
+    """
+    in:
+        -name: name of pdf and annotation file w/out point or extension
+        -pdfs_path: dir where pdfs stored
+        -annotations_path: dir where annotations stored
+        -train_path: dir where train data stored
+    out:
+        -train file in train directory
+    """
+    text = get_pdf_text(f"{pdfs_path}/{name}.pdf") 
     text = clean_text(text)
     text = text.split("\n")
     text = [text_piece[2:-2] for text_piece in text]
-    create_data_manually_file(text, f"../training/annotations/{name}.txt", f"../training/train/{name}.spacy")
+    create_data_manually_file(text, f"{annotations_path}/{name}.txt", f"{train_path}/{name}.spacy")
 
-name = "ENGL 50 - Felice Blake - Winter 2020"
-create_set(name)
+# name = ""
+# create_set(name)
+def update_sets(pdfs_path, annotations_path, train_path):
+    """
+    in:
+        -pdfs_path: dir where pdfs stored
+        -annotations_path: dir where annotations stored
+        -train_path: dir where train data stored
+    out:
+        -updates every train file according to its respective annotation file
+    """
+    path = Path(annotations_path)
+    files = [file for file in path.iterdir() if file.is_file()]
+    for file in files:
+        create_set(file.name[:-4], pdfs_path, annotations_path, train_path)
+
+
+PDFS_PATH = "../data/done_pdfs"
+ANNOTATIONS_PATH = "../training/annotations"
+TRAIN_PATH = "../training/train"
+# update_sets(PDFS_PATH, ANNOTATIONS_PATH, TRAIN_PATH)
+name = ""
+create_set(name, PDFS_PATH, ANNOTATIONS_PATH, TRAIN_PATH)
 #!paths assume that this is run from scripts, not create-training or other dir
-
 
 
 
