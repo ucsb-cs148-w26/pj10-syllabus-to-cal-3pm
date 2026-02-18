@@ -1,0 +1,47 @@
+CHUNK 1
+-
+meetings: mw 10:00-11:30, phelps hall, room 1431>>3
+-
+CHUNK 2
+-
+mon. 4/3/06 1 introduction to parallel processing>>3
+homework requirements>>1
+wed. 4/5/06 2 a taste of parallel algorithms>>3
+hw#1 posted (chaps. 1-4)>>1
+mon. 4/10/06 3-4 complexity and models>>3
+wed. 4/12/06 5 pram model and basic algorithms research project defined>>3
+mon. 4/17/06 6 more shared-memory algorithms>>3
+hw #1 due>>1
+hw #2 posted (chaps. 5-8)>>1
+wed. 4/19/06 7 sorting and selection networks>>3
+mon. 4/24/06 8 other circuit-level examples>>3
+research project background>>1
+wed. 4/26/06 9 sorting on a 2d mesh or torus>>3
+hw #2 due>>1
+hw #3 posted (chaps. 9-12)>>1
+mon. 5/1/06 10 routing on a 2d mesh or torus>>3
+wed. 5/3/06 11 other mesh/torus algorithms>>3
+project assignments>>1
+mon. 5/8/06 12 mesh variations and extensions>>3
+hw #3 due>>1
+wed. 5/10/06 1-12 midterm exam: closed book (10:00-11:50 am)>>2
+mon. 5/15/06 13 hypercubes and their algorithms>>3
+wed. 5/17/06 14 sorting and routing on hypercubes>>3
+hw #4 posted (chapters 13-17)>>1
+mon. 5/22/06 15 other hypercubic architectures>>3
+wed. 5/24/06 16 other interconnection networks>>3
+project plan and references due>>1
+mon. 5/29/06  holiday (memorial day): no lecture>>3
+wed. 5/31/06 17 emulation and scheduling>>3
+hw #4 due>>1
+mon. 6/5/06 18 data storage, input, and output>>3
+wed. 6/7/06 19-20 reliability and system issues>>3
+wed. 6/14/06   final project report due by 5:00 pm>>1
+homework #1: fundamental concepts (chapters 1-4, due mon. 4/17/06) do the following problems from the textbook: 1.2 [10 pts.], 1.12b [10 pts], 2.6 [10 pts.], 2.14 [20 pts], 3.1 [20 pts.], 3.4 [15 pts.], 4.5 [15 pts.] ece 254b s2006>>1
+homework #2: shared-memory and circuit models (chapters 5-8, due wed. 4/26/05) do the following problems from the textbook: 5.6 [15 pts.], 5.9 [10 pts.], 6.2 [15 pts.], 6.13 [15 pts.], 7.6 [15 pts.], 7.8 [15 pts], 8.7 [15 pts] ece 254b s2006>>1
+homework #3: mesh and mesh-based architectures (chapters 9-12, due mon. 5/8/05) do the following problems from the textbook: 9.7 [20 pts.], 9.9 [10 pts.], 10.9 [20 pts.], 11.1 [15 pts.], 12.6 [20 pts.], 12.10 [15 pts] ece 254b s2006>>1
+homework #4: interconnection networks (chapters 13-17, due wed. 5/31/05) do the following problems from the textbook or defined below: 13.3 [15 pts.], 13.b [15 pts.], 14.8 [20 pts.], 14.c [15 pts.], 15.9 [15 pts.], 16.7 [20 pts] 13.b embedding multigrids and pyramids into hypercubes a. show that a 2d multigrid whose base is a 2q1-node square mesh, with q odd and q  5, and hence a pyramid of the same size, cannot be embedded in a q-cube with dilation 1>>1
+-
+CHUNK 3
+-
+b. show that the 21-node 2d multigrid with a 44 base can be embedded in a 5-cube with dilation 2 and congestion 1 but that the 21-node pyramid cannot. 14.c hypercube routing algorithm consider a q-cube in which each bidirectional link has been replaced by two unidirectional links in opposite directions. dividing the unidirectional links into upward links (connecting x to y with x < y) and downward links (connecting x to y with x > y), we can view the hypercube as two unidirectional cubes formed by the upward and downward links. a proposed routing algorithm works as follows. the route taken by a message going from node u to node w passes through an intermediate node v such that the path from u to v in the upward cube and the path from v to w is in the downward cube (v can be the same as u or w). a. show that the proposed algorithm always chooses a shortest path from u to w. b. prove that the algorithm is free from deadlock if used for wormhole routing. c. how can we benefit from this algorithm in devising a deadlock-free routing algorithm for a bidirectional hypercube? ece 254b s2006>>1

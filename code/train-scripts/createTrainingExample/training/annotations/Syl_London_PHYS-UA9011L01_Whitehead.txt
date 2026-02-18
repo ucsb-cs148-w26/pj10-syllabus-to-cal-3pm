@@ -1,0 +1,52 @@
+CHUNK 1
+-
+monday wednesday thursday  303, franklin wilkins at kings college>>3
+-
+CHUNK 3
+-
+session 1 units and measurement, vectors, motion along a straight line, motion with constant acceleration>>3
+young and freedman ch1 and ch2>>1
+randall knight ch1, ch2 and ch3>>1
+8 questions due 13/09/18>>1
+session 2 motion in 2d and projectiles. motion in 3d. forces and motion along a straight line. net force and identifying and using forces.>>3
+young and freedman ch 3>>1
+ch4 randall knight ch4.1-4.5, and ch5>>1
+8 questions due 20/09/18>>1
+-
+CHUNK 4
+-
+session 3 friction. newtons 3rd law. circular motion.>>3
+young and freedman ch 5 and ch 3.4>>1
+randall knight ch4.5-4.7, 7, 81.-8.4>>1
+8 questions due 04/10/18 and practice test>>1
+session 4 mid term test 1 topics from l1-l3>>2
+session 5 kinetic energy and work and power>>3
+young and freedman ch6 and ch7>>1
+knight ch10 and 11>>1
+8 questions due 11/10/18>>1
+session 6 potential energy and conservation of energy>>3
+young and freedman ch8 and ch9>>1
+knight ch9 and 12>>1
+8 questions due 18/10/18>>1
+session 7 rotation. complex rotation. gravitation>>3
+young and freedman ch10 and ch12>>1
+knight ch12 and 13>>1
+8 questions due 01/11/18>>1
+session 8 mid term test 2 topics from l4-l6>>2
+session 9 oscillations and waves>>3
+young and freedman ch13>>1
+ch15 knight ch14>>1
+8 questions due 15/11/18>>1
+session 10 fluids and elasticity>>3
+young and freedman ch11.4, 11.5>>1
+ch14 knight ch15>>1
+6 questions due 29/11/18>>1
+session 11 heat. temperature. gas laws. kinetic theory>>3
+young and freedman ch17 and 18>>1
+knight ch16, 17.8, 18.1-4>>1
+6 questions due 29/11/18>>1
+session 12 mid term test 3 on l7-l9>>2
+session 13 laws of thermodynamics and heat engines>>3
+8 questions due 06/12/18>>1
+session 14 revision class bring material you want to go over.>>3
+final assessment: final exam on all course topics>>2

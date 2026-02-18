@@ -1,0 +1,46 @@
+CHUNK 1
+-
+class time: m w 5:00 pm  6:15 pm location: phelp 1260>>3
+lab times: thursdays 9 am, 10 am, and 11 am in phelp 3525>>4
+-
+1/6 intro to the course; numerical bases>>3
+1 (binarth 1)>>1
+1/8 binary arithmetic & 2s complement>>3
+ch. 3.2, 2.4>>1
+1/13 binary logic operations>>3
+ch. 2.6>>1
+2 (binarth 2)>>1
+1/15 assembly: intro; processing a program>>3
+ch. 2.2 3>>1
+1/20 mlk jr. day (no class)>>3
+3 (mips basic)>>1
+1/22 assembly: i/o and instructions>>3
+1/27 assembly: flow control (branches & loops)>>3
+ch. 2.7>>1
+4 (mips flow)>>1
+1/29 assembly: accessing memory>>3
+2/3 assembly: addressing memory & instructions>>3
+5 (mips functions 1)>>1
+2/5 assembly: functions and the stack>>3
+ch. 2.8 6 10>>1
+2/10 assembly: mips calling convention 1>>3
+2/12 midterm exam>>2
+2/17 presidents day holiday (no class)>>3
+6 (mips functions 2)>>1
+2/19 assembly: mips calling convention 2>>3
+2/24 digdesign: intro; simplification techniques>>3
+b.1 (appendix)>>1
+7 (cld)>>1
+2/26 digdesign: combinatorial logic and k-maps>>3
+b.2, b.3, b.4 9 14>>1
+3/2 digdesign: muxs, alus>>3
+b.5, b.6, b.7>>1
+8 (sld)>>1
+3/4 digdesign: sequential logic, latches>>3
+b.8, b.9 10 16>>1
+3/9 digdesign: sequential logic, ffs, memory, fsms>>3
+b.8, b.9, b.10>>1
+9 (cpu)>>1
+3/11 ethics in cs; impact of cs>>3
+10 (e/i)>>1
+march 17th, 7:30 pm  10:30 pm: final exam (cumulative)>>2

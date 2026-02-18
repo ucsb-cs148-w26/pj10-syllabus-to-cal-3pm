@@ -1,0 +1,10 @@
+CHUNK 1
+-
+section: wed 5-5:50pm at ilp, 4205; wed 6-6:50pm at ilp 3312>>4
+-
+CHUNK 2
+-
+mondays and wednesdays from 8-9:15am at ilp 2302>>3
+midterm 1 on may 1>>2
+midterm 2 on june 3>>2
+final exam on june [date] at [time]>>2
