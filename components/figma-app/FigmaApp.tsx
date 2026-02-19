@@ -103,7 +103,7 @@ export default function FigmaApp() {
             onAccessTokenChange={setAccessToken}
           />
         )}
-        {currentView === "calendar" && <Calendar />}
+        {currentView === "calendar" && <Calendar accessToken={accessToken} />}
         {currentView === "study-plan" && <StudyPlan />}
         {currentView === "profile" && <Profile />}
       </main>
