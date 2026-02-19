@@ -9,7 +9,7 @@ export default function GoogleSignInButton() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${location.origin}/auth/callback?next=/figma`,
+        redirectTo: `${location.origin}/auth/callback?next=/protected`,
       },
     });
 

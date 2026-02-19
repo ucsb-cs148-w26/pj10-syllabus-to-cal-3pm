@@ -1,16 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Landing } from "@/components/figma-app/components/features/Landing";
 import { Uploads } from "@/components/figma-app/components/features/Uploads";
 import { Calendar } from "@/components/figma-app/components/features/Calendar";
 import { StudyPlan } from "@/components/figma-app/components/features/StudyPlan";
 import { Profile } from "@/components/figma-app/components/features/Profile";
 
-type View = "landing" | "uploads" | "calendar" | "study-plan" | "profile";
+type View = "uploads" | "calendar" | "study-plan" | "profile";
 
 export default function FigmaApp() {
-  const [currentView, setCurrentView] = useState<View>("landing");
+  const [currentView, setCurrentView] = useState<View>("uploads");
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
   // When returning from Google OAuth (/api/callback), pick up access_token and clean URL
@@ -30,10 +29,6 @@ export default function FigmaApp() {
       setCurrentView("uploads");
     }
   }, []);
-
-  if (currentView === "landing") {
-    return <Landing onGetStarted={() => setCurrentView("uploads")} />;
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
