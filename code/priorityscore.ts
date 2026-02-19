@@ -17,7 +17,7 @@ function priority_score(
 
     let split_title : Array<string> = title.trim().split(" ")
     for(let a = 0; a < split_title.length; a++){
-        split_title[a] = split_title[a].trim()
+        split_title[a] = split_title[a].trim().toLowerCase();
     }
     const EXAM_KEYWORDS : Set<string> = new Set<string>(["final", "midterm", "exam", "test", "project"])
     for(const word of split_title){
