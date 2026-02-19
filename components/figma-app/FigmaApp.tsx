@@ -5,6 +5,7 @@ import { Uploads } from "@/components/figma-app/components/features/Uploads";
 import { Calendar } from "@/components/figma-app/components/features/Calendar";
 import { StudyPlan } from "@/components/figma-app/components/features/StudyPlan";
 import { Profile } from "@/components/figma-app/components/features/Profile";
+import { LogoutButton } from "@/components/logout-button";
 
 type View = "uploads" | "calendar" | "study-plan" | "profile";
 
@@ -86,6 +87,9 @@ export default function FigmaApp() {
               >
                 Profile
               </button>
+              <LogoutButton variant="outline" className="ml-2">
+                Logout
+              </LogoutButton>
             </div>
           </div>
         </div>
