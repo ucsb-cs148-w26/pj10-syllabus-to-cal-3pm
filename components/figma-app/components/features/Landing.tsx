@@ -1,12 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { Calendar, FileText, Brain, TrendingUp, ArrowRight } from 'lucide-react';
 
-interface LandingProps {
-  onGetStarted: () => void;
-}
-
-export function Landing({ onGetStarted }: LandingProps) {
+export function Landing() {
   return (
     <div className="relative min-h-screen overflow-hidden">
       {/* Background (purple-forward, not the old heavy gradient) */}
@@ -15,6 +12,21 @@ export function Landing({ onGetStarted }: LandingProps) {
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
         {/* HERO (keep original structure/text, upgraded layout) */}
+        <div className="flex items-center justify-between mb-10">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm ring-1 ring-slate-200">
+              <Calendar className="w-5 h-5 text-violet-700" />
+            </div>
+            <span className="text-sm font-semibold text-slate-700">Syllabus Calendar</span>
+          </div>
+          <Link
+            href="/auth/login"
+            className="text-sm font-semibold text-slate-700 hover:text-slate-900"
+          >
+            Sign in
+          </Link>
+        </div>
+
         <div className="text-center mb-14 sm:mb-16">
           <div className="mx-auto inline-flex items-center gap-3 mb-6">
             <div className="relative">
@@ -33,13 +45,13 @@ export function Landing({ onGetStarted }: LandingProps) {
             Upload your course syllabuses and let AI transform them into an organized calendar with smart study plans
           </p>
 
-          <button
-            onClick={onGetStarted}
+          <Link
+            href="/auth/login"
             className="group inline-flex items-center gap-2 rounded-xl bg-violet-600 text-white px-7 py-3.5 font-semibold text-base hover:bg-violet-700 transition-colors shadow-sm"
           >
             Get Started
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
-          </button>
+          </Link>
 
           {/* subtle divider */}
           <div className="mt-12 w-full max-w-2xl mx-auto h-px bg-gradient-to-r from-transparent via-slate-200 to-transparent" />

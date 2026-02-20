@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Calendar } from "../../components/figma-app/components/features/Calendar";
+import { Calendar } from "../../../components/figma-app/components/features/Calendar";
 import { describe, test, expect, beforeEach } from "@jest/globals";
 
 // Mock fetch so we don't hit the real API

@@ -148,11 +148,11 @@ export default function PdfUpload({
               <UploadIcon className="w-7 h-7 text-indigo-600" />
             </div>
             <div>
-              <p className="font-medium text-gray-900 text-sm md:text-base">Drag & drop your syllabus PDF here</p>
+              <p className="font-medium text-gray-900 text-sm md:text-base">Drag or Click to Browse</p>
               <p className="text-xs md:text-sm text-gray-500 mt-1">
-                or <span className="text-indigo-600 font-semibold">browse files</span> from your computer
+               PDF format supported
               </p>
-              <p className="mt-2 text-[11px] text-gray-400">PDF format only · Multiple syllabuses supported</p>
+
             </div>
           </label>
         ) : (

@@ -545,7 +545,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Upload Syllabus</h3>
               <p className="text-sm text-gray-500">
-                Drag and drop, or click to upload a syllabus PDF. Then process it to extract important dates.
+                Add your syllabus files, then select event types to extract and click process to generate your calendar.
               </p>
             </div>
 
@@ -555,56 +555,58 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
               onDeleteUploadedFile={handleDeleteUploadedFile}
             />
 
-            <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
-              <div
-                className={
-                  'inline-flex w-fit items-center gap-2 rounded-md border px-3 py-2 text-xs transition-colors ' +
-                  (statusTone === 'error'
-                    ? 'border-rose-200 bg-rose-50 text-rose-700'
-                    : statusTone === 'ok'
-                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                      : 'border-gray-200 bg-white/70 text-gray-700')
-                }
-              >
-                <span
+            {/* Bottom section: info closer to uploader, filters below; actions on the right */}
+            <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
+              <div className="flex min-w-0 flex-col gap-3">
+                {/* Info pill: directly under uploader */}
+                <div
                   className={
-                    'h-2 w-2 rounded-full ' +
+                    'inline-flex w-fit max-w-full items-center gap-2 rounded-md border px-3 py-2 text-xs transition-colors ' +
                     (statusTone === 'error'
-                      ? 'bg-rose-500'
+                      ? 'border-rose-200 bg-rose-50 text-rose-700'
                       : statusTone === 'ok'
-                        ? 'bg-emerald-500'
-                        : 'bg-indigo-500 ' + (uploadPulse ? 'animate-pulse' : ''))
+                        ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                        : 'border-gray-200 bg-white/70 text-gray-700')
                   }
-                />
-                <span>{statusText}</span>
+                >
+                  <span
+                    className={
+                      'h-2 w-2 shrink-0 rounded-full ' +
+                      (statusTone === 'error'
+                        ? 'bg-rose-500'
+                        : statusTone === 'ok'
+                          ? 'bg-emerald-500'
+                          : 'bg-indigo-500 ' + (uploadPulse ? 'animate-pulse' : ''))
+                    }
+                  />
+                  <span className="truncate">{statusText}</span>
+                </div>
+
+                {/* Include: horizontal list (secondary) */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs font-medium text-gray-500">Include:</span>
+
+                  <label className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white/70 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-white transition-colors cursor-pointer select-none">
+                    <Checkbox checked={includeLectures} onCheckedChange={(c) => setIncludeLectures(c === true)} />
+                    <span>Lectures</span>
+                  </label>
+
+                  <label className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white/70 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-white transition-colors cursor-pointer select-none">
+                    <Checkbox
+                      checked={includeAssignments}
+                      onCheckedChange={(c) => setIncludeAssignments(c === true)}
+                    />
+                    <span>Assignments</span>
+                  </label>
+
+                  <label className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white/70 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-white transition-colors cursor-pointer select-none">
+                    <Checkbox checked={includeExams} onCheckedChange={(c) => setIncludeExams(c === true)} />
+                    <span>Tests/Exams</span>
+                  </label>
+                </div>
               </div>
 
-              <div className="flex flex-1 items-center justify-center gap-4">
-                <span className="text-xs font-medium text-gray-500">Include:</span>
-                <label className="flex items-center gap-1.5 cursor-pointer">
-                  <Checkbox
-                    checked={includeLectures}
-                    onCheckedChange={(c) => setIncludeLectures(c === true)}
-                  />
-                  <span className="text-xs text-gray-700">Lectures</span>
-                </label>
-                <label className="flex items-center gap-1.5 cursor-pointer">
-                  <Checkbox
-                    checked={includeAssignments}
-                    onCheckedChange={(c) => setIncludeAssignments(c === true)}
-                  />
-                  <span className="text-xs text-gray-700">Assignments</span>
-                </label>
-                <label className="flex items-center gap-1.5 cursor-pointer">
-                  <Checkbox
-                    checked={includeExams}
-                    onCheckedChange={(c) => setIncludeExams(c === true)}
-                  />
-                  <span className="text-xs text-gray-700">Tests/Exams</span>
-                </label>
-              </div>
-
-              <div className="flex w-fit shrink-0 items-center gap-2">
+              <div className="flex w-full flex-col gap-2 sm:flex-row lg:w-fit lg:justify-end">
                 <button
                   type="button"
                   onClick={goToReviewFromUpload}
