@@ -1,0 +1,18 @@
+CHUNK 1
+-
+sep. 30 lab 1: hard-copy aerial photography and stereoscopy>>4
+oct. 7 lab 2: land-use change detection>>4
+lab 1>>1
+oct. 14 lab 3: digital image processing>>4
+lab 2>>1
+oct. 21 exam #1 review session in lab>>4
+lab 3>>1
+oct. 28 lab 4: land-cover classication>>4
+nov. 4 lab 5: photogrammetry>>4
+lab 4>>1
+nov. 11 lab 6: multispectral image analysis (w & f sections)>>4
+lab 5 (due for all sections)>>1
+nov. 18 lab 6: multispectral image analysis (monday section)>>4
+nov. 25 exam #2 review session in lab>>4
+lab 6 (due for all sections)>>4
+dec. 2 no labs this week>>4

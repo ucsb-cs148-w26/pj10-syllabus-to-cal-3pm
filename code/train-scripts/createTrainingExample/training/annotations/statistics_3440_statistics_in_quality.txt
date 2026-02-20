@@ -1,0 +1,57 @@
+CHUNK 1
+-
+monday and wednesday, 8:00am -9:20am in carmenzoom plus tuesday 10:00am- 11:15 am>>3
+-
+CHUNK 14
+-
+aug 24 overview of the course and brief review of the syllabus, observational studies, experiment, simple random sample, histogram and box plot, shape of the data, location measure, mean, median and mode>>3
+assignment 1, due date is at the end of the third week>>1
+2 aug 29 measures of spread, standard deviation, iqr, empirical rule, outliers>>3
+aug 31 lab1, exploratory data analysis.>>4
+lab1 report, descriptive statistics>>1
+sep 5 no classes, labor day>>3
+sep 7 basic set operation, union, intersection, complement events. probability axioms and rules>>3
+assignment 2, due date is at the end of the 5th week>>1
+sep 12 conditional probabilities, bayes theorem, independent events>>3
+sep 14 discrete random variable, probability mass function, expected value, standard deviation>>3
+sep 19 binomial distribution>>3
+assignment 3, due date is at the end of the 6th week>>1
+sep 21 poisson distribution>>3
+lab2, acceptance sampling design>>4
+lab2 report, acceptance sampling>>1
+sep 26 normal distribution>>3
+quiz 1>>1
+sep 28 exponential distribution, review for midterm>>3
+oct 3 midterm exam>>2
+oct 5 central limit theorem, sampling distribution of mean and proportion>>3
+assignment 4, due date is at the end of 9th week>>1
+lab3 report>>1
+oct 10 lab3, normal distribution>>4
+oct 12 confidence interval for mean>>3
+oct 17 confidence interval for proportion>>3
+oct 19 hypothesis testing for mean>>3
+assignment 5, due date is at the end of the 11th week>>1
+oct 24 hypotheses testing for proportion>>3
+oct 26 two-sample problem for mean>>3
+quiz 2>>1
+oct 31 two-sample problem for proportion>>3
+lab 4, two sample inference>>4
+lab4 report, two-sample inference>>1
+nov 2 comparing observational studies and experiment, basic principles of a design of experiment>>3
+assignment 6, due date is at the end of the 12th>>1
+now 7 anova>>3
+lab5>>4
+lab 5 report, design of experiment, anova>>1
+nov 9 correlation>>3
+homework 7, due date is at the end of the 14th week>>1
+nov 14 simple linear regression model>>3
+nov16 control charts>>3
+homework 8, due date is at the end of the 16th week>>1
+nov 21 control charts>>3
+nov 23 process capability indices, cp>>3
+nov 28 no classes, thanksgiving break>>3
+nov 30 process capability indices, cpk>>3
+quiz 3>>1
+dec 5 lab 6, process capability indices, cpk, review for final>>4
+lab 6 report>>1
+dec 7 review>>3

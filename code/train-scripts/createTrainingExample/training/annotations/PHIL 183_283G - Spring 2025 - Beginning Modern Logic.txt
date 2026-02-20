@@ -1,0 +1,45 @@
+CHUNK 1
+-
+2:00-3:15 mon/wed phelp 1160>>3
+sections with ta scheduled mon 4:00-4:50 phelp 1445 and wed 5:00-5:50 387 1015>>4
+sections: mon 4:00-5:00 and wed 5:00-6:00>>4
+-
+CHUNK 2
+-
+mon mar 31 introduction to the course/arguments, validity, soundness, and a language for sentential logic>>3
+1.1-1.3>>1
+wed apr 1 wffs and translations>>3
+1.4, 2.1>>1
+1.4>>1
+mon apr 7 translations & primitive rules of proof>>3
+wed apr 9 primitive rules of proof (and strategies)>>3
+2.2, 2.3>>1
+2.1>>1
+strategy sheet>>1
+mon apr 14 proof strategies, more rules, and theorems>>3
+apr 16 truth tables for sentences and sequents>>3
+3.1-3.3>>1
+mon apr 21 direct and indirect truth tables for sequents>>3
+3.3, 3.4 (optional 3.5)>>1
+wed apr 23 review chapters 1-3>>3
+1.1-3.4>>1
+week 5 mon apr 28 first midterm>>2
+wed apr 30 the language of predicate logic>>3
+4.1, 4.2>>1
+mon may 5 translations>>3
+4.2, 5.1>>1
+4.2>>1
+wed may 7 translations and primitive rules of proofs>>3
+mon may 12 more rules of proof>>3
+5.2>>1
+wed may 14 finite interpretations and countermodels for one-place predicates>>3
+6.1, 6.2>>1
+mon may 19 finite countermodels for multi-place predicates>>3
+6.3>>1 
+wed may 21 review chapters 3-6>>3
+mon may 26 memorial day no class>>3
+wed may 28 second midterm>>2
+mon jun 2 review all chapters>>3
+wed jun 4 review all chapters>>3
+mon jun 09 comprehensive LECTURE
+mon jun 09 comprehensive final exam 4-7 p.m.>>2

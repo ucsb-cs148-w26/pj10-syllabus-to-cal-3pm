@@ -1,0 +1,62 @@
+CHUNK 1
+-
+class time: tth 8:00-9:15 am>>3
+-
+CHUNK 4
+-
+4 online self-presentation assignment (15%) for this assignment you will write a 3-4 page (double spaced) paper that does the following. a. consider your dream job and write down the kinds of attributes a successful candidate for a position in this field should have. then, pretend you are a third party who is trying to find out information about you on the internet based on your name (you may need to include one or two facts about you, such as location). do a thorough search using a variety of search engines and online tools. what kind of impression would this person get? remember, there may be information online about other people with your same name, but a third party wouldnt know this. finally, consider what actions you could take to create an online impression that matches the attributes you described in the first part of the assignment. come up with a plan of action for achieving your online self-presentational goals. describe the information you found and how it relates to the characteristics you wrote down as needed for your dream job above. b. read the we googled you case study (from the harvard business review). using at least 3 ideas and concepts discussed in class, in our other readings, and from any additional online research you wish to do, describe the advice you would give fred. (you may wish to jot down some notes before you read the experts advice.). which one of the experts do you agree with most and why? which do you disagree with and why? midterm exam (20%) the midterm exam format will consist of a combination of multiple choice and short answer questions. please bring a scantron form and #2 pencil to the exam. students are responsible for all material covered in readings as well as lecture. group research project (30%) you will work in a group to produce a final research paper that will examine one of the topics addressed in this course in more depth. you may also pick a relevant topic not discussed in the course, so long as you get it approved by me. students will work on the paper in groups of 4 people. you can form your own group and notify me via email by january 14th. feel free to post on the class gauchospace forum if you are looking for classmates with similar interests to join your group. students who have not contacted me before the deadline will be randomly assigned to groups and notified about their assignment by january 21st. your final paper may involve empirical data collection (e.g. a survey of social media users, interviews with developers or organizational members, analysis of online content, an online experiment, etc.). the project may also be theoretical: extending existing frameworks and concepts, or applying them to new platforms and contexts (e.g. adapting current or proposing new models for the way individuals or organizations behave online). the paper should be 12-15 pages long, double-spaced, using a 12-point font with a 1-inch margin on all sides. it should have the following structure: (1) introduction, providing a rationale for your topic and why it is important to study (2) literature review, including an overview of previous research in the area>>1
+-
+CHUNK 5
+-
+february 4th: submit a one-page proposal describing your research question and the way you intend to approach it. you will receive feedback suggesting that you proceed with the paper, or advising you to change your topic.>>1
+march 3rd: submit a 3-4 page detailed outline of the paper that sketches the background, relevant literature, research questions, the data collection and analytical procedures (for empirical papers), the concepts or theoretical frameworks that you are developing or contributing to, and how (for theoretical papers). make it clear whether it is a conceptual paper (lit review only), case study, or empirical study (based on your own data collection).>>1
+march 17th: upload the final paper to gauchospace by 5 pm. each group should submit only one paper. each group member should also submit a 1-page reflection paper individually, uploaded in gauchospace. this reflection paper should describe your contributions to the final paper and reflect on the ways in which collaborative technologies helped or hindered your group process.>>1
+-
+CHUNK 7
+-
+1/7 introduction>>3
+1/9 theoretical foundations>>3
+sturken & thomas, 2004>>1
+1/14 distance and proximity
+wilson et al., 2008
+1/16 group collaboration
+pentland, 2012
+1/21 virtuality and virtual teams
+ferrazzi, 2014 gibson & gibbs, 2006
+1/23 social networks and social capital
+dimicco et al., 2008 uzzi & dunlap
+2005 social network case due
+1/28 collaborative production
+kaplan & haenlein, 2014
+1/30 collective action and mobilization
+gladwell, 2010 sutton et al., 2008
+2/4 privacy and surveillance
+humphreys, 2011 tufekci
+2018 final paper proposal due
+2/6 privacy and surveillance (contd)
+botsman, 2017 mello, 2012
+2/11 midterm
+2/13 artificial intelligence
+chan & humphreys, 2018 castro & new, 2016
+2/18 organizational image and reputation
+holt, 2016 kane et al., 2009
+2/20 self-presentation and cybervetting
+berkelaar et al., 2015 coutu, 2007
+we googled you case due
+2/25 social media in the workplace
+leonardi & neeley, 2017
+2/27 social media in the workplace (contd)
+gibbs et al., 2013
+3/3 telework / flexwork
+fonner & roloff, 2010 
+final paper outline due
+3/5 well-being: distraction, interruptions, and stress
+kurzberg & gibbs, 2017
+3/10 no class
+3/12 well-being: distraction, interruptions, and stress (contd)
+carr, 2008
+3/17 final paper due by 5 pm
+-
+CHUNK 10
+-
+10 required: humphreys, l. (2011). whos watching whom? a study of interactive technology and surveillance. journal of communication, 61, 575595. tufekci, z. (2018). why zuckerbergs 14-year apology tour hasnt fixed facebook. wired. available at: https://www.wired.com/story/why-zuckerberg-15-year-apology-tour-hasnt- fixed-facebook/?mbid=social_fb_onsiteshare 2/6  privacy and surveillance (contd) required: botsman, r. (2017, october 21). big data meets big brother as china moves to rate its citizens. wired uk. available at: http://www.wired.co.uk/article/chinese-government-social- credit-score-privacy-invasion required: mello, j. a. (2012). social media, employee privacy and concerted activity: brave new world or big brother? labor law journal, 63(3), 165-173. 2/13  artificial intelligence required: chan, n. k., & humphreys, l. (2018). mediatization of social space and the case of uber drivers. media and communication, 6, 29-38. castro, d., & new, j. (2016). the promise of artificial intelligence. washington, dc: center for data innovation. [read pp. 1-5 and skim the examples] 2/18  organizational image and reputation required: holt, d. (2016). branding in an age of social media. harvard business review, march 2016, 41-50. required: kane, g. c., r. g. fichman, r. g., gallaugher, j., & glaser, j. (2009). community relations 2.0: with the rise of real-time social media, the rules about community outreach have changed. harvard business review, 87(11), 45-50. 2/20  self-presentation and cybervetting required: berkelaar, b. l., scacco, j. m., & birdsell, j. l. (2015). the worker as politician: how online information and electoral heuristics shape personnel selection and careers. new media & society, 17, 1377-1396.5
