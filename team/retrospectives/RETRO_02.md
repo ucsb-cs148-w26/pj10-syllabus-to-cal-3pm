@@ -39,6 +39,7 @@ Absent: n/a
 ##Experiments:
 - Established system to deal with PRs quickly
 - More PRs with less content
+- keep/remove tbd in next retro
 ##Results:
 - Established PR system made PRs easier to understand. PRs dealt with quicker.
 - Smaller PRs easier to understand and test.
