@@ -1,7 +1,11 @@
 Date of Retrospective: 02/13/26
+
 Led by: Timothy Lou
+
 Present: Lucy, Saeed, Matthew, Tim, Wilson, Rocky, Nataly
+
 Absent: n/a
+
 ## Action items
 1. Stop delaying PR reviews
 2. Make PRs more descriptive
