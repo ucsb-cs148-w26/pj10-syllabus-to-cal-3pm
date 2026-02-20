@@ -6,24 +6,24 @@ export async function POST(req: NextRequest) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: "Missing GEMINI_API_KEY" }, { status: 500 });
+      return NextResponse.json({ success: false, error: "Missing GEMINI_API_KEY" }, { status: 500 });
     }
 
     const { imageUrl } = (await req.json()) as { imageUrl?: string };
     if (!imageUrl) {
-      return NextResponse.json({ error: "Missing imageUrl" }, { status: 400 });
+      return NextResponse.json({ success: false, error: "Missing imageUrl" }, { status: 400 });
     }
 
-    // Download image bytes from Vercel Blob public URL
     const imgRes = await fetch(imageUrl);
     if (!imgRes.ok) {
-      return NextResponse.json({ error: `Failed to fetch image: ${imgRes.status}` }, { status: 400 });
+      return NextResponse.json(
+        { success: false, error: `Failed to fetch image: ${imgRes.status}` },
+        { status: 400 }
+      );
     }
 
     const contentType = imgRes.headers.get("content-type") || "image/jpeg";
     const bytes = new Uint8Array(await imgRes.arrayBuffer());
-
-    // Convert to base64
     const b64 = Buffer.from(bytes).toString("base64");
 
     const prompt =
@@ -41,30 +41,32 @@ export async function POST(req: NextRequest) {
         contents: [
           {
             role: "user",
-            parts: [
-              { text: prompt },
-              { inlineData: { mimeType: contentType, data: b64 } },
-            ],
+            parts: [{ text: prompt }, { inlineData: { mimeType: contentType, data: b64 } }],
           },
         ],
-        generationConfig: { temperature: 0, maxOutputTokens: 8000 },
+        generationConfig: { temperature: 0, maxOutputTokens: 4096 },
       }),
     });
 
     if (!gemRes.ok) {
       const errText = await gemRes.text();
-      return NextResponse.json({ error: `Gemini OCR HTTP ${gemRes.status}: ${errText}` }, { status: 500 });
+      return NextResponse.json(
+        { success: false, error: `Gemini OCR HTTP ${gemRes.status}: ${errText}` },
+        { status: 500 }
+      );
     }
 
     const data: any = await gemRes.json();
+
     const text =
-      (data?.candidates || [])
-        .map((c: any) => c?.content?.parts?.map((p: any) => p.text).join("") || "")
-        .join("\n")
+      (data?.candidates ?? [])
+        .flatMap((c: any) => c?.content?.parts ?? [])
+        .map((p: any) => (typeof p?.text === "string" ? p.text : ""))
+        .join("")
         .trim();
 
-    return NextResponse.json({ text });
+    return NextResponse.json({ success: true, text });
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message ?? "vision-ocr failed" }, { status: 500 });
+    return NextResponse.json({ success: false, error: e?.message ?? "vision-ocr failed" }, { status: 500 });
   }
 }
