@@ -9,44 +9,48 @@ import {
 
 /** GET /api/calendar/events?month=YYYY-MM OR ?timeMin=ISO&timeMax=ISO — list events. Auth: Authorization: Bearer <access_token> */
 export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  const { searchParams } = new URL(request.url);
+  const monthParam = searchParams.get("month");
+  const timeMinParam = searchParams.get("timeMin");
+  const timeMaxParam = searchParams.get("timeMax");
+
+  console.log("[calendar/events GET] token:", token ? "present" : "MISSING", "month:", monthParam ?? "range");
+
+  if (!token) {
+    return NextResponse.json(
+      { success: false, error: "Authorization required (Bearer token)" },
+      { status: 401 }
+    );
+  }
+
+  let timeMin: string;
+  let timeMax: string;
+
+  if (timeMinParam && timeMaxParam) {
+    timeMin = timeMinParam;
+    timeMax = timeMaxParam;
+  } else if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+    const [year, month] = monthParam.split("-").map(Number);
+    timeMin = new Date(Date.UTC(year, month - 1, 1)).toISOString();
+    timeMax = new Date(Date.UTC(year, month, 1)).toISOString();
+  } else {
+    return NextResponse.json(
+      { success: false, error: "Query 'month' (YYYY-MM) or 'timeMin' and 'timeMax' (ISO) required" },
+      { status: 400 }
+    );
+  }
+
   try {
-    const authHeader = request.headers.get("authorization");
-    const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
-    if (!token) {
-      return NextResponse.json(
-        { success: false, error: "Authorization required (Bearer token)" },
-        { status: 401 }
-      );
-    }
-
-    const { searchParams } = new URL(request.url);
-    const monthParam = searchParams.get("month");
-    const timeMinParam = searchParams.get("timeMin");
-    const timeMaxParam = searchParams.get("timeMax");
-
-    let timeMin: string;
-    let timeMax: string;
-
-    if (timeMinParam && timeMaxParam) {
-      timeMin = timeMinParam;
-      timeMax = timeMaxParam;
-    } else if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
-      const [year, month] = monthParam.split("-").map(Number);
-      // Use UTC so the whole calendar month is included regardless of server timezone
-      timeMin = new Date(Date.UTC(year, month - 1, 1)).toISOString();
-      timeMax = new Date(Date.UTC(year, month, 1)).toISOString();
-    } else {
-      return NextResponse.json(
-        { success: false, error: "Query 'month' (YYYY-MM) or 'timeMin' and 'timeMax' (ISO) required" },
-        { status: 400 }
-      );
-    }
-
     const events = await listCalendarEvents(token, timeMin, timeMax);
+    console.log("[calendar/events GET] success, events count:", events.length);
     return NextResponse.json({ success: true, events });
   } catch (error: unknown) {
-    const err = error as { code?: number; message?: string };
-    console.error("Error listing calendar events:", error);
+    const err = error as { code?: number; message?: string; response?: { data?: { error?: { message?: string; code?: number } } } };
+    const googleMessage = err.response?.data?.error?.message;
+    const message = googleMessage ?? err.message ?? "Failed to list calendar events";
+    console.error("[calendar/events GET] error:", message, err.code ?? "", err.response?.data?.error ?? "");
     if (err.code === 401) {
       return NextResponse.json(
         { success: false, error: "Invalid or expired token. Please re-authenticate." },
@@ -54,8 +58,8 @@ export async function GET(request: NextRequest) {
       );
     }
     return NextResponse.json(
-      { success: false, error: err.message ?? "Failed to list calendar events" },
-      { status: 500 }
+      { success: false, error: message },
+      { status: err.code === 403 ? 403 : 500 }
     );
   }
 }

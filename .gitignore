@@ -42,3 +42,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# project-specific: avoid adding large dirs (git add -A would freeze)
+code/uploader/node_modules/
+code/uploader/.next/
+code/uploader/uploads/
+dist/
+generator/
+syllabi-app/

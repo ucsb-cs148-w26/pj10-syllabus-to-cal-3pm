@@ -7,27 +7,47 @@ import { Calendar } from "@/components/figma-app/components/features/Calendar";
 import { StudyPlan } from "@/components/figma-app/components/features/StudyPlan";
 import { Profile } from "@/components/figma-app/components/features/Profile";
 
+const GOOGLE_TOKEN_KEY = "syllabus_calendar_google_token";
+
 type View = "landing" | "uploads" | "calendar" | "study-plan" | "profile";
+
+function getInitialToken(): string | null {
+  if (typeof window === "undefined") return null;
+  const url = new URL(window.location.href);
+  if (url.searchParams.get("auth_success") === "true") {
+    const t = url.searchParams.get("access_token");
+    if (t) return t;
+  }
+  return sessionStorage.getItem(GOOGLE_TOKEN_KEY);
+}
 
 export default function FigmaApp() {
   const [currentView, setCurrentView] = useState<View>("landing");
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [accessToken, setAccessTokenState] = useState<string | null>(getInitialToken);
 
-  // When returning from Google OAuth (/api/callback), pick up access_token and clean URL
+  const setAccessToken = (token: string | null) => {
+    setAccessTokenState(token);
+    if (typeof window !== "undefined") {
+      if (token) sessionStorage.setItem(GOOGLE_TOKEN_KEY, token);
+      else sessionStorage.removeItem(GOOGLE_TOKEN_KEY);
+    }
+  };
+
+  // On OAuth return: clean URL and go to uploads; token already in state from getInitialToken
   useEffect(() => {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
     const authSuccess = url.searchParams.get("auth_success");
-    const token = url.searchParams.get("access_token");
-
-    if (authSuccess === "true" && token) {
-      setAccessToken(token);
-      // remove query params from URL without reloading
+    const tokenFromUrl = url.searchParams.get("access_token");
+    if (authSuccess === "true" && tokenFromUrl) {
+      setAccessToken(tokenFromUrl);
       url.searchParams.delete("auth_success");
       url.searchParams.delete("access_token");
       window.history.replaceState({}, "", url.toString());
-      // Take user straight to uploads view after connecting
       setCurrentView("uploads");
+    } else {
+      const stored = sessionStorage.getItem(GOOGLE_TOKEN_KEY);
+      if (stored) setAccessTokenState(stored);
     }
   }, []);
 
@@ -103,7 +123,12 @@ export default function FigmaApp() {
             onAccessTokenChange={setAccessToken}
           />
         )}
-        {currentView === "calendar" && <Calendar accessToken={accessToken} />}
+        {currentView === "calendar" && (
+          <Calendar
+            accessToken={accessToken}
+            onGoToUploads={() => setCurrentView("uploads")}
+          />
+        )}
         {currentView === "study-plan" && <StudyPlan />}
         {currentView === "profile" && <Profile />}
       </main>

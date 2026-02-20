@@ -6,6 +6,7 @@ import type { GoogleCalendarEventItem } from '@/lib/googleCalendar';
 
 interface CalendarProps {
   accessToken: string | null;
+  onGoToUploads?: () => void;
 }
 
 /** Display event: normalized for calendar day; includes start/end for edit. */
@@ -255,13 +256,18 @@ function WeekView({
   );
 }
 
-export function Calendar({ accessToken }: CalendarProps) {
+export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<DisplayEvent[]>([]);
   const [loading, setLoading] = useState(false);
+  const [eventsLoadError, setEventsLoadError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
   /** Cache events by period key to avoid refetch on every arrow click */
   const eventsCacheRef = useRef<Map<string, DisplayEvent[]>>(new Map());
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const fetchIdRef = useRef(0);
+  /** When a response arrives, only apply it if we're still displaying this period (avoids overwriting current month with stale data). */
+  const displayedPeriodRef = useRef<string>('');
   const [createOpen, setCreateOpen] = useState(false);
   const [createTitle, setCreateTitle] = useState('');
   const [createDate, setCreateDate] = useState('');
@@ -319,24 +325,36 @@ export function Calendar({ accessToken }: CalendarProps) {
     end.setDate(end.getDate() + 7);
     return end;
   };
+  // Keep ref in sync with what we're displaying so we apply the right response
+  displayedPeriodRef.current = viewMode === 'week' ? getWeekStart(currentDate).toISOString().slice(0, 10) : monthKey;
 
   const fetchEvents = useCallback(async (bypassCache = false) => {
     if (!accessToken) {
       setEvents([]);
+      setEventsLoadError(null);
       return;
     }
     const cacheKey =
       viewMode === 'week'
         ? getWeekStart(currentDate).toISOString().slice(0, 10)
         : monthKey;
+    displayedPeriodRef.current = cacheKey;
     if (!bypassCache) {
       const cached = eventsCacheRef.current.get(cacheKey);
       if (cached !== undefined) {
         setEvents(cached);
+        setEventsLoadError(null);
         return;
       }
     }
+    // Cancel any in-flight request for a different period (avoids duplicate calls when switching month/week)
+    if (abortControllerRef.current) abortControllerRef.current.abort();
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
+    const id = ++fetchIdRef.current;
+    const responseForPeriod = cacheKey;
     setLoading(true);
+    setEventsLoadError(null);
     try {
       const url =
         viewMode === 'week'
@@ -344,22 +362,31 @@ export function Calendar({ accessToken }: CalendarProps) {
           : `/api/calendar/events?month=${monthKey}`;
       const res = await fetch(url, {
         headers: { Authorization: `Bearer ${accessToken}` },
+        signal,
       });
       const data = await res.json();
+      if (id !== fetchIdRef.current) return; // stale response, ignore
       if (!res.ok) throw new Error(data.error ?? 'Failed to load events');
       const list = toDisplayEvents(data.events ?? []);
-      eventsCacheRef.current.set(cacheKey, list);
-      setEvents(list);
+      eventsCacheRef.current.set(cacheKey, list); // always cache for when user navigates back
+      if (displayedPeriodRef.current === responseForPeriod) setEvents(list);
     } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return;
+      if (id !== fetchIdRef.current) return;
       setEvents([]);
+      const message = err instanceof Error ? err.message : 'Failed to load events';
+      setEventsLoadError(message);
       console.error(err);
     } finally {
-      setLoading(false);
+      if (id === fetchIdRef.current) setLoading(false);
     }
   }, [accessToken, monthKey, viewMode, currentDate]);
 
   useEffect(() => {
     fetchEvents();
+    return () => {
+      if (abortControllerRef.current) abortControllerRef.current.abort();
+    };
   }, [fetchEvents]);
 
   const getDaysInMonth = (date: Date) => {
@@ -651,8 +678,40 @@ export function Calendar({ accessToken }: CalendarProps) {
         </div>
 
         <div className="p-6">
+          {!accessToken && (
+            <div className="mb-4 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+              <p className="text-gray-700 font-medium mb-2">Your calendar events will show here</p>
+              <p className="text-sm text-gray-500 mb-4">Connect your Google account on the Uploads page, then come back to see and add events.</p>
+              {onGoToUploads ? (
+                <button
+                  type="button"
+                  onClick={onGoToUploads}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700"
+                >
+                  Go to Uploads to connect
+                </button>
+              ) : (
+                <p className="text-sm text-gray-600">Click <strong>Uploads</strong> in the menu above to connect.</p>
+              )}
+            </div>
+          )}
+          {eventsLoadError && accessToken && (
+            <div className="mb-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800">
+              Couldn&apos;t load Google Calendar events: {eventsLoadError}. Enable &quot;Google Calendar API&quot; in Google Cloud Console if needed, then try reconnecting in Uploads or Profile.
+              <button
+                type="button"
+                onClick={() => fetchEvents(true)}
+                className="ml-2 font-medium underline hover:no-underline"
+              >
+                Retry
+              </button>
+            </div>
+          )}
           {loading && (
             <p className="text-sm text-gray-500 mb-2">Loading events…</p>
+          )}
+          {accessToken && !loading && !eventsLoadError && events.length === 0 && (
+            <p className="text-sm text-gray-500 mb-2">No events this period. Add one with the button above or in Google Calendar.</p>
           )}
 
           {viewMode === 'week' ? (
