@@ -36,11 +36,11 @@ Absent: n/a
 - Stop: leaving PRs unapproved for long time
 - Continue: communicating with team frequently
 # Experiments, Changes, and results
-##Experiments:
+## Experiments:
 - Established system to deal with PRs quickly
 - More PRs with less content
 - keep/remove tbd in next retro
-##Results:
+## Results:
 - Established PR system made PRs easier to understand. PRs dealt with quicker.
 - Smaller PRs easier to understand and test.
 # Retro Assessment:
