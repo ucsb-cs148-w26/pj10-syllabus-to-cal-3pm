@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
+type GeminiPart = { text?: string };
+type GeminiCandidate = { content?: { parts?: GeminiPart[] } };
+type GeminiResponse = { candidates?: GeminiCandidate[] };
+
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const {
@@ -51,11 +55,11 @@ export async function POST(req: NextRequest) {
       }
     );
 
-    const data = await response.json();
+    const data: GeminiResponse = await response.json();
 
     const csvText = (data?.candidates || [])
-      .map(candidate =>
-        candidate?.content?.parts?.map(part => part.text).join("") || ""
+      .map((candidate: GeminiCandidate) =>
+        (candidate?.content?.parts || []).map((part: GeminiPart) => part.text ?? "").join("")
       )
       .join("\n");
 
