@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Uploads } from "../../components/figma-app/components/features/Uploads";
+import { Uploads } from "../../../components/figma-app/components/features/Uploads";
 import { describe, test, expect, beforeEach } from "@jest/globals"
 
 function mockLocalStorage() {
