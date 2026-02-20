@@ -1,1 +1,3 @@
-
+1. Process UX (Were the steps for using the app intuitive? Were the options available to you at any point in the process clear to you? What can we do improve the experience? Was there anything that was ambiguous or complicated?)
+2. What are your thoughts on a personalized scheduler that prioritizes tasks for you? Do you think a feature that plans time for you to work on assignments would be helpful?
+3. Do you feel that the "guard rails" between the upload and the calendar sync steps are sufficient to prevent incorrect events from being uploaded to your calendar? Are there any options that you wish you had that you feel would make the process "safer?"
