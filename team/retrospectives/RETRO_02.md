@@ -3,7 +3,9 @@ Led by: Timothy Lou
 Present: Lucy, Saeed, Matthew, Tim, Wilson, Rocky, Nataly
 Absent: n/a
 ## Action items
-1. 
+1. Stop delaying PR reviews
+2. Make PRs more descriptive
+3. Half/partial PRs
 ## Optional - Additional discussion points:
 ### Lucy:
 - Start: create more smaller issues to better track progress
@@ -33,10 +35,18 @@ Absent: n/a
 - Start: writing better PR descriptions
 - Stop: leaving PRs unapproved for long time
 - Continue: communicating with team frequently
-# Changes and results
-
+# Experiments, Changes, and results
+##Experiments:
+- Established system to deal with PRs quickly
+- More PRs with less content
+##Results:
+- Established PR system made PRs easier to understand. PRs dealt with quicker.
+- Smaller PRs easier to understand and test.
 # Retro Assessment:
 ## Template:
 Stop, start, continue. Contribution from each member and collaborated to prioritize point made.
 ## Assessment:
+- Everyone was respectful and engaged in active conversation
 ## Advice for next retro leader: 
+- More time to come up with ideas (> 5 min)
+- Less time to choose action items(< 5 min)
