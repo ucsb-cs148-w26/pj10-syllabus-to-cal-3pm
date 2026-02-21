@@ -15,8 +15,12 @@ export async function GET(request: NextRequest) {
   const monthParam = searchParams.get("month");
   const timeMinParam = searchParams.get("timeMin");
   const timeMaxParam = searchParams.get("timeMax");
+  const calendarsParam = searchParams.get("calendars");
+  const calendarIds = calendarsParam
+    ? calendarsParam.split(",").map((s) => s.trim()).filter(Boolean)
+    : ["primary"];
 
-  console.log("[calendar/events GET] token:", token ? "present" : "MISSING", "month:", monthParam ?? "range");
+  console.log("[calendar/events GET] token:", token ? "present" : "MISSING", "month:", monthParam ?? "range", "calendars:", calendarIds.length);
 
   if (!token) {
     return NextResponse.json(
@@ -43,7 +47,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const events = await listCalendarEvents(token, timeMin, timeMax);
+    const events = await listCalendarEvents(token, timeMin, timeMax, calendarIds);
     console.log("[calendar/events GET] success, events count:", events.length);
     return NextResponse.json({ success: true, events });
   } catch (error: unknown) {

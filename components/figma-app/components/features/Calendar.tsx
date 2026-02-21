@@ -1,8 +1,118 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Pencil, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Pencil, Trash2, ChevronDown } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import type { GoogleCalendarEventItem } from '@/lib/googleCalendar';
+
+interface CalendarMeta {
+  id: string;
+  summary: string;
+  primary?: boolean;
+  backgroundColor: string;
+}
+
+function CalendarMultiPicker({
+  accessToken,
+  selectedIds,
+  onChange,
+}: {
+  accessToken: string;
+  selectedIds: string[];
+  onChange: (ids: string[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [calendars, setCalendars] = useState<CalendarMeta[]>([]);
+  const [fetchStatus, setFetchStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (fetchStatus !== 'idle') return;
+    setFetchStatus('loading');
+    fetch('/api/calendar/calendars', { headers: { Authorization: `Bearer ${accessToken}` } })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.calendars) {
+          const list = (data.calendars as CalendarMeta[]).filter((c) => !c.primary);
+          setCalendars([{ id: 'primary', summary: 'Default calendar', primary: true, backgroundColor: '#4285f4' }, ...list]);
+        }
+        setFetchStatus('ok');
+      })
+      .catch(() => setFetchStatus('error'));
+  }, [open, accessToken, fetchStatus]);
+
+  const toggle = (id: string) => {
+    if (selectedIds.includes(id)) {
+      const next = selectedIds.filter((x) => x !== id);
+      onChange(next.length ? next : ['primary']);
+    } else {
+      onChange([...selectedIds, id]);
+    }
+  };
+
+  const displayLabel =
+    selectedIds.length === 0
+      ? 'No calendars'
+      : selectedIds.length === 1
+        ? (calendars.find((c) => c.id === selectedIds[0])?.summary ?? selectedIds[0])
+        : `${selectedIds.length} calendars`;
+
+  return (
+    <div ref={dropdownRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
+      >
+        <span className="truncate max-w-[140px]">{displayLabel}</span>
+        <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full z-50 mt-1.5 min-w-[220px] max-w-[300px] rounded-xl border border-gray-200 bg-white shadow-lg py-2">
+          {fetchStatus === 'loading' && (
+            <div className="flex gap-2 px-4 py-3 text-xs text-gray-500">
+              <span className="h-3 w-3 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
+              Loading calendars…
+            </div>
+          )}
+          {fetchStatus === 'error' && (
+            <div className="px-4 py-3 text-xs text-rose-600">Could not load calendars.</div>
+          )}
+          {fetchStatus === 'ok' && (
+            <div className="max-h-60 overflow-y-auto">
+              {calendars.map((cal) => (
+                <label
+                  key={cal.id}
+                  className="flex cursor-pointer items-center gap-3 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50"
+                >
+                  <Checkbox
+                    checked={selectedIds.includes(cal.id)}
+                    onCheckedChange={() => toggle(cal.id)}
+                  />
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: cal.backgroundColor }} />
+                  <span className="truncate">
+                    {cal.summary}
+                    {cal.primary && <span className="ml-1 text-gray-400">(primary)</span>}
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface CalendarProps {
   accessToken: string | null;
@@ -256,16 +366,30 @@ function WeekView({
   );
 }
 
+const DISPLAY_CALENDARS_KEY = 'syllabus_calendar_display_ids';
+
 export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<DisplayEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [eventsLoadError, setEventsLoadError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'month' | 'week'>('month');
+  const [selectedCalendarIds, setSelectedCalendarIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return ['primary'];
+    try {
+      const saved = localStorage.getItem(DISPLAY_CALENDARS_KEY);
+      if (saved) {
+        const ids = JSON.parse(saved);
+        if (Array.isArray(ids) && ids.length > 0) return ids;
+      }
+    } catch { /* ignore */ }
+    return ['primary'];
+  });
   /** Cache events by period key to avoid refetch on every arrow click */
   const eventsCacheRef = useRef<Map<string, DisplayEvent[]>>(new Map());
   const abortControllerRef = useRef<AbortController | null>(null);
   const fetchIdRef = useRef(0);
+  const fetchInProgressRef = useRef<string | null>(null);
   /** When a response arrives, only apply it if we're still displaying this period (avoids overwriting current month with stale data). */
   const displayedPeriodRef = useRef<string>('');
   const [createOpen, setCreateOpen] = useState(false);
@@ -325,8 +449,10 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
     end.setDate(end.getDate() + 7);
     return end;
   };
-  // Keep ref in sync with what we're displaying so we apply the right response
-  displayedPeriodRef.current = viewMode === 'week' ? getWeekStart(currentDate).toISOString().slice(0, 10) : monthKey;
+  const calKey = [...selectedCalendarIds].sort().join(',');
+  const periodKey = viewMode === 'week' ? getWeekStart(currentDate).toISOString().slice(0, 10) : monthKey;
+  const fullCacheKey = `${periodKey}|${calKey}`;
+  displayedPeriodRef.current = fullCacheKey;
 
   const fetchEvents = useCallback(async (bypassCache = false) => {
     if (!accessToken) {
@@ -334,11 +460,7 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
       setEventsLoadError(null);
       return;
     }
-    const cacheKey =
-      viewMode === 'week'
-        ? getWeekStart(currentDate).toISOString().slice(0, 10)
-        : monthKey;
-    displayedPeriodRef.current = cacheKey;
+    const cacheKey = fullCacheKey;
     if (!bypassCache) {
       const cached = eventsCacheRef.current.get(cacheKey);
       if (cached !== undefined) {
@@ -346,7 +468,9 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
         setEventsLoadError(null);
         return;
       }
+      if (fetchInProgressRef.current === cacheKey) return;
     }
+    fetchInProgressRef.current = cacheKey;
     // Cancel any in-flight request for a different period (avoids duplicate calls when switching month/week)
     if (abortControllerRef.current) abortControllerRef.current.abort();
     abortControllerRef.current = new AbortController();
@@ -356,10 +480,12 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
     setLoading(true);
     setEventsLoadError(null);
     try {
-      const url =
+      const calendarsParam = encodeURIComponent(selectedCalendarIds.join(','));
+      const base =
         viewMode === 'week'
           ? `/api/calendar/events?timeMin=${getWeekStart(currentDate).toISOString()}&timeMax=${getWeekEnd(currentDate).toISOString()}`
           : `/api/calendar/events?month=${monthKey}`;
+      const url = `${base}&calendars=${calendarsParam}`;
       const res = await fetch(url, {
         headers: { Authorization: `Bearer ${accessToken}` },
         signal,
@@ -371,16 +497,22 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
       eventsCacheRef.current.set(cacheKey, list); // always cache for when user navigates back
       if (displayedPeriodRef.current === responseForPeriod) setEvents(list);
     } catch (err) {
-      if (err instanceof Error && err.name === 'AbortError') return;
+      if (err instanceof Error && err.name === 'AbortError') {
+        fetchInProgressRef.current = null;
+        return;
+      }
       if (id !== fetchIdRef.current) return;
       setEvents([]);
       const message = err instanceof Error ? err.message : 'Failed to load events';
       setEventsLoadError(message);
       console.error(err);
     } finally {
-      if (id === fetchIdRef.current) setLoading(false);
+      if (id === fetchIdRef.current) {
+        setLoading(false);
+        fetchInProgressRef.current = null;
+      }
     }
-  }, [accessToken, monthKey, viewMode, currentDate]);
+  }, [accessToken, monthKey, viewMode, currentDate, selectedCalendarIds]);
 
   useEffect(() => {
     fetchEvents();
@@ -602,17 +734,30 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
           </p>
         </div>
         {accessToken && (
-          <button
-            type="button"
-            onClick={() => {
-              setCreateDate(createDateValue);
-              setCreateOpen(true);
-            }}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            Add event
-          </button>
+          <div className="flex items-center gap-3">
+            <CalendarMultiPicker
+              accessToken={accessToken}
+              selectedIds={selectedCalendarIds}
+              onChange={(ids) => {
+                setSelectedCalendarIds(ids);
+                try {
+                  localStorage.setItem(DISPLAY_CALENDARS_KEY, JSON.stringify(ids));
+                } catch { /* ignore */ }
+                eventsCacheRef.current.clear();
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setCreateDate(createDateValue);
+                setCreateOpen(true);
+              }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              Add event
+            </button>
+          </div>
         )}
       </div>
 

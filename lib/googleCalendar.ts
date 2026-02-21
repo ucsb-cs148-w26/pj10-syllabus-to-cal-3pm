@@ -113,42 +113,56 @@ export interface GoogleCalendarEventItem {
 }
 
 /**
- * List events from the user's primary Google Calendar within a time range.
+ * List events from one or more Google Calendars within a time range.
+ * @param calendarIds - calendar IDs to fetch from (default ['primary'])
  */
 export const listCalendarEvents = async (
   accessToken: string,
   timeMin: string, // ISO datetime
-  timeMax: string
+  timeMax: string,
+  calendarIds: string[] = ['primary']
 ): Promise<GoogleCalendarEventItem[]> => {
   const oauth2Client = new google.auth.OAuth2();
   oauth2Client.setCredentials({ access_token: accessToken });
 
   const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
-  const response = await calendar.events.list({
-    calendarId: 'primary',
-    timeMin,
-    timeMax,
-    singleEvents: true,
-    orderBy: 'startTime',
-  });
+  const seen = new Set<string>();
+  const allItems: GoogleCalendarEventItem[] = [];
 
-  const items = response.data.items ?? [];
-  return items
-    .filter((e): e is NonNullable<typeof e> => e != null && e.id != null)
-    .map((e) => {
-      const start = e.start?.dateTime ?? e.start?.date ?? '';
-      const end = e.end?.dateTime ?? e.end?.date ?? start;
-      return {
-        id: e.id,
-        title: e.summary ?? '(No title)',
-        start,
-        end,
-        allDay: !e.start?.dateTime,
-        description: e.description ?? undefined,
-        location: e.location ?? undefined,
-        recurrence: e.recurrence ?? undefined,
-      };
-    });
+  for (const calendarId of calendarIds) {
+    if (!calendarId) continue;
+    try {
+      const response = await calendar.events.list({
+        calendarId,
+        timeMin,
+        timeMax,
+        singleEvents: true,
+        orderBy: 'startTime',
+      });
+      const items = response.data.items ?? [];
+      for (const e of items) {
+        if (e == null || e.id == null || seen.has(e.id)) continue;
+        seen.add(e.id);
+        const start = e.start?.dateTime ?? e.start?.date ?? '';
+        const end = e.end?.dateTime ?? e.end?.date ?? start;
+        allItems.push({
+          id: e.id,
+          title: e.summary ?? '(No title)',
+          start,
+          end,
+          allDay: !e.start?.dateTime,
+          description: e.description ?? undefined,
+          location: e.location ?? undefined,
+          recurrence: e.recurrence ?? undefined,
+        });
+      }
+    } catch (err) {
+      console.warn(`[googleCalendar] Failed to fetch calendar ${calendarId}:`, err);
+    }
+  }
+
+  allItems.sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+  return allItems;
 };
 
 /**

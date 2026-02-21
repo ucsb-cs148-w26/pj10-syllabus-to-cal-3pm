@@ -44,6 +44,7 @@ yarn-error.log*
 next-env.d.ts
 
 # project-specific: avoid adding large dirs (git add -A would freeze)
+/uploads
 code/uploader/node_modules/
 code/uploader/.next/
 code/uploader/uploads/

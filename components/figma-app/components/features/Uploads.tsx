@@ -310,8 +310,29 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   const [includeAssignments, setIncludeAssignments] = useState(true);
   const [includeExams, setIncludeExams] = useState(true);
 
-  const [selectedCalendarId, setSelectedCalendarId] = useState<string>('primary');
-  const [selectedCalendarSummary, setSelectedCalendarSummary] = useState<string>('Default calendar');
+  const CALENDAR_PREF_KEY = 'syllabus_calendar_selected';
+  const [selectedCalendarId, setSelectedCalendarId] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'primary';
+    try {
+      const saved = localStorage.getItem(CALENDAR_PREF_KEY);
+      if (saved) {
+        const { id, summary } = JSON.parse(saved);
+        if (id) return id;
+      }
+    } catch { /* ignore */ }
+    return 'primary';
+  });
+  const [selectedCalendarSummary, setSelectedCalendarSummary] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'Default calendar';
+    try {
+      const saved = localStorage.getItem(CALENDAR_PREF_KEY);
+      if (saved) {
+        const { id, summary } = JSON.parse(saved);
+        if (id) return summary ?? (id === 'primary' ? 'Default calendar' : id);
+      }
+    } catch { /* ignore */ }
+    return 'Default calendar';
+  });
 
   const accessToken = initialAccessToken;
   const hasEvents = events.length > 0;
@@ -350,6 +371,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     const token = url.searchParams.get('access_token');
     if (authSuccess === 'true' && token) {
       onAccessTokenChange(token);
+      setStep(3);
       url.searchParams.delete('auth_success');
       url.searchParams.delete('access_token');
       window.history.replaceState({}, '', url.toString());
@@ -929,6 +951,9 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                       onSelect={(id, summary) => {
                         setSelectedCalendarId(id);
                         setSelectedCalendarSummary(summary);
+                        try {
+                          localStorage.setItem(CALENDAR_PREF_KEY, JSON.stringify({ id, summary }));
+                        } catch { /* ignore */ }
                         if (hasSynced) {
                           setHasSynced(false);
                           setSyncBurst(false);
