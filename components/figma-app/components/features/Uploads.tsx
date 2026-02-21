@@ -650,7 +650,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
   const isSyncComplete = hasSynced && calendarStatus === 'ok';
 
-
+  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
   return (
     <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_5%,theme(colors.indigo.100),transparent_55%),radial-gradient(1000px_circle_at_80%_35%,theme(colors.violet.100),transparent_60%),linear-gradient(to_bottom,theme(colors.white),theme(colors.slate.50))] transition-all duration-700" />
@@ -830,6 +830,16 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                 >
                   Download CSV
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowRegenerateModal(true)}
+                  disabled={!pendingText || calendarStatus === 'loading'}
+                  className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >               
+                  Regenerate
+                </button>
+
                 <button
                   type="button"
                   onClick={() => setStep(3)}
@@ -1071,6 +1081,53 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
           </div>
         </div>
       )}
+    
+      {showRegenerateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">
+              Regenerate Events
+            </h3>
+
+            <div className="space-y-3 mb-6">
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" className="rounded border-gray-300" />
+                Lectures
+              </label>
+
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" className="rounded border-gray-300" />
+                Assignments
+              </label>
+
+              <label className="flex items-center gap-2 text-sm text-gray-700">
+                <input type="checkbox" className="rounded border-gray-300" />
+                Exams
+              </label>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setShowRegenerateModal(false)}
+                className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowRegenerateModal(false);
+                  void processPendingText();
+                }}
+                className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
+              >
+                Regenerate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    
     </div>
   );
 }
