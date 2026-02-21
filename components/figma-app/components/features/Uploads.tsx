@@ -15,7 +15,6 @@ import PdfUpload from '@/components/PdfUpload';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { CalendarEvent } from '@/lib/googleCalendar';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface UploadsProps {
   initialAccessToken: string | null;
@@ -32,7 +31,6 @@ interface GoogleCalendarMeta {
   backgroundColor: string;
 }
 
-// ─── StepRail ─────────────────────────────────────────────────────────────────
 
 function StepRail({
   step,
@@ -119,7 +117,6 @@ function StepRail({
   );
 }
 
-// ─── CalendarPicker ───────────────────────────────────────────────────────────
 
 function CalendarPicker({
   accessToken,
@@ -135,7 +132,6 @@ function CalendarPicker({
   const [fetchStatus, setFetchStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return;
     function handleClick(e: MouseEvent) {
@@ -147,7 +143,6 @@ function CalendarPicker({
     return () => document.removeEventListener('mousedown', handleClick);
   }, [open]);
 
-  // Fetch calendars once when first opened
   async function fetchCalendars() {
     if (fetchStatus === 'ok' || fetchStatus === 'loading') return;
     setFetchStatus('loading');
@@ -275,7 +270,6 @@ function CalendarPicker({
   );
 }
 
-// ─── Uploads ──────────────────────────────────────────────────────────────────
 
 export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProps) {
   const [step, setStep] = useState<UploadStep>(1);
@@ -298,7 +292,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   const [includeAssignments, setIncludeAssignments] = useState(true);
   const [includeExams, setIncludeExams] = useState(true);
 
-  // ── Calendar selection state ──
   const [selectedCalendarId, setSelectedCalendarId] = useState<string>('primary');
   const [selectedCalendarSummary, setSelectedCalendarSummary] = useState<string>('Default calendar');
 
@@ -341,7 +334,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     uploadedFilesRef.current = uploadedFiles;
   }, [uploadedFiles]);
 
-  // ── Button style tokens ──
   const connectSyncSizeClass = 'h-10 w-32 px-0';
 
   const syncButtonClassName =
@@ -364,7 +356,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   const newUploadNeutral = 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50';
   const newUploadPurple = 'bg-indigo-600 text-white hover:bg-indigo-700';
 
-  // ── Handlers ──
 
   function handleSyllabusText(rawText: string, uploaded?: string[] | UploadedFileMeta[]) {
     setPendingText(rawText);
@@ -489,7 +480,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
         body: JSON.stringify({
           accessToken: token,
           events,
-          // Pass the selected calendar ID so events go to the right calendar
           calendarId: selectedCalendarId,
         }),
       });
@@ -593,7 +583,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     setStep(2);
   }
 
-  // ── Derived display values ──
 
   const statusText = useMemo(() => {
     if (calendarStatus === 'error' && calendarMessage) return calendarMessage;
@@ -611,7 +600,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
   const isSyncComplete = hasSynced && calendarStatus === 'ok';
 
-  // ── Render ──
 
   return (
     <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -912,7 +900,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                       onSelect={(id, summary) => {
                         setSelectedCalendarId(id);
                         setSelectedCalendarSummary(summary);
-                        // Reset sync state if user changes calendar after a sync
                         if (hasSynced) {
                           setHasSynced(false);
                           setSyncBurst(false);

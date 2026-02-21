@@ -17,7 +17,6 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Uploads } from '@/components/figma-app/components/features/Uploads';
 
-// ─── Constants ────────────────────────────────────────────────────────────────
 
 const MOCK_ACCESS_TOKEN = 'mock-access-token';
 
@@ -32,15 +31,9 @@ const MOCK_EVENTS = [
   { title: 'Final Project Due', start: '2025-04-30T23:59:00Z', allDay: false },
 ];
 
-// ─── Setup ────────────────────────────────────────────────────────────────────
 
-/**
- * Navigate the real Uploads component to step 3 by injecting events into
- * localStorage and clicking through the step rail. This mirrors actual user
- * flow without touching internals.
- */
+
 async function renderAtSyncStep(accessToken: string | null = MOCK_ACCESS_TOKEN) {
-  // Pre-seed extracted events so "Review" and "Sync" steps are reachable.
   localStorage.setItem('calendarEvents', JSON.stringify(MOCK_EVENTS));
 
   const onAccessTokenChange = jest.fn();
@@ -53,14 +46,9 @@ async function renderAtSyncStep(accessToken: string | null = MOCK_ACCESS_TOKEN) 
     />
   );
 
-  // Click the "Sync" step in the step rail to jump to step 3.
-  // The button text includes the step number so we match "3 Sync" specifically.
   const syncStep = screen.getByRole('button', { name: /3.*sync/i });
   await user.click(syncStep);
 
-  // Confirm we are on the sync stage.
-  // Use getByRole heading to avoid matching the subtitle paragraph and step
-  // rail hint text which also contain "sync to google calendar".
   await waitFor(() => {
     expect(
       screen.getByRole('heading', { name: /sync to google calendar/i })
@@ -70,9 +58,7 @@ async function renderAtSyncStep(accessToken: string | null = MOCK_ACCESS_TOKEN) 
   return { user, onAccessTokenChange };
 }
 
-// ─── Fetch mock helpers ───────────────────────────────────────────────────────
 
-/** Mock fetch to return the calendar list for GET /api/calendar/calendars */
 function mockFetchCalendars(overrides?: Partial<typeof MOCK_CALENDARS[0]>[]) {
   const calendars = overrides
     ? MOCK_CALENDARS.map((c, i) => ({ ...c, ...(overrides[i] ?? {}) }))
@@ -84,7 +70,6 @@ function mockFetchCalendars(overrides?: Partial<typeof MOCK_CALENDARS[0]>[]) {
   });
 }
 
-/** Mock fetch to return a successful sync response for POST /api/calendar/events */
 function mockFetchSyncSuccess(count = MOCK_EVENTS.length) {
   return jest.fn().mockResolvedValueOnce({
     ok: true,
@@ -97,10 +82,6 @@ function mockFetchSyncSuccess(count = MOCK_EVENTS.length) {
   });
 }
 
-/**
- * Build a fetch mock that handles multiple sequential requests.
- * Requests are matched in the order they are added.
- */
 function buildMultiFetch(...handlers: Array<(url: string, init?: RequestInit) => Promise<Response>>) {
   let callIndex = 0;
   return jest.fn().mockImplementation((url: string, init?: RequestInit) => {
@@ -110,9 +91,6 @@ function buildMultiFetch(...handlers: Array<(url: string, init?: RequestInit) =>
   });
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Integration tests
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe('CalendarPicker — integration tests (Sync stage)', () => {
   beforeEach(() => {
@@ -124,14 +102,12 @@ describe('CalendarPicker — integration tests (Sync stage)', () => {
     localStorage.clear();
   });
 
-  // ── Scenario 2 ──────────────────────────────────────────────────────────────
 
   describe('Scenario 2: User presses the calendar choice button', () => {
     it('renders the calendar choice button in the sync panel when connected', async () => {
       global.fetch = jest.fn(); // no calls expected yet
       const { user } = await renderAtSyncStep();
 
-      // The picker trigger should be visible when Google is connected.
       expect(screen.getByRole('button', { name: /default calendar/i })).toBeInTheDocument();
     });
 
@@ -170,7 +146,6 @@ describe('CalendarPicker — integration tests (Sync stage)', () => {
     });
 
     it('shows a loading state while the calendar list is being fetched', async () => {
-      // Return a promise that never resolves to hold the loading state.
       global.fetch = jest.fn().mockReturnValueOnce(new Promise(() => {}));
       const { user } = await renderAtSyncStep();
 
@@ -199,13 +174,11 @@ describe('CalendarPicker — integration tests (Sync stage)', () => {
 
       const trigger = screen.getByRole('button', { name: /default calendar/i });
 
-      // Open → close → open
       await user.click(trigger);
       await waitFor(() => screen.getByRole('listbox'));
-      await user.click(trigger); // close
-      await user.click(trigger); // re-open
+      await user.click(trigger);
+      await user.click(trigger);
 
-      // fetch should have only been called once
       expect(global.fetch).toHaveBeenCalledTimes(1);
     });
 
@@ -225,12 +198,10 @@ describe('CalendarPicker — integration tests (Sync stage)', () => {
       global.fetch = jest.fn();
       await renderAtSyncStep(null); // no access token
 
-      // When not connected, the picker trigger should not be interactive.
       expect(screen.queryByRole('button', { name: /default calendar/i })).not.toBeInTheDocument();
     });
   });
 
-  // ── Scenario 1 ──────────────────────────────────────────────────────────────
 
   describe('Scenario 1: User does not select a calendar and presses Sync', () => {
     it('syncs to the primary calendar by default when no selection is made', async () => {
@@ -262,7 +233,6 @@ describe('CalendarPicker — integration tests (Sync stage)', () => {
     });
   });
 
-  // ── Scenario 3 ──────────────────────────────────────────────────────────────
 
   describe('Scenario 3: User selects the Spring calendar and presses Sync', () => {
     it('updates the trigger label to show Spring after selection', async () => {
@@ -278,7 +248,6 @@ describe('CalendarPicker — integration tests (Sync stage)', () => {
     });
 
     it('syncs to the Spring calendar when it has been selected', async () => {
-      // First fetch → calendar list; second fetch → sync success
       global.fetch = buildMultiFetch(
         async () => ({
           ok: true,
@@ -292,12 +261,10 @@ describe('CalendarPicker — integration tests (Sync stage)', () => {
 
       const { user } = await renderAtSyncStep();
 
-      // Open picker and choose Spring
       await user.click(screen.getByRole('button', { name: /default calendar/i }));
       await waitFor(() => screen.getByRole('listbox'));
       await user.click(screen.getByRole('option', { name: /spring/i }));
 
-      // Press Sync
       await user.click(screen.getByRole('button', { name: /^sync$/i }));
 
       await waitFor(() => {

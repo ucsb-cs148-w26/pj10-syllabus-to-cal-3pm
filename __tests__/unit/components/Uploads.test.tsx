@@ -3,7 +3,6 @@ import userEvent from "@testing-library/user-event";
 import { Uploads } from "../../../components/figma-app/components/features/Uploads";
 import { describe, test, expect, beforeEach } from "@jest/globals";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const MOCK_EVENTS = [
   { title: "Midterm Exam", start: "2025-03-15T10:00:00Z", allDay: false },
@@ -25,7 +24,6 @@ function seedEvents() {
   localStorage.setItem("calendarEvents", JSON.stringify(MOCK_EVENTS));
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 
 describe("Uploads unit tests", () => {
   beforeEach(() => {
@@ -35,7 +33,6 @@ describe("Uploads unit tests", () => {
     global.fetch = jest.fn();
   });
 
-  // ── Step 1: Initial render ─────────────────────────────────────────────────
 
   describe("Step 1 – initial render", () => {
     test("renders the Upload & Sync heading", () => {
@@ -132,7 +129,6 @@ describe("Uploads unit tests", () => {
     });
   });
 
-  // ── Step 1: Filter checkboxes ──────────────────────────────────────────────
 
   describe("Step 1 – filter checkboxes", () => {
     test("clicking Lectures checkbox unchecks it", async () => {
@@ -166,7 +162,6 @@ describe("Uploads unit tests", () => {
     });
   });
 
-  // ── Step 1 → Step 2: Navigation ────────────────────────────────────────────
 
   describe("Step 1 → Step 2: navigation", () => {
     test("clicking Review Previous navigates to step 2 when events exist", async () => {
@@ -188,11 +183,9 @@ describe("Uploads unit tests", () => {
     });
   });
 
-  // ── Step 1 → processing: Process button ───────────────────────────────────
 
   describe("Step 1 – Process button", () => {
     test("shows processing spinner after clicking Process", async () => {
-      // Hold the fetch in-flight so we can observe the loading state
       let resolveGemini!: (v: unknown) => void;
       global.fetch = jest.fn().mockReturnValueOnce(
         new Promise((res) => {
@@ -202,7 +195,6 @@ describe("Uploads unit tests", () => {
 
       renderUploads();
 
-      // Simulate PdfUpload emitting extracted text via the file input
       const fileInput = document.querySelector(
         "input[type='file']"
       ) as HTMLInputElement;
@@ -234,7 +226,6 @@ describe("Uploads unit tests", () => {
       seedEvents();
       renderUploads();
 
-      // Navigate to step 2 directly via step rail (events already seeded)
       await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
 
       await waitFor(() => {
@@ -251,14 +242,12 @@ describe("Uploads unit tests", () => {
       });
 
       renderUploads();
-      // Component stays on step 1 — upload heading should still be visible
       expect(
         screen.getByRole("heading", { name: /upload syllabus/i })
       ).toBeInTheDocument();
     });
   });
 
-  // ── Step 2: Review panel ───────────────────────────────────────────────────
 
   describe("Step 2 – Review panel", () => {
     beforeEach(() => {
@@ -349,7 +338,6 @@ describe("Uploads unit tests", () => {
     });
   });
 
-  // ── Step 3: Sync panel ─────────────────────────────────────────────────────
 
   describe("Step 3 – Sync panel", () => {
     beforeEach(() => {
@@ -392,7 +380,7 @@ describe("Uploads unit tests", () => {
       });
     });
 
-    test("CalendarPicker trigger is shown when connected", async () => {
+    test("Calendar selector trigger is shown when connected", async () => {
       renderUploads("mock-token");
       await userEvent.click(screen.getByRole("button", { name: /3.*sync/i }));
       await waitFor(() => {
@@ -402,7 +390,7 @@ describe("Uploads unit tests", () => {
       });
     });
 
-    test("CalendarPicker trigger is NOT shown when not connected", async () => {
+    test("Calendar selector trigger is NOT shown when not connected", async () => {
       renderUploads(null);
       await userEvent.click(screen.getByRole("button", { name: /3.*sync/i }));
       await waitFor(() => {
@@ -441,8 +429,6 @@ describe("Uploads unit tests", () => {
 
       await userEvent.click(screen.getByRole("button", { name: /^sync$/i }));
 
-      // On error the component resets hasSynced to false so the error banner
-      // is not shown — the user is returned to the ready-to-sync state.
       await waitFor(() => {
         expect(
           screen.getByRole("heading", { name: /sync to google calendar/i })
@@ -487,7 +473,6 @@ describe("Uploads unit tests", () => {
     });
   });
 
-  // ── Full flow ──────────────────────────────────────────────────────────────
 
   describe("Full flow", () => {
     test("New Upload button resets to step 1 and clears localStorage", async () => {
