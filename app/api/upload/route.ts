@@ -1,20 +1,41 @@
 import { NextRequest, NextResponse } from "next/server";
 import { list, put, del } from "@vercel/blob";
-import { sanitizeFilename } from "@/lib/fileValidation";
+import { sanitizeFilename, validateUploadFile } from "@/lib/fileValidation";
+
+type UploadedFileMeta = { filename: string; url: string };
+export const runtime = "nodejs";
+
 
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const files = formData.getAll("file") as File[];
 
-  const uploadedFiles: { filename: string; url: string }[] = [];
+  if (!files || files.length === 0) {
+    return NextResponse.json(
+      { success: false, error: "No files provided" },
+      { status: 400 }
+    );
+  }
+
+  const uploadedFiles: UploadedFileMeta[] = [];
 
   for (const file of files) {
-    const safeName = sanitizeFilename(file.name);
-    const uniqueName = `${Date.now()}-${safeName}`;
+    // ✅ Validate file (size + extension + mime)
+    const v = validateUploadFile(file);
+    if (!v.ok) {
+      return NextResponse.json(
+        { success: false, error: v.error },
+        { status: 400 }
+      );
+    }
+
+    // ✅ Use safe name from validator
+    const uniqueName = `${Date.now()}-${v.safeName}`;
 
     const blob = await put(uniqueName, file, {
       access: "public",
-      contentType: file.type,
+      // Some browsers may not provide file.type reliably; omit if empty.
+      contentType: file.type || undefined,
     });
 
     uploadedFiles.push({
@@ -62,7 +83,7 @@ export async function GET(_request: NextRequest) {
     console.error("Error listing files:", error);
     return NextResponse.json(
       { success: false, error: "Failed to list files" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
@@ -75,7 +96,9 @@ export async function DELETE(request: NextRequest) {
     const deleteAll = url.searchParams.get("all") === "true";
     if (deleteAll) {
       const limitRaw = url.searchParams.get("limit");
-      const limit = limitRaw ? Math.max(1, Math.min(1000, Number(limitRaw))) : undefined;
+      const limit = limitRaw
+        ? Math.max(1, Math.min(1000, Number(limitRaw)))
+        : undefined;
 
       const { blobs } = await list();
       const targets = limit ? blobs.slice(0, limit) : blobs;
@@ -107,7 +130,7 @@ export async function DELETE(request: NextRequest) {
     if (!filenameRaw) {
       return NextResponse.json(
         { success: false, error: "Missing filename" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -121,7 +144,7 @@ export async function DELETE(request: NextRequest) {
     console.error("Error deleting file:", error);
     return NextResponse.json(
       { success: false, error: "Failed to delete file" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

@@ -54,7 +54,8 @@ export const getTokenFromCode = async (code: string) => {
 
 export const createCalendarEvents = async (
   accessToken: string,
-  events: CalendarEvent[]
+  events: CalendarEvent[],
+  calendarId: string = 'primary',
 ): Promise<string[]> => {
   const oauth2Client = new google.auth.OAuth2();
   oauth2Client.setCredentials({ access_token: accessToken });
@@ -87,7 +88,7 @@ export const createCalendarEvents = async (
     }
 
     const response = await calendar.events.insert({
-      calendarId: 'primary',
+      calendarId,
       requestBody: calendarEvent,
     });
 

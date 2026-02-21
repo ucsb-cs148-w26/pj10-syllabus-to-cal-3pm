@@ -11,8 +11,6 @@ We use the following testing libraries:
 | **@testing-library/react** | ^16.3.2 | Renders React components and provides DOM query utilities |
 | **@testing-library/jest-dom** | ^6.9.1 | Custom matchers like `toBeInTheDocument()` |
 | **@testing-library/user-event** | ^14.6.1 | Simulates realistic user interactions (clicks, typing) |
-| **@testing-library/dom** | ^10.4.1 | Core DOM testing utilities used by React Testing Library |
-| **ts-jest** | ^29.4.6 | TypeScript preprocessor so Jest can run `.ts`/`.tsx` files |
 | **ts-node** | ^10.9.2 | Allows Jest config to be written in TypeScript (`jest.config.ts`) |
 | **@types/jest** | ^30.0.0 | TypeScript type definitions for Jest globals |
 
@@ -25,36 +23,44 @@ We use the following testing libraries:
 
 ### Configuration files
 
-- **`cs148-app/jest.config.ts`** -- Uses `next/jest` to auto-handle Next.js transforms (JSX, CSS modules, path aliases). Sets `jsdom` as the test environment and loads the setup file.
-- **`cs148-app/jest.setup.js`** -- Imports `@testing-library/jest-dom` so custom DOM matchers are available in every test.
+- **`jest.config.ts`** -- Uses `next/jest` to auto-handle Next.js transforms (JSX, CSS modules, path aliases). Sets `jsdom` as the test environment and loads the setup file.
+- **`jest.setup.js`** -- Imports `@testing-library/jest-dom` so custom DOM matchers are available in every test.
 
-### NPM scripts (in `cs148-app/package.json`)
+### NPM scripts (in `package.json`)
 
 | Command | What it does |
 |---|---|
 | `npm test` | Run the full Jest test suite |
-| `npm test -- --watch` | Re-run tests on file changes |
-| `npm test -- --coverage` | Run tests and generate a coverage report |
 
-## Unit Tests Implemented
 
-### `Uploads.test.tsx`
+## Integration Tests Implemented
 
-**File:** `cs148-app/components/figma-app/components/features/__tests__/Uploads.test.tsx`
-**Component under test:** `Uploads` -- the main uploader UI for uploading syllabi PDFs, reviewing extracted events, and syncing to Google Calendar.
+### `CalendarSelector.integration.test.tsx`
 
-All tests mock `localStorage` to isolate state between runs.
+**File:** `__tests__/integration/CalendarSelector.integration.test.tsx`
+**Main component under test:** `CalendarPicker` -- a calendar selector UI for selecting which calendar the user wants to upload the extracted events to in Google Calendar.
+
+Tests draw from a set of Mock calendar data and all mock calls are reset before each test is ran.
+
+
+
 
 | # | Test Name | What It Validates |
 |---|---|---|
-| 1 | Render upload page default view | The component renders its heading ("Upload Your Syllabuses") and empty-state prompt ("Upload your first syllabus") on initial load. |
-| 2 | Seed mock documents if local storage is empty | When localStorage has no saved documents, clicking the documents button seeds default sample files (CS-101, MATH-201, ENG-150) and persists them to localStorage. |
-| 3 | Load documents from localStorage when present | Pre-populated localStorage documents are loaded and displayed correctly on render. |
-| 4 | Uploading PDF adds it to file list & saves to localStorage | Simulating a file input change with a PDF file adds the file to the visible list and persists it in localStorage. |
-| 5 | Deleting document removes it from user view and localStorage | Clicking the delete button on a specific document removes it from the DOM and from localStorage while leaving other documents intact. |
-| 6 | Show correct message when all files are deleted | After deleting every document, the empty-state message ("No documents uploaded yet") is displayed. |
-| 7 | Do nothing if upload event had no files | A file input change event with `null` files does not crash or alter the existing document list. |
-| 8 | Do nothing if upload event has empty file list | A file input change event with an empty file list does not crash or alter the existing document list. |
+| 1 | renders the calendar choice button in the sync panel when connected | The CalendarPicker trigger button labelled "Default calendar" is visible in the Sync panel when a Google access token is present.
+| 2 | fetches the real calendar list from /api/calendar/calendars when opened | Clicking the trigger calls /api/calendar/calendars with the correct Authorization: Bearer header.
+| 3 | renders all calendars returned by the API inside the dropdown | After opening, the listbox contains all calendars returned by the API (Personal, Spring, Work).
+| 4 | shows a loading state while the calendar list is being fetched | While the fetch is in-flight, a "Loading calendars…" indicator is visible inside the dropdown.
+| 5 | shows an error state if the calendar list fetch fails | When the API returns a non-OK response, "Could not load calendars" is shown inside the dropdown.
+| 6 | only fetches the calendar list once even if the picker is opened multiple times | Opening, closing, and reopening the picker only triggers a single fetch call.
+| 7 | closes the dropdown when the trigger is clicked again | Clicking the open trigger again removes the listbox from the DOM.
+| 8 | is not shown when the user is not connected to Google | When no access token is provided, the CalendarPicker trigger is not rendered at all.
+| 9 | syncs to the primary calendar by default when no selection is made | Clicking Sync without choosing a calendar sends calendarId: "primary" in the POST body.
+| 10 | shows a success message after syncing to the default calendar | After a successful sync to the default calendar, "Sync Complete" appears in the UI.
+| 11 | updates the trigger label to show Spring after selection | After selecting Spring from the dropdown, the trigger button label updates to "Spring".
+| 12 | syncs to the Spring calendar when it has been selected | After selecting Spring and clicking Sync, the POST body contains calendarId: "spring-cal-id".
+| 13 | does not use "primary" as the calendarId when Spring is selected | After selecting Spring, the POST body does not contain calendarId: "primary".
+| 14 | shows a sync-complete message after syncing to the Spring calendar | After syncing to Spring, "Sync Complete" appears in the UI.
 
 ## How to Run Tests
 
@@ -62,19 +68,13 @@ All tests mock `localStorage` to isolate state between runs.
 # 1. Install dependencies
 npm i
 
-# 2. Navigate to the app directory
-cd cs148-app
+# 2. In project root directory
 
-# 3. Run all unit tests
+# 3. Run all tests
 npm test
-
-# 4. Run with coverage report
-npm test -- --coverage
 ```
 
 ## Completion Criteria
 
 - All Jest tests pass locally
-- Coverage runs successfully
-- Coverage (branch, lines, statements, etc.) reaches 100% threshold for `Uploads.tsx`
 
