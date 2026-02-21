@@ -121,10 +121,12 @@ function StepRail({
 function CalendarPicker({
   accessToken,
   selectedCalendarId,
+  selectedCalendarSummary,
   onSelect,
 }: {
   accessToken: string;
   selectedCalendarId: string;
+  selectedCalendarSummary: string,
   onSelect: (id: string, summary: string) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -168,9 +170,7 @@ function CalendarPicker({
   const selectedCalendar = calendars.find((c) => c.id === selectedCalendarId);
   const displayLabel = selectedCalendar
     ? selectedCalendar.summary
-    : selectedCalendarId === 'primary'
-      ? 'Default calendar'
-      : 'Select calendar';
+    : selectedCalendarSummary;
 
   const displayColor = selectedCalendar?.backgroundColor ?? '#4285f4';
 
@@ -897,6 +897,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                     <CalendarPicker
                       accessToken={accessToken!}
                       selectedCalendarId={selectedCalendarId}
+                      selectedCalendarSummary={selectedCalendarSummary}
                       onSelect={(id, summary) => {
                         setSelectedCalendarId(id);
                         setSelectedCalendarSummary(summary);
