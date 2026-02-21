@@ -78,3 +78,39 @@ npm test
 
 - All Jest tests pass locally
 
+## Implementation of Unit Tests
+The main focus of the unit tests were to test the calendar selector component where we ensure that the output was correct in different user scenarios. Using the `jest` testing library that we have used for our project, we implemented unit tests that went alongside the integration test (as detailed above) to cover the correctness of the component in its entirety - by itself and in use with other parts of our app. 
+
+Some parts of the code:
+```
+describe('Scenario 3: User selects the Spring calendar', () => {
+  it('calls onSelect with the correct id and name when a calendar is clicked', async () => {
+    const onSelect = jest.fn();
+    render(<TestableCalendarPicker {...BASE_PROPS} onSelect={onSelect} />);
+    await userEvent.click(screen.getByTestId('calendar-picker-trigger'));
+
+    await userEvent.click(screen.getByTestId('calendar-option-spring-cal-id'));
+
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onSelect).toHaveBeenCalledWith('spring-cal-id', 'Spring');
+  });
+
+  it('closes the dropdown after a calendar is selected', async () => {
+    render(<TestableCalendarPicker {...BASE_PROPS} />);
+    await userEvent.click(screen.getByTestId('calendar-picker-trigger'));
+    await userEvent.click(screen.getByTestId('calendar-option-spring-cal-id'));
+
+    expect(screen.queryByTestId('calendar-dropdown')).not.toBeInTheDocument();
+  });
+```
+
+In this code snippet, the unit tests cover individual and specific parts that work for the calendar selector. Separating them into small unit tests reduces the risk of bugs and we can clearly pinpoint where there are any errors with great ease.
+
+## Satisfying integration test requirement (Lab06 deliverable)
+As detailed above, we implemented an integration test that tested a new feature. We found this especially useful when integrating into the previous features. For specific implementation detail of the integration test, refer above.
+
+## Plans for unit tests going forward
+Very similarly to the current unit tests in our codebase, we will continue implementing them for components that will need to be integrated into working with other features. Because they are relatively simple to implement and return important/useful information about the correctness of the component, this saves us a lot of time for debugging especially in the integration step, where we deal with reviewing that all of the components are working smoothly and correctly together.
+
+## Plans for higher-level testing going forward
+Since integrating different features and components is a crucial part of our app, where we need to make sure that everything falls correctly into place, we plan to continue creating integration tests whenever we introduce new features and when current features are refined. However, we will also look to implement end-to-end tests - we are nearing the end of our project timeline, therefore, in order to release a successful product, it is essential to experience the full experience a user will have while interacting with our app.
