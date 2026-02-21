@@ -4,9 +4,10 @@ import { createCalendarEvents, CalendarEvent } from "@/lib/googleCalendar";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { accessToken, events } = body as {
+    const { accessToken, events, calendarId } = body as {
       accessToken?: string;
       events?: CalendarEvent[];
+      calendarId?: string;
     };
 
     if (!accessToken) {
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const eventIds = await createCalendarEvents(accessToken, events);
+    const eventIds = await createCalendarEvents(accessToken, events, calendarId ?? "primary");
 
     return NextResponse.json({
       success: true,

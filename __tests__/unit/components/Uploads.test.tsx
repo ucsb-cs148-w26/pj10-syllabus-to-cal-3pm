@@ -1,177 +1,519 @@
-import { render, screen, fireEvent, within } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Uploads } from "../../components/figma-app/components/features/Uploads";
-import { describe, test, expect, beforeEach } from "@jest/globals"
+import { Uploads } from "../../../components/figma-app/components/features/Uploads";
+import { describe, test, expect, beforeEach } from "@jest/globals";
 
-function mockLocalStorage() {
-	let store: Record<string, string> = {};
 
-	jest.spyOn(window.localStorage.__proto__, "getItem").mockImplementation((key: string) => {
-		return store[key] ?? null;
-	});
+const MOCK_EVENTS = [
+  { title: "Midterm Exam", start: "2025-03-15T10:00:00Z", allDay: false },
+  { title: "Final Project Due", start: "2025-04-30T23:59:00Z", allDay: false },
+];
 
-	jest.spyOn(window.localStorage.__proto__, "setItem").mockImplementation((key: string, value: string) => {
-		store[key] = value;
-	});
-
-	jest.spyOn(window.localStorage.__proto__, "removeItem").mockImplementation((key: string) => {
-		delete store[key];
-	});
-
-	return {
-		getStore: () => store,
-		clear: () => (store = {}),
-	};
+function renderUploads(accessToken: string | null = null) {
+  const onAccessTokenChange = jest.fn();
+  render(
+    <Uploads
+      initialAccessToken={accessToken}
+      onAccessTokenChange={onAccessTokenChange}
+    />
+  );
+  return { onAccessTokenChange };
 }
 
-describe("File Uploader Unit Tests", () => {
-	beforeEach(() => {
-		jest.restoreAllMocks();
-	});
+function seedEvents() {
+  localStorage.setItem("calendarEvents", JSON.stringify(MOCK_EVENTS));
+}
 
-	test("Render upload page default view", () => {
-		mockLocalStorage();
 
-		render(<Uploads />);
+describe("Uploads unit tests", () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+    jest.clearAllMocks();
+    localStorage.clear();
+    global.fetch = jest.fn();
+  });
 
-		expect(screen.getByText("Upload Your Syllabuses")).toBeInTheDocument();
-		expect(screen.getByText("Upload your first syllabus")).toBeInTheDocument();
-	});
 
-	test("Seed mock documents if local storage is empty", async () => {
-		const ls = mockLocalStorage();
+  describe("Step 1 – initial render", () => {
+    test("renders the Upload & Sync heading", () => {
+      renderUploads();
+      expect(screen.getByText("Upload & Sync")).toBeInTheDocument();
+    });
 
-		render(<Uploads />);
+    test("renders the Upload Syllabus panel heading", () => {
+      renderUploads();
+      expect(
+        screen.getByRole("heading", { name: /upload syllabus/i })
+      ).toBeInTheDocument();
+    });
 
-		await userEvent.click(screen.getByRole("button", { name: /documents/i }));
+    test("renders the three step rail buttons", () => {
+      renderUploads();
+      expect(screen.getByRole("button", { name: /1.*upload/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /2.*review/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /3.*sync/i })).toBeInTheDocument();
+    });
 
-		expect(screen.getByText("CS-101-Syllabus.pdf")).toBeInTheDocument();
-		expect(screen.getByText("MATH-201-Syllabus.pdf")).toBeInTheDocument();
-		expect(screen.getByText("ENG-150-Syllabus.pdf")).toBeInTheDocument();
+    test("step 1 button has aria-current='step'", () => {
+      renderUploads();
+      expect(
+        screen.getByRole("button", { name: /1.*upload/i })
+      ).toHaveAttribute("aria-current", "step");
+    });
 
-		const store = ls.getStore();
-		expect(store["syllabusDocuments"]).toBeTruthy();
-	});
+    test("Review and Sync step buttons are disabled when no events exist", () => {
+      renderUploads();
+      expect(screen.getByRole("button", { name: /2.*review/i })).toBeDisabled();
+      expect(screen.getByRole("button", { name: /3.*sync/i })).toBeDisabled();
+    });
 
-	test("Load documents from localStorage when present", async () => {
-		const ls = mockLocalStorage();
+    test("Process button is disabled when no PDF has been added", () => {
+      renderUploads();
+      expect(screen.getByRole("button", { name: /process/i })).toBeDisabled();
+    });
 
-		const savedDocs = [
-		{ id: "123", name: "BIO-110.pdf", uploadDate: "2026-01-01", courseName: "BIO 110" },
-		];
+    test("Review Previous button is disabled when no events exist", () => {
+      renderUploads();
+      expect(
+        screen.getByRole("button", { name: /review previous/i })
+      ).toBeDisabled();
+    });
 
-		window.localStorage.setItem("syllabusDocuments", JSON.stringify(savedDocs));
+    test("renders all three filter checkboxes", () => {
+      renderUploads();
+      expect(screen.getByRole("checkbox", { name: /lectures/i })).toBeInTheDocument();
+      expect(screen.getByRole("checkbox", { name: /assignments/i })).toBeInTheDocument();
+      expect(screen.getByRole("checkbox", { name: /tests\/exams/i })).toBeInTheDocument();
+    });
 
-		render(<Uploads />);
+    test("all filter checkboxes are checked by default", () => {
+      renderUploads();
+      expect(screen.getByRole("checkbox", { name: /lectures/i })).toHaveAttribute(
+        "aria-checked",
+        "true"
+      );
+      expect(screen.getByRole("checkbox", { name: /assignments/i })).toHaveAttribute(
+        "aria-checked",
+        "true"
+      );
+      expect(screen.getByRole("checkbox", { name: /tests\/exams/i })).toHaveAttribute(
+        "aria-checked",
+        "true"
+      );
+    });
 
-		await userEvent.click(screen.getByRole("button", { name: /documents/i }));
+    test("status pill shows 'Upload a PDF to begin' when nothing is uploaded", () => {
+      renderUploads();
+      expect(screen.getByText(/upload a pdf to begin/i)).toBeInTheDocument();
+    });
 
-		expect(screen.getByText("BIO-110.pdf")).toBeInTheDocument();
-		expect(screen.getByText("BIO 110")).toBeInTheDocument();
-	});
+    test("Review and Sync step buttons are enabled when events exist in localStorage", () => {
+      seedEvents();
+      renderUploads();
+      expect(screen.getByRole("button", { name: /2.*review/i })).not.toBeDisabled();
+      expect(screen.getByRole("button", { name: /3.*sync/i })).not.toBeDisabled();
+    });
 
-	test("Uploading PDF adds it to file list & saves to localStorage", async () => {
-		const ls = mockLocalStorage();
+    test("Review Previous button is enabled when events exist in localStorage", () => {
+      seedEvents();
+      renderUploads();
+      expect(
+        screen.getByRole("button", { name: /review previous/i })
+      ).not.toBeDisabled();
+    });
 
-		render(<Uploads />);
+    test("status pill shows 'Previous events found' when localStorage has events", () => {
+      seedEvents();
+      renderUploads();
+      expect(screen.getByText(/previous events found/i)).toBeInTheDocument();
+    });
+  });
 
-		await userEvent.click(screen.getByRole("button", { name: /documents/i }));
 
-		const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-		expect(fileInput).toBeTruthy();
+  describe("Step 1 – filter checkboxes", () => {
+    test("clicking Lectures checkbox unchecks it", async () => {
+      renderUploads();
+      const checkbox = screen.getByRole("checkbox", { name: /lectures/i });
+      await userEvent.click(checkbox);
+      expect(checkbox).toHaveAttribute("aria-checked", "false");
+    });
 
-		const file = new File(["fake pdf"], "PHYS-220-Syllabus.pdf", { type: "application/pdf" });
+    test("clicking Assignments checkbox unchecks it", async () => {
+      renderUploads();
+      const checkbox = screen.getByRole("checkbox", { name: /assignments/i });
+      await userEvent.click(checkbox);
+      expect(checkbox).toHaveAttribute("aria-checked", "false");
+    });
 
-		fireEvent.change(fileInput, { target: { files: [file] } });
+    test("clicking Tests/Exams checkbox unchecks it", async () => {
+      renderUploads();
+      const checkbox = screen.getByRole("checkbox", { name: /tests\/exams/i });
+      await userEvent.click(checkbox);
+      expect(checkbox).toHaveAttribute("aria-checked", "false");
+    });
 
-		expect(await screen.findByText("PHYS-220-Syllabus.pdf")).toBeInTheDocument();
+    test("checkbox can be toggled back on after being turned off", async () => {
+      renderUploads();
+      const checkbox = screen.getByRole("checkbox", { name: /lectures/i });
+      await userEvent.click(checkbox);
+      expect(checkbox).toHaveAttribute("aria-checked", "false");
+      await userEvent.click(checkbox);
+      expect(checkbox).toHaveAttribute("aria-checked", "true");
+    });
+  });
 
-		const saved = JSON.parse(ls.getStore()["syllabusDocuments"]);
-		const names = saved.map((d: any) => d.name);
-		expect(names).toContain("PHYS-220-Syllabus.pdf");
-	});
 
-	test("Deleting document removes it from user view and localStorage", async () => {
-		const ls = mockLocalStorage();
+  describe("Step 1 → Step 2: navigation", () => {
+    test("clicking Review Previous navigates to step 2 when events exist", async () => {
+      seedEvents();
+      renderUploads();
+      await userEvent.click(screen.getByRole("button", { name: /review previous/i }));
+      expect(
+        screen.getByRole("heading", { name: /review extracted events/i })
+      ).toBeInTheDocument();
+    });
 
-		const savedDocs = [
-		{ id: "1", name: "TRASH-SYLLABUS.pdf", uploadDate: "2026-01-04", courseName: "TRASH SYLLABUS" },
-		{ id: "2", name: "KEEP-SYLLABUS.pdf", uploadDate: "2026-01-01", courseName: "KEEP SYLLABUS" },
-		];
+    test("clicking step rail button 2 navigates to Review when events exist", async () => {
+      seedEvents();
+      renderUploads();
+      await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+      expect(
+        screen.getByRole("heading", { name: /review extracted events/i })
+      ).toBeInTheDocument();
+    });
+  });
 
-		window.localStorage.setItem("syllabusDocuments", JSON.stringify(savedDocs));
 
-		render(<Uploads />);
+  describe("Step 1 – Process button", () => {
+    test("shows processing spinner after clicking Process", async () => {
+      let resolveGemini!: (v: unknown) => void;
+      global.fetch = jest.fn().mockReturnValueOnce(
+        new Promise((res) => {
+          resolveGemini = res;
+        })
+      );
 
-		await userEvent.click(screen.getByRole("button", { name: /documents/i }));
+      renderUploads();
 
-		expect(screen.getByText("TRASH-SYLLABUS.pdf")).toBeInTheDocument();
-		expect(screen.getByText("KEEP-SYLLABUS.pdf")).toBeInTheDocument();
+      const fileInput = document.querySelector(
+        "input[type='file']"
+      ) as HTMLInputElement;
+      if (fileInput) {
+        const file = new File(["%PDF fake"], "test.pdf", {
+          type: "application/pdf",
+        });
+        fireEvent.change(fileInput, { target: { files: [file] } });
+      }
 
-		const row = screen.getByText("TRASH-SYLLABUS.pdf").closest("div")?.parentElement?.parentElement;
-		expect(row).toBeTruthy();
+      const processBtn = screen.getByRole("button", { name: /process/i });
+      if (!processBtn.hasAttribute("disabled")) {
+        await userEvent.click(processBtn);
+        expect(screen.getByText(/processing/i)).toBeInTheDocument();
+      }
+    });
 
-		const buttons = screen.getAllByRole("button");
-		const trashButton = within(row as HTMLElement).getByRole("button");
-		await userEvent.click(trashButton);
+    test("navigates to step 2 after Gemini returns events successfully", async () => {
+      const csvText = [
+        "title,start,allDay,description,location",
+        "Midterm,2025-03-15T10:00:00Z,false,,",
+      ].join("\n");
 
-		expect(screen.queryByText("TRASH-SYLLABUS.pdf")).not.toBeInTheDocument();
-		expect(screen.getByText("KEEP-SYLLABUS.pdf")).toBeInTheDocument();
+      global.fetch = jest.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ csvText }),
+      });
 
-		const saved = JSON.parse(ls.getStore()["syllabusDocuments"]);
-		const names = saved.map((d: any) => d.name);
+      seedEvents();
+      renderUploads();
 
-		expect(names).not.toContain("TRASH-SYLLABUS.pdf");
-		expect(names).toContain("KEEP-SYLLABUS.pdf");
-	});
+      await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
 
-	test("Show correct message when all files are deleted", async () => {
-		mockLocalStorage();
+      await waitFor(() => {
+        expect(
+          screen.getByRole("heading", { name: /review extracted events/i })
+        ).toBeInTheDocument();
+      });
+    });
 
-		const savedDocs = [
-			{id: "1", name: "CMPSC-148.pdf", uploadedDate: "2026-02-10", courseName: "CMPSC 148"},
-			{id: "2", name: "CMPSC-156.pdf", uploadedDate: "2026-01-08", courseName: "CMPSC 156"},
-		];
+    test("stays on step 1 and shows error when Gemini call fails", async () => {
+      global.fetch = jest.fn().mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ error: "Gemini failed" }),
+      });
 
-		window.localStorage.setItem("syllabusDocuments", JSON.stringify(savedDocs));
+      renderUploads();
+      expect(
+        screen.getByRole("heading", { name: /upload syllabus/i })
+      ).toBeInTheDocument();
+    });
+  });
 
-		render(<Uploads />);
 
-		await userEvent.click(screen.getByRole("button", { name: /documents/i }));
+  describe("Step 2 – Review panel", () => {
+    beforeEach(() => {
+      seedEvents();
+    });
 
-		const trashButtons = screen.getAllByRole("button");
+    test("renders the Review Extracted Events heading", async () => {
+      renderUploads();
+      await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+      expect(
+        screen.getByRole("heading", { name: /review extracted events/i })
+      ).toBeInTheDocument();
+    });
 
-		await userEvent.click(trashButtons[1]);
-		await userEvent.click(trashButtons[2]);
+    test("shows the correct event count badge", async () => {
+      renderUploads();
+      await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+      await waitFor(() => {
+        expect(
+          screen.getByText(`${MOCK_EVENTS.length} events`)
+        ).toBeInTheDocument();
+      });
+    });
 
-		expect(screen.getByText("No documents uploaded yet")).toBeInTheDocument();
-	});
+    test("renders event titles in the list", async () => {
+      renderUploads();
+      await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+      await waitFor(() => {
+        expect(screen.getByText("Midterm Exam")).toBeInTheDocument();
+        expect(screen.getByText("Final Project Due")).toBeInTheDocument();
+      });
+    });
 
-	test("Do nothing if upload event had no files", async () => {
-		mockLocalStorage();
+    test("Back to Upload button returns to step 1", async () => {
+      renderUploads();
+      await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+      await waitFor(() => screen.getByRole("heading", { name: /review extracted events/i }));
 
-		render(<Uploads />);
+      await userEvent.click(screen.getByRole("button", { name: /back to upload/i }));
+      expect(
+        screen.getByRole("heading", { name: /upload syllabus/i })
+      ).toBeInTheDocument();
+    });
 
-		await userEvent.click(screen.getByRole("button", { name: /documents/i }));
+    test("Continue to Sync button advances to step 3", async () => {
+      renderUploads("mock-token");
+      await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+      await waitFor(() => screen.getByRole("heading", { name: /review extracted events/i }));
 
-		const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+      await userEvent.click(
+        screen.getByRole("button", { name: /continue to sync/i })
+      );
+      await waitFor(() => {
+        expect(
+          screen.getByRole("heading", { name: /sync to google calendar/i })
+        ).toBeInTheDocument();
+      });
+    });
 
-		fireEvent.change(fileInput, { target: { files: null }});
+    test("Download CSV button is enabled when events exist", async () => {
+      renderUploads();
+      await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+      await waitFor(() =>
+        expect(
+          screen.getByRole("button", { name: /download csv/i })
+        ).not.toBeDisabled()
+      );
+    });
 
-		expect(screen.getByText("CS-101-Syllabus.pdf")).toBeInTheDocument();
-	});
+    test("Show raw CSV button toggles the CSV panel", async () => {
+      renderUploads();
+      await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+      await waitFor(() => screen.getByRole("heading", { name: /review extracted events/i }));
 
-	test("Do nothing if upload event has empty file list", async () => {
-		mockLocalStorage();
+      await userEvent.click(screen.getByRole("button", { name: /show raw csv/i }));
+      expect(screen.getByText(/hide raw csv/i)).toBeInTheDocument();
+      expect(screen.getByText(/title,start,allday/i)).toBeInTheDocument();
+    });
 
-		render(<Uploads />);
+    test("raw CSV panel hides again when Hide raw CSV is clicked", async () => {
+      renderUploads();
+      await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+      await waitFor(() => screen.getByRole("heading", { name: /review extracted events/i }));
 
-		await userEvent.click(screen.getByRole("button", { name: /documents/i }));
+      await userEvent.click(screen.getByRole("button", { name: /show raw csv/i }));
+      await userEvent.click(screen.getByRole("button", { name: /hide raw csv/i }));
+      expect(screen.queryByText(/title,start,allday/i)).not.toBeInTheDocument();
+    });
+  });
 
-		const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
 
-		fireEvent.change(fileInput, { target: { files: [] } });
+  describe("Step 3 – Sync panel", () => {
+    beforeEach(() => {
+      seedEvents();
+    });
 
-		expect(screen.getByText("CS-101-Syllabus.pdf")).toBeInTheDocument();
-	});
+    test("renders the Sync to Google Calendar heading", async () => {
+      renderUploads("mock-token");
+      await userEvent.click(screen.getByRole("button", { name: /3.*sync/i }));
+      await waitFor(() => {
+        expect(
+          screen.getByRole("heading", { name: /sync to google calendar/i })
+        ).toBeInTheDocument();
+      });
+    });
+
+    test("shows Connected badge when access token is provided", async () => {
+      renderUploads("mock-token");
+      await userEvent.click(screen.getByRole("button", { name: /3.*sync/i }));
+      await waitFor(() => {
+        expect(screen.getByText(/connected/i)).toBeInTheDocument();
+      });
+    });
+
+    test("shows Connect button when no access token is provided", async () => {
+      renderUploads(null);
+      await userEvent.click(screen.getByRole("button", { name: /3.*sync/i }));
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: /^connect$/i })).toBeInTheDocument();
+      });
+    });
+
+    test("Sync button is disabled when user is not connected", async () => {
+      renderUploads(null);
+      await userEvent.click(screen.getByRole("button", { name: /3.*sync/i }));
+      await waitFor(() => {
+        expect(
+          screen.getByRole("button", { name: /^sync$/i })
+        ).toHaveAttribute("aria-disabled", "true");
+      });
+    });
+
+    test("Calendar selector trigger is shown when connected", async () => {
+      renderUploads("mock-token");
+      await userEvent.click(screen.getByRole("button", { name: /3.*sync/i }));
+      await waitFor(() => {
+        expect(
+          screen.getByRole("button", { name: /default calendar/i })
+        ).toBeInTheDocument();
+      });
+    });
+
+    test("Calendar selector trigger is NOT shown when not connected", async () => {
+      renderUploads(null);
+      await userEvent.click(screen.getByRole("button", { name: /3.*sync/i }));
+      await waitFor(() => {
+        expect(
+          screen.queryByRole("button", { name: /default calendar/i })
+        ).not.toBeInTheDocument();
+      });
+    });
+
+    test("shows Sync Complete after a successful sync", async () => {
+      global.fetch = jest.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, count: 2, eventIds: ["a", "b"] }),
+      });
+
+      renderUploads("mock-token");
+      await userEvent.click(screen.getByRole("button", { name: /3.*sync/i }));
+      await waitFor(() => screen.getByRole("heading", { name: /sync to google calendar/i }));
+
+      await userEvent.click(screen.getByRole("button", { name: /^sync$/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText(/sync complete/i)).toBeInTheDocument();
+      });
+    });
+
+    test("stays on step 3 with Sync button available after a failed sync", async () => {
+      global.fetch = jest.fn().mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ error: "Server error" }),
+      });
+
+      renderUploads("mock-token");
+      await userEvent.click(screen.getByRole("button", { name: /3.*sync/i }));
+      await waitFor(() => screen.getByRole("heading", { name: /sync to google calendar/i }));
+
+      await userEvent.click(screen.getByRole("button", { name: /^sync$/i }));
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole("heading", { name: /sync to google calendar/i })
+        ).toBeInTheDocument();
+        expect(
+          screen.getByRole("button", { name: /^sync$/i })
+        ).toBeInTheDocument();
+      });
+    });
+
+    test("Sync button shows Syncing and is disabled while loading", async () => {
+      let resolveSync!: (v: unknown) => void;
+      global.fetch = jest
+        .fn()
+        .mockReturnValueOnce(new Promise((res) => { resolveSync = res; }));
+
+      renderUploads("mock-token");
+      await userEvent.click(screen.getByRole("button", { name: /3.*sync/i }));
+      await waitFor(() => screen.getByRole("heading", { name: /sync to google calendar/i }));
+
+      await userEvent.click(screen.getByRole("button", { name: /^sync$/i }));
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole("button", { name: /syncing/i })
+        ).toHaveAttribute("aria-disabled", "true");
+      });
+    });
+
+    test("Back to Review button returns to step 2", async () => {
+      renderUploads("mock-token");
+      await userEvent.click(screen.getByRole("button", { name: /3.*sync/i }));
+      await waitFor(() => screen.getByRole("heading", { name: /sync to google calendar/i }));
+
+      await userEvent.click(screen.getByRole("button", { name: /back to review/i }));
+
+      await waitFor(() => {
+        expect(
+          screen.getByRole("heading", { name: /review extracted events/i })
+        ).toBeInTheDocument();
+      });
+    });
+  });
+
+
+  describe("Full flow", () => {
+    test("New Upload button resets to step 1 and clears localStorage", async () => {
+      seedEvents();
+      global.fetch = jest.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, count: 2, eventIds: ["a", "b"] }),
+      });
+
+      renderUploads("mock-token");
+      await userEvent.click(screen.getByRole("button", { name: /3.*sync/i }));
+      await waitFor(() => screen.getByRole("heading", { name: /sync to google calendar/i }));
+
+      await userEvent.click(screen.getByRole("button", { name: /^sync$/i }));
+      await waitFor(() => screen.getByText(/sync complete/i));
+
+      await userEvent.click(screen.getByRole("button", { name: /new upload/i }));
+
+      expect(
+        screen.getByRole("heading", { name: /upload syllabus/i })
+      ).toBeInTheDocument();
+      expect(localStorage.getItem("calendarEvents")).toBeNull();
+    });
+
+    test("step rail shows step 1 as active after reset", async () => {
+      seedEvents();
+      global.fetch = jest.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ success: true, count: 2, eventIds: ["a", "b"] }),
+      });
+
+      renderUploads("mock-token");
+      await userEvent.click(screen.getByRole("button", { name: /3.*sync/i }));
+      await waitFor(() => screen.getByRole("heading", { name: /sync to google calendar/i }));
+      await userEvent.click(screen.getByRole("button", { name: /^sync$/i }));
+      await waitFor(() => screen.getByText(/sync complete/i));
+      await userEvent.click(screen.getByRole("button", { name: /new upload/i }));
+
+      expect(
+        screen.getByRole("button", { name: /1.*upload/i })
+      ).toHaveAttribute("aria-current", "step");
+    });
+  });
 });

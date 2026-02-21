@@ -1,10 +1,20 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FileText, FolderOpen, Sparkles, CheckCircle2, CalendarCheck, Trash2, User } from 'lucide-react';
+import {
+  FileText,
+  FolderOpen,
+  Sparkles,
+  CalendarCheck,
+  Trash2,
+  User,
+  ChevronDown,
+  Check,
+} from 'lucide-react';
 import PdfUpload from '@/components/PdfUpload';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { CalendarEvent } from '@/lib/googleCalendar';
+
 
 interface UploadsProps {
   initialAccessToken: string | null;
@@ -13,6 +23,14 @@ interface UploadsProps {
 
 type UploadStep = 1 | 2 | 3 | 'processing';
 type UploadedFileMeta = { filename: string; url: string };
+
+interface GoogleCalendarMeta {
+  id: string;
+  summary: string;
+  primary: boolean;
+  backgroundColor: string;
+}
+
 
 function StepRail({
   step,
@@ -38,8 +56,6 @@ function StepRail({
     return hasEvents;
   };
 
-  // Align the indicator to the exact centers of the 3 equal-width segments.
-  // 1: 1/6 (≈16.667%), 2: 1/2 (50%), 3: 5/6 (≈83.333%)
   const anchorPct = active === 1 ? 16.667 : active === 2 ? 50 : 83.333;
   const progressPct = isSynced ? 100 : step === 'processing' ? (16.667 + 50) / 2 : anchorPct;
 
@@ -101,13 +117,166 @@ function StepRail({
   );
 }
 
+
+function CalendarPicker({
+  accessToken,
+  selectedCalendarId,
+  selectedCalendarSummary,
+  onSelect,
+}: {
+  accessToken: string;
+  selectedCalendarId: string;
+  selectedCalendarSummary: string,
+  onSelect: (id: string, summary: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [calendars, setCalendars] = useState<GoogleCalendarMeta[]>([]);
+  const [fetchStatus, setFetchStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [open]);
+
+  async function fetchCalendars() {
+    if (fetchStatus === 'ok' || fetchStatus === 'loading') return;
+    setFetchStatus('loading');
+    try {
+      const res = await fetch('/api/calendar/calendars', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to fetch calendars');
+      setCalendars(data.calendars as GoogleCalendarMeta[]);
+      setFetchStatus('ok');
+    } catch (err) {
+      console.error('[CalendarPicker]', err);
+      setFetchStatus('error');
+    }
+  }
+
+  function handleToggle() {
+    if (!open) fetchCalendars();
+    setOpen((o) => !o);
+  }
+
+  const selectedCalendar = calendars.find((c) => c.id === selectedCalendarId);
+  const displayLabel = selectedCalendar
+    ? selectedCalendar.summary
+    : selectedCalendarSummary;
+
+  const displayColor = selectedCalendar?.backgroundColor ?? '#4285f4';
+
+  return (
+    <div ref={dropdownRef} className="relative">
+      {/* Trigger button */}
+      <button
+        type="button"
+        onClick={handleToggle}
+        className={
+          'inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ' +
+          (open
+            ? 'border-indigo-300 bg-indigo-50 text-indigo-800 shadow-sm'
+            : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300')
+        }
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        {/* Colour swatch */}
+        <span
+          className="h-2.5 w-2.5 shrink-0 rounded-full"
+          style={{ backgroundColor: displayColor }}
+        />
+        <span className="max-w-[160px] truncate">{displayLabel}</span>
+        <ChevronDown
+          className={
+            'h-3.5 w-3.5 shrink-0 text-gray-400 transition-transform duration-200 ' +
+            (open ? 'rotate-180' : '')
+          }
+        />
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <div className="absolute left-0 top-full z-50 mt-1.5 min-w-[220px] max-w-[300px] origin-top-left animate-[fadeInUp_150ms_ease-out] rounded-xl border border-gray-200 bg-white shadow-lg ring-1 ring-black/5">
+          {fetchStatus === 'loading' && (
+            <div className="flex items-center gap-2 px-4 py-3 text-xs text-gray-500">
+              <span className="h-3 w-3 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
+              Loading calendars…
+            </div>
+          )}
+
+          {fetchStatus === 'error' && (
+            <div className="px-4 py-3 text-xs text-rose-600">
+              Could not load calendars. Try again.
+            </div>
+          )}
+
+          {fetchStatus === 'ok' && calendars.length === 0 && (
+            <div className="px-4 py-3 text-xs text-gray-500">No writable calendars found.</div>
+          )}
+
+          {fetchStatus === 'ok' && calendars.length > 0 && (
+            <ul
+              role="listbox"
+              aria-label="Choose a Google Calendar"
+              className="max-h-60 overflow-y-auto py-1"
+            >
+              {calendars.map((cal) => {
+                const isSelected = cal.id === selectedCalendarId;
+                return (
+                  <li
+                    key={cal.id}
+                    role="option"
+                    aria-selected={isSelected}
+                    onClick={() => {
+                      onSelect(cal.id, cal.summary);
+                      setOpen(false);
+                    }}
+                    className={
+                      'flex cursor-pointer items-center gap-3 px-3 py-2.5 text-xs transition-colors ' +
+                      (isSelected
+                        ? 'bg-indigo-50 text-indigo-900'
+                        : 'text-gray-700 hover:bg-gray-50')
+                    }
+                  >
+                    {/* Colour dot */}
+                    <span
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: cal.backgroundColor }}
+                    />
+                    <span className="flex-1 truncate font-medium">
+                      {cal.summary}
+                      {cal.primary && (
+                        <span className="ml-1.5 text-[10px] font-normal text-gray-400">(primary)</span>
+                      )}
+                    </span>
+                    {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-indigo-600" />}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProps) {
   const [step, setStep] = useState<UploadStep>(1);
   const [showDocuments, setShowDocuments] = useState(false);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [calendarStatus, setCalendarStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [calendarMessage, setCalendarMessage] = useState('');
-  const [showCheck, setShowCheck] = useState(false);
   const [pendingText, setPendingText] = useState<string | null>(null);
   const [uploadPulse, setUploadPulse] = useState(false);
   const [lastProcessOk, setLastProcessOk] = useState(false);
@@ -117,21 +286,20 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   const deleteSnapshotsRef = useRef<Map<string, UploadedFileMeta[]>>(new Map());
 
   const [hasSynced, setHasSynced] = useState(false);
-
   const [syncBurst, setSyncBurst] = useState(false);
 
   const [includeLectures, setIncludeLectures] = useState(true);
   const [includeAssignments, setIncludeAssignments] = useState(true);
   const [includeExams, setIncludeExams] = useState(true);
 
+  const [selectedCalendarId, setSelectedCalendarId] = useState<string>('primary');
+  const [selectedCalendarSummary, setSelectedCalendarSummary] = useState<string>('Default calendar');
+
   const accessToken = initialAccessToken;
   const hasEvents = events.length > 0;
   const isGoogleConnected = !!accessToken;
-
-  // Use a single derived flag for connection UI so it never depends on other state.
   const showConnectedUi = isGoogleConnected;
 
-  // Reset any "synced" UI if connection is removed.
   useEffect(() => {
     if (!accessToken) {
       setHasSynced(false);
@@ -148,26 +316,15 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   }, []);
 
   useEffect(() => {
-    if (calendarStatus === 'ok') {
-      setShowCheck(true);
-      const timeout = setTimeout(() => setShowCheck(false), 800);
-      return () => clearTimeout(timeout);
-    }
-    setShowCheck(false);
-  }, [calendarStatus]);
-
-  useEffect(() => {
     if (typeof window === 'undefined') return;
     const url = new URL(window.location.href);
     const authSuccess = url.searchParams.get('auth_success');
     const token = url.searchParams.get('access_token');
-
     if (authSuccess === 'true' && token) {
       onAccessTokenChange(token);
       url.searchParams.delete('auth_success');
       url.searchParams.delete('access_token');
       window.history.replaceState({}, '', url.toString());
-      // Don't force step changes if user navigated away; just ensure token state is set.
       setCalendarStatus('idle');
       setCalendarMessage('');
     }
@@ -177,8 +334,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     uploadedFilesRef.current = uploadedFiles;
   }, [uploadedFiles]);
 
-  // Centralize button styles to keep colors consistent.
-  // Keep Sync and Connect/Connected EXACTLY the same dimensions.
   const connectSyncSizeClass = 'h-10 w-32 px-0';
 
   const syncButtonClassName =
@@ -187,7 +342,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     ' text-xs font-semibold shadow-sm leading-none ' +
     'transition-[background-color,color,border-color,box-shadow,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ';
 
-  // Match other stages' button sizing + tone
   const secondaryActionClassName =
     'inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors';
 
@@ -195,7 +349,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   const primaryPurpleDisabled = 'bg-indigo-400/60 text-white cursor-not-allowed opacity-60';
   const syncedWhite = 'bg-white text-gray-900 border border-gray-200 shadow-none';
 
-  // New Upload should match other stages (same size as Review buttons)
   const newUploadClassName =
     'inline-flex items-center justify-center rounded-lg px-3 py-2 text-xs font-semibold shadow-sm ' +
     'transition-[background-color,color,border-color,box-shadow,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ';
@@ -203,34 +356,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   const newUploadNeutral = 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50';
   const newUploadPurple = 'bg-indigo-600 text-white hover:bg-indigo-700';
 
-  const progress = useMemo(() => {
-    const hasUpload = !!pendingText || uploadedFiles.length > 0;
-
-    // Milestones:
-    // - 0: start
-    // - ~16.7%: right above "Upload" (step 1)
-    // - ~33.3%: between Upload and Review (processing)
-    // - ~50%: right above "Review" (step 2)
-    // - ~83.3%: right above "Sync" (step 3)
-    // - 100%: calendar sync success
-
-    // Only ever reach 100% after an actual successful sync attempt.
-    if (hasSynced && calendarStatus === 'ok') return 100;
-
-    // While processing, keep it between Upload and Review.
-    if (step === 'processing') return 33.333;
-
-    // After processing completes (events exist / we are in review), snap to Review.
-    if (step === 2 || hasEvents) return 50;
-
-    // If user is on Sync step, snap to Sync (but not complete until ok).
-    if (step === 3) return 83.333;
-
-    // If a PDF has been uploaded/recognized, snap to Upload.
-    if (hasUpload) return 16.667;
-
-    return 0;
-  }, [pendingText, uploadedFiles.length, step, hasEvents, hasSynced, calendarStatus]);
 
   function handleSyllabusText(rawText: string, uploaded?: string[] | UploadedFileMeta[]) {
     setPendingText(rawText);
@@ -248,27 +373,21 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       );
       setUploadedFiles((prev) => {
         const seen = new Set<string>();
-        const merged = [...items, ...prev].filter((f) => {
+        return [...items, ...prev].filter((f) => {
           if (seen.has(f.filename)) return false;
           seen.add(f.filename);
           return true;
         });
-        return merged;
       });
     }
   }
 
   async function handleDeleteUploadedFile(filename: string) {
-    // Capture a snapshot for THIS filename so rapid deletes don't clobber each other.
     deleteSnapshotsRef.current.set(filename, uploadedFilesRef.current);
-
-    // Optimistic remove (functional update to avoid stale closures)
     setUploadedFiles((prev) => prev.filter((f) => f.filename !== filename));
-
     try {
       const res = await fetch(`/api/upload?filename=${encodeURIComponent(filename)}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
-
       if (!res.ok || !data?.success) {
         const snapshot = deleteSnapshotsRef.current.get(filename);
         if (snapshot) setUploadedFiles(snapshot);
@@ -295,18 +414,13 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       const res = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          text: pendingText,
-          includeLectures,
-          includeAssignments,
-          includeExams,
-        }),
+        body: JSON.stringify({ text: pendingText, includeLectures, includeAssignments, includeExams }),
       });
 
       if (!res.ok) {
         await res.json().catch(() => ({}));
         setCalendarStatus('error');
-        setCalendarMessage(`Could not process file, try again.`);
+        setCalendarMessage('Could not process file, try again.');
         setStep(1);
         return;
       }
@@ -318,13 +432,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
         .slice(1)
         .map((line: string) => {
           const [title, start, allDayStr, description, location] = line.split(',');
-          return {
-            title,
-            start,
-            allDay: allDayStr?.toLowerCase() === 'true',
-            description,
-            location,
-          } as CalendarEvent;
+          return { title, start, allDay: allDayStr?.toLowerCase() === 'true', description, location } as CalendarEvent;
         });
 
       setEvents(eventsFromCsv);
@@ -369,12 +477,15 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       const res = await fetch('/api/calendar/events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessToken: token, events }),
+        body: JSON.stringify({
+          accessToken: token,
+          events,
+          calendarId: selectedCalendarId,
+        }),
       });
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        // Ensure synced visual state doesn't get stuck on failure.
         setHasSynced(false);
         setSyncBurst(false);
         setCalendarStatus('error');
@@ -383,9 +494,12 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       }
 
       const count = data.count ?? events.length;
+      const calLabel =
+        selectedCalendarId === 'primary' ? 'your default calendar' : `"${selectedCalendarSummary}"`;
       setCalendarStatus('ok');
       setCalendarMessage(
-        data.message || `All set — ${count} event${count === 1 ? '' : 's'} added to Google Calendar.`,
+        data.message ||
+          `All set — ${count} event${count === 1 ? '' : 's'} added to ${calLabel}.`,
       );
       setSyncBurst(true);
       window.setTimeout(() => setSyncBurst(false), 900);
@@ -429,11 +543,10 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     });
     const csv = [header, ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    const filename = `syllabus-events-${new Date().toISOString().slice(0, 10)}.csv`;
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = filename;
+    a.download = `syllabus-events-${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -451,13 +564,15 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     setUploadedFiles([]);
     setHasSynced(false);
     setSyncBurst(false);
+    setSelectedCalendarId('primary');
+    setSelectedCalendarSummary('Default calendar');
     localStorage.removeItem('calendarEvents');
   }
 
   function goToPreviousStep() {
     if (step === 2) setStep(1);
-    if (step === 3) setStep(2);
     if (step === 3) {
+      setStep(2);
       setHasSynced(false);
       setSyncBurst(false);
     }
@@ -467,6 +582,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     if (!canJumpToReviewFromUpload) return;
     setStep(2);
   }
+
 
   const statusText = useMemo(() => {
     if (calendarStatus === 'error' && calendarMessage) return calendarMessage;
@@ -484,10 +600,12 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
   const isSyncComplete = hasSynced && calendarStatus === 'ok';
 
+
   return (
     <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_5%,theme(colors.indigo.100),transparent_55%),radial-gradient(1000px_circle_at_80%_35%,theme(colors.violet.100),transparent_60%),linear-gradient(to_bottom,theme(colors.white),theme(colors.slate.50))] transition-all duration-700" />
 
+      {/* Header */}
       <div className="mb-8">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -497,7 +615,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
             </p>
           </div>
         </div>
-
         <StepRail
           step={step}
           hasEvents={hasEvents}
@@ -510,6 +627,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
         />
       </div>
 
+      {/* ── Step 1: Upload ── */}
       {step === 1 && (
         <div className="mb-8 transition-all duration-500 ease-out animate-[fadeInUp_260ms_ease-out]">
           <div className="bg-white/80 backdrop-blur rounded-2xl shadow-sm border border-gray-200/80 p-8">
@@ -526,10 +644,9 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
               onDeleteUploadedFile={handleDeleteUploadedFile}
             />
 
-            {/* Bottom section: info closer to uploader, filters below; actions on the right */}
             <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
               <div className="flex min-w-0 flex-col gap-3">
-                {/* Info pill: directly under uploader */}
+                {/* Status pill */}
                 <div
                   className={
                     'inline-flex w-fit max-w-full items-center gap-2 rounded-md border px-3 py-2 text-xs transition-colors ' +
@@ -553,27 +670,22 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                   <span className="truncate">{statusText}</span>
                 </div>
 
-                {/* Include: horizontal list (secondary) */}
+                {/* Filters */}
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="text-xs font-medium text-gray-500">Include:</span>
-
-                  <label className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white/70 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-white transition-colors cursor-pointer select-none">
-                    <Checkbox checked={includeLectures} onCheckedChange={(c) => setIncludeLectures(c === true)} />
-                    <span>Lectures</span>
-                  </label>
-
-                  <label className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white/70 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-white transition-colors cursor-pointer select-none">
-                    <Checkbox
-                      checked={includeAssignments}
-                      onCheckedChange={(c) => setIncludeAssignments(c === true)}
-                    />
-                    <span>Assignments</span>
-                  </label>
-
-                  <label className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white/70 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-white transition-colors cursor-pointer select-none">
-                    <Checkbox checked={includeExams} onCheckedChange={(c) => setIncludeExams(c === true)} />
-                    <span>Tests/Exams</span>
-                  </label>
+                  {[
+                    { label: 'Lectures', checked: includeLectures, set: setIncludeLectures },
+                    { label: 'Assignments', checked: includeAssignments, set: setIncludeAssignments },
+                    { label: 'Tests/Exams', checked: includeExams, set: setIncludeExams },
+                  ].map(({ label, checked, set }) => (
+                    <label
+                      key={label}
+                      className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white/70 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-white transition-colors cursor-pointer select-none"
+                    >
+                      <Checkbox checked={checked} onCheckedChange={(c) => set(c === true)} />
+                      <span>{label}</span>
+                    </label>
+                  ))}
                 </div>
               </div>
 
@@ -586,7 +698,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                 >
                   Review Previous
                 </button>
-
                 <button
                   type="button"
                   onClick={() => void processPendingText()}
@@ -601,6 +712,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
         </div>
       )}
 
+      {/* ── Processing spinner ── */}
       {step === 'processing' && (
         <div className="mb-8 flex items-center justify-center">
           <div className="bg-white/90 backdrop-blur rounded-2xl shadow-md border border-indigo-100 px-8 py-10 max-w-xl w-full text-center animate-[fadeInUp_280ms_ease-out]">
@@ -613,6 +725,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
         </div>
       )}
 
+      {/* ── Step 2: Review ── */}
       {step === 2 && (
         <div className="mb-8 space-y-6 transition-all duration-500 ease-out animate-[fadeInUp_260ms_ease-out]">
           <div className="bg-white/90 backdrop-blur rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col">
@@ -632,12 +745,13 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto text-sm">
                 {events.slice(0, 10).map((e, idx) => (
-                  <div key={idx} className="flex items-start justify-between border-b border-gray-100 last:border-0 py-2">
+                  <div
+                    key={idx}
+                    className="flex items-start justify-between border-b border-gray-100 last:border-0 py-2"
+                  >
                     <div className="pr-4">
                       <p className="font-medium text-gray-900 line-clamp-2">{e.title}</p>
-                      {e.description && (
-                        <p className="text-xs text-gray-500 line-clamp-1">{e.description}</p>
-                      )}
+                      {e.description && <p className="text-xs text-gray-500 line-clamp-1">{e.description}</p>}
                     </div>
                     <div className="text-right text-xs text-gray-500 whitespace-nowrap">
                       <p>{new Date(e.start).toLocaleString()}</p>
@@ -657,7 +771,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
               >
                 Back to Upload
               </button>
-
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -695,7 +808,10 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                 <pre className="whitespace-pre-wrap break-words text-xs">
                   title,start,allDay,description,location
                   {events
-                    .map((e) => `${e.title},${e.start},${String(e.allDay)},${e.description ?? ''},${e.location ?? ''}`)
+                    .map(
+                      (e) =>
+                        `${e.title},${e.start},${String(e.allDay)},${e.description ?? ''},${e.location ?? ''}`,
+                    )
                     .join('\n')}
                 </pre>
               )}
@@ -704,15 +820,19 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
         </div>
       )}
 
+      {/* ── Step 3: Sync ── */}
       {step === 3 && (
         <div className="mb-8 space-y-6 transition-all duration-500 ease-out animate-[fadeInUp_260ms_ease-out]">
           <div className="bg-white/90 backdrop-blur rounded-2xl shadow-sm border border-gray-200 p-6">
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Sync to Google Calendar</h3>
-              <p className="text-sm text-gray-500 mt-1">Connect your Google account and add the extracted events.</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Connect your Google account and add the extracted events.
+              </p>
             </div>
 
             <div className="mt-6 grid gap-3">
+              {/* ── Connection row ── */}
               <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
                 <div className="flex min-h-[44px] items-center justify-between gap-3">
                   <div className="min-w-0">
@@ -761,6 +881,45 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                 </div>
               </div>
 
+              {/* ── Calendar choice row ── */}
+              <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+                <div className="flex min-h-[44px] items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-900">Calendar</p>
+                    <p className="text-xs text-gray-500">
+                      {isGoogleConnected
+                        ? 'Choose which calendar to sync events into.'
+                        : 'Connect Google to choose a calendar.'}
+                    </p>
+                  </div>
+
+                  {isGoogleConnected ? (
+                    <CalendarPicker
+                      accessToken={accessToken!}
+                      selectedCalendarId={selectedCalendarId}
+                      selectedCalendarSummary={selectedCalendarSummary}
+                      onSelect={(id, summary) => {
+                        setSelectedCalendarId(id);
+                        setSelectedCalendarSummary(summary);
+                        if (hasSynced) {
+                          setHasSynced(false);
+                          setSyncBurst(false);
+                          setCalendarStatus('idle');
+                          setCalendarMessage('');
+                        }
+                      }}
+                    />
+                  ) : (
+                    <span className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-400">
+                      <span className="h-2.5 w-2.5 rounded-full bg-gray-300" />
+                      Default calendar
+                      <ChevronDown className="h-3.5 w-3.5 text-gray-300" />
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* ── Sync row ── */}
               <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
@@ -789,13 +948,16 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                     title={!isGoogleConnected ? 'Connect your Google account to enable syncing.' : undefined}
                   >
                     <span className="inline-flex items-center gap-2">
-                      <CalendarCheck className={'h-4 w-4 ' + (calendarStatus === 'loading' ? 'animate-pulse' : '')} />
+                      <CalendarCheck
+                        className={'h-4 w-4 ' + (calendarStatus === 'loading' ? 'animate-pulse' : '')}
+                      />
                       {calendarStatus === 'loading' ? 'Syncing…' : isSyncComplete ? 'Synced' : 'Sync'}
                     </span>
                   </button>
                 </div>
               </div>
 
+              {/* ── Status banner ── */}
               {hasSynced && (calendarMessage || calendarStatus !== 'idle') && (
                 <div
                   className={
@@ -835,15 +997,11 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
               )}
             </div>
 
+            {/* ── Footer actions ── */}
             <div className="mt-6 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={goToPreviousStep}
-                className={secondaryActionClassName}
-              >
+              <button type="button" onClick={goToPreviousStep} className={secondaryActionClassName}>
                 Back to Review
               </button>
-
               <button
                 type="button"
                 onClick={resetFlow}
