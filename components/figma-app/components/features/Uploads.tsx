@@ -108,7 +108,7 @@ function StepRail({
           : step === 'processing'
             ? 'Processing your syllabus…'
             : active === 1
-              ? 'Upload a syllabus PDF to begin.'
+              ? 'Upload a syllabus to begin.'
               : active === 2
                 ? 'Review the extracted events.'
                 : 'Connect and sync to Google Calendar.'}
