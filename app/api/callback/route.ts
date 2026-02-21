@@ -9,11 +9,11 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       // User denied or Google returned an error
-      return NextResponse.redirect(new URL(`/?auth_success=false&error=${encodeURIComponent(error)}`, url.origin));
+      return NextResponse.redirect(new URL(`/protected?auth_success=false&error=${encodeURIComponent(error)}`, url.origin));
     }
 
     if (!code) {
-      return NextResponse.redirect(new URL("/?auth_success=false&error=missing_code", url.origin));
+      return NextResponse.redirect(new URL("/protected?auth_success=false&error=missing_code", url.origin));
     }
 
     const oauth2Client = new google.auth.OAuth2(
@@ -27,14 +27,14 @@ export async function GET(request: NextRequest) {
 
     if (!accessToken) {
       return NextResponse.redirect(
-        new URL("/?auth_success=false&error=no_access_token", url.origin),
+        new URL("/protected?auth_success=false&error=no_access_token", url.origin),
       );
     }
 
-    // Redirect back to home (Figma app) with token in query params
+    // Redirect to protected app with token in query params (not / — that redirects to /protected and strips params)
     return NextResponse.redirect(
       new URL(
-        `/?auth_success=true&access_token=${encodeURIComponent(accessToken)}`,
+        `/protected?auth_success=true&access_token=${encodeURIComponent(accessToken)}`,
         url.origin,
       ),
     );
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     console.error("Google OAuth callback error", err);
     const url = new URL(request.url);
     return NextResponse.redirect(
-      new URL("/?auth_success=false&error=callback_error", url.origin),
+      new URL("/protected?auth_success=false&error=callback_error", url.origin),
     );
   }
 }

@@ -1,5 +1,72 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createCalendarEvents, CalendarEvent } from "@/lib/googleCalendar";
+import {
+  createCalendarEvents,
+  listCalendarEvents,
+  updateCalendarEvent,
+  deleteCalendarEvent,
+  CalendarEvent,
+} from "@/lib/googleCalendar";
+
+/** GET /api/calendar/events?month=YYYY-MM OR ?timeMin=ISO&timeMax=ISO — list events. Auth: Authorization: Bearer <access_token> */
+export async function GET(request: NextRequest) {
+  const authHeader = request.headers.get("authorization");
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  const { searchParams } = new URL(request.url);
+  const monthParam = searchParams.get("month");
+  const timeMinParam = searchParams.get("timeMin");
+  const timeMaxParam = searchParams.get("timeMax");
+  const calendarsParam = searchParams.get("calendars");
+  const calendarIds = calendarsParam
+    ? calendarsParam.split(",").map((s) => s.trim()).filter(Boolean)
+    : ["primary"];
+
+  console.log("[calendar/events GET] token:", token ? "present" : "MISSING", "month:", monthParam ?? "range", "calendars:", calendarIds.length);
+
+  if (!token) {
+    return NextResponse.json(
+      { success: false, error: "Authorization required (Bearer token)" },
+      { status: 401 }
+    );
+  }
+
+  let timeMin: string;
+  let timeMax: string;
+
+  if (timeMinParam && timeMaxParam) {
+    timeMin = timeMinParam;
+    timeMax = timeMaxParam;
+  } else if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
+    const [year, month] = monthParam.split("-").map(Number);
+    timeMin = new Date(Date.UTC(year, month - 1, 1)).toISOString();
+    timeMax = new Date(Date.UTC(year, month, 1)).toISOString();
+  } else {
+    return NextResponse.json(
+      { success: false, error: "Query 'month' (YYYY-MM) or 'timeMin' and 'timeMax' (ISO) required" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const events = await listCalendarEvents(token, timeMin, timeMax, calendarIds);
+    console.log("[calendar/events GET] success, events count:", events.length);
+    return NextResponse.json({ success: true, events });
+  } catch (error: unknown) {
+    const err = error as { code?: number; message?: string; response?: { data?: { error?: { message?: string; code?: number } } } };
+    const googleMessage = err.response?.data?.error?.message;
+    const message = googleMessage ?? err.message ?? "Failed to list calendar events";
+    console.error("[calendar/events GET] error:", message, err.code ?? "", err.response?.data?.error ?? "");
+    if (err.code === 401) {
+      return NextResponse.json(
+        { success: false, error: "Invalid or expired token. Please re-authenticate." },
+        { status: 401 }
+      );
+    }
+    return NextResponse.json(
+      { success: false, error: message },
+      { status: err.code === 403 ? 403 : 500 }
+    );
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -65,6 +132,85 @@ export async function POST(request: NextRequest) {
         success: false,
         error: error.message || "Failed to create calendar events",
       },
+      { status: 500 }
+    );
+  }
+}
+
+/** PATCH /api/calendar/events — update one event. Body: { accessToken, eventId, title?, start?, end?, allDay?, description?, recurrence? } */
+export async function PATCH(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { accessToken, eventId, title, start, end, allDay, description, recurrence } = body as {
+      accessToken?: string;
+      eventId?: string;
+      title?: string;
+      start?: string;
+      end?: string;
+      allDay?: boolean;
+      description?: string;
+      recurrence?: string[];
+    };
+
+    if (!accessToken || !eventId) {
+      return NextResponse.json(
+        { success: false, error: "accessToken and eventId are required" },
+        { status: 400 }
+      );
+    }
+
+    await updateCalendarEvent(accessToken, eventId, {
+      ...(title !== undefined && { title }),
+      ...(start !== undefined && { start }),
+      ...(end !== undefined && { end }),
+      ...(allDay !== undefined && { allDay }),
+      ...(description !== undefined && { description }),
+      ...(recurrence !== undefined && { recurrence }),
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error: unknown) {
+    const err = error as { code?: number; message?: string };
+    console.error("Error updating calendar event:", error);
+    if (err.code === 401) {
+      return NextResponse.json(
+        { success: false, error: "Invalid or expired token. Please re-authenticate." },
+        { status: 401 }
+      );
+    }
+    return NextResponse.json(
+      { success: false, error: err.message ?? "Failed to update event" },
+      { status: 500 }
+    );
+  }
+}
+
+/** DELETE /api/calendar/events — delete one event. Body: { accessToken, eventId } */
+export async function DELETE(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { accessToken, eventId } = body as { accessToken?: string; eventId?: string };
+
+    if (!accessToken || !eventId) {
+      return NextResponse.json(
+        { success: false, error: "accessToken and eventId are required" },
+        { status: 400 }
+      );
+    }
+
+    await deleteCalendarEvent(accessToken, eventId);
+    return NextResponse.json({ success: true });
+  } catch (error: unknown) {
+    const err = error as { code?: number; message?: string };
+    console.error("Error deleting calendar event:", error);
+    if (err.code === 401) {
+      return NextResponse.json(
+        { success: false, error: "Invalid or expired token. Please re-authenticate." },
+        { status: 401 }
+      );
+    }
+    return NextResponse.json(
+      { success: false, error: err.message ?? "Failed to delete event" },
       { status: 500 }
     );
   }
