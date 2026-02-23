@@ -1,55 +1,51 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Uploads } from "@/components/figma-app/components/features/Uploads";
 import { Calendar } from "@/components/figma-app/components/features/Calendar";
 import { StudyPlan } from "@/components/figma-app/components/features/StudyPlan";
 import { Profile } from "@/components/figma-app/components/features/Profile";
 import { LogoutButton } from "@/components/logout-button";
 
-const GOOGLE_TOKEN_KEY = "syllabus_calendar_google_token";
+const GOOGLE_CONNECTED_MARKER = "google-calendar-session";
 
 type View = "uploads" | "calendar" | "study-plan" | "profile";
 
-function getInitialToken(): string | null {
-  if (typeof window === "undefined") return null;
-  const url = new URL(window.location.href);
-  if (url.searchParams.get("auth_success") === "true") {
-    const t = url.searchParams.get("access_token");
-    if (t) return t;
-  }
-  return sessionStorage.getItem(GOOGLE_TOKEN_KEY);
-}
-
 export default function FigmaApp() {
   const [currentView, setCurrentView] = useState<View>("uploads");
-  const [accessToken, setAccessTokenState] = useState<string | null>(getInitialToken);
+  const [accessToken, setAccessTokenState] = useState<string | null>(null);
 
   const setAccessToken = (token: string | null) => {
-    setAccessTokenState(token);
-    if (typeof window !== "undefined") {
-      if (token) sessionStorage.setItem(GOOGLE_TOKEN_KEY, token);
-      else sessionStorage.removeItem(GOOGLE_TOKEN_KEY);
-    }
+    setAccessTokenState(token ? GOOGLE_CONNECTED_MARKER : null);
   };
 
-  // On OAuth return: clean URL and go to uploads; token already in state from getInitialToken
+  const syncCalendarConnection = useCallback(async () => {
+    try {
+      const res = await fetch("/api/calendar/session", { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      setAccessTokenState(data?.connected ? GOOGLE_CONNECTED_MARKER : null);
+    } catch {
+      setAccessTokenState(null);
+    }
+  }, []);
+
+  // On OAuth return: clean URL and refresh server-backed calendar session state.
   useEffect(() => {
     if (typeof window === "undefined") return;
     const url = new URL(window.location.href);
     const authSuccess = url.searchParams.get("auth_success");
-    const tokenFromUrl = url.searchParams.get("access_token");
-    if (authSuccess === "true" && tokenFromUrl) {
-      setAccessToken(tokenFromUrl);
+    const hasError = url.searchParams.has("error");
+    if (authSuccess !== null) {
       url.searchParams.delete("auth_success");
-      url.searchParams.delete("access_token");
+      url.searchParams.delete("error");
       window.history.replaceState({}, "", url.toString());
-      setCurrentView("uploads");
-    } else {
-      const stored = sessionStorage.getItem(GOOGLE_TOKEN_KEY);
-      if (stored) setAccessTokenState(stored);
+      if (authSuccess === "true") setCurrentView("uploads");
+    } else if (hasError) {
+      url.searchParams.delete("error");
+      window.history.replaceState({}, "", url.toString());
     }
-  }, []);
+    void syncCalendarConnection();
+  }, [syncCalendarConnection]);
 
   return (
     <div className="min-h-screen bg-gray-50">
