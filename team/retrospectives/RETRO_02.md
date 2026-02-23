@@ -49,9 +49,10 @@ Absent: n/a
 - Smaller PRs easier to understand and test.
 # Retro Assessment:
 ## Template:
-Stop, start, continue. Contribution from each member and collaborated to prioritize point made.
+Stop, start, continue. 1 contribution to each category from each member. Collaborated to choose top items and develop experiements.
 ## Assessment:
 - Everyone was respectful and engaged in active conversation
+- Came up with new ideas to simplify integration and manage PRs.
 ## Advice for next retro leader: 
-- More time to come up with ideas (> 5 min)
+- Offer time to come up with ideas (> 5 min)
 - Less time to choose action items(< 5 min)
