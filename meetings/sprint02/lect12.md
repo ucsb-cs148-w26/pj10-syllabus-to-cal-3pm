@@ -1,10 +1,10 @@
-Date: 2026/02/18
+Date: 2026/02/23
 
 Project: Syllabus to Calendar
 
 Mentor: Self Mentored :)
 
-Meeting Time: lect11
+Meeting Time: lect12
 
 Type of meeting: Daily Scrum
 
