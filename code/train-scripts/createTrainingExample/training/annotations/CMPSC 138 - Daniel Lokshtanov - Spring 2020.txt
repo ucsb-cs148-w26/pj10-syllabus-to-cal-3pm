@@ -1,0 +1,30 @@
+CHUNK 1
+-
+march m 30, review of basic math, strings and languages>>3
+april m 6, regular expressions, dfas, regular languages>>3
+w 8, nfas, closure properties>>3
+f 10, hw1 due>>1
+m 13, nfa to dfa>>3
+w 15, dfa and nfa and regexp equivalence, consequences>>3
+m 20, grammars, right and left-regular grammars, myhill-nerode theorem>>3
+w 22, mealy vs moore machines. proving non-regularity>>3
+f 24, hw2 due>>1
+m 27, midterm 11-12:30>>2
+w 29, cfgs, linear grammars, derivation (trees), ambiguity>>3
+may m 4, grammar simplifications>>3
+w 6, chomsky & greibach normal forms, parsing problem>>3
+f 8, hw3 due>>1
+m 11, cyk algorithm, parsing, simple grammars, ll(k) grammars, npdas>>3
+w 13, npdas and cfl equivalence, deterministic pdas>>3
+m 18, pumping lemma for cfls, turing machines>>3
+w 20, countable and uncountable sets, (un)decidable and (un)enumerable langs>>3
+f 22 hw4 due>>1
+-
+CHUNK 2
+-
+m 25, memorial day, no lecture>>3
+w 27, halting problem, post correspdence problem>>3
+june m 1, undecidablity of problems related to cfgs. ambiguity>>3
+w 3, buffer, review>>3
+f 5, hw5 due>>1
+t 11 final, 12pm-15.30pm>>2

@@ -1,0 +1,41 @@
+CHUNK 1
+-
+lecture: t/th 12:30-1:45pm nh 1110>>3
+sept 26 th introduction>>3
+oct 1 t revenue recognition (ch. 18)>>3
+hmwk #1>>1
+oct 3 th revenue recognition (ch. 18)>>3
+hmwk #2>>1
+oct 8 t accounting for income taxes (ch. 19)>>3
+hmwk #3>>1
+oct 10 th accounting for income taxes (ch. 19)>>3
+hmwk #4>>1
+oct 15 t accounting for income taxes (ch. 19)>>3
+hmwk #5>>1
+oct 17 th midterm #1>>2
+oct 22 t accounting for pensions (ch. 20)>>3
+hmwk #6>>1
+oct 24 th accounting for pensions (ch. 20)>>3
+hmwk #7>>1
+oct 29 t accounting for pensions (ch. 20)>>3
+hmwk #8>>1
+oct 31 th accounting for leases (ch. 21)>>3
+hmwk #9>>1
+nov 5 t accounting for leases (ch. 21)>>3
+hmwk #10>>1
+nov 7 th midterm #2>>2
+nov 12 t investments (ch. 17)>>3
+hmwk #11>>1
+nov 14 th accounting changes and error analysis (ch. 22)>>3
+hmwk #12>>1
+nov 19 t accounting changes and error analysis (ch. 22)>>3
+hmwk #13>>1
+nov 21 th statement of cash flows (ch. 23)>>3
+hmwk #14>>1
+nov 26 t no class>>3
+nov 28 th no class>>3
+dec 3 t statement of cash flows (ch. 23)>>3
+hmwk #15>>1
+dec 5 th statement of cash flows (ch. 23)>>3
+hmwk #16>>1
+final exam: monday, december 9th, 12:00-2:00pm>>2

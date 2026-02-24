@@ -1,0 +1,46 @@
+CHUNK 1
+-
+lecture: mtwth 11:00-12:05 pm>>3
+discussion sec: th 12:30-1:50 pm>>4
+-
+CHUNK 3
+-
+august 3 introduction: geography and ecosystems>>3
+august 4 the tropical environment>>3
+august 5 hot deserts and environmental factors>>3
+august 6 hot deserts and biological adaptations>>3
+august 10 grasslands and primary production>>3
+august 11 savannas and population dynamics>>3
+august 12 savannas and population dynamics (continued)>>3
+august 13 rainforest structure and function>>3
+august 17 rainforests and biotic interactions>>3
+august 18 rainforests and biological diversity>>3
+august 19 mid-term examination: via gauchospace and zoom>>3
+august 20 rainforests and community structure>>3
+august 24 lakes, energy flow and biogeochemical cycling>>3
+august 25 lakes, trophic level interactions and community structure>>3
+august 26 lakes, trophic level interactions and community structure (continued)>>3
+august 27 rivers and floodplains: the river continuum concept>>3
+aug 31 rivers and floodplains: flood pulse concept>>3
+sept 1 coral reef structure and function>>3
+sept 2 coral reefs and biological diversity>>3
+sept sept sept sept sept 3 7 8 9 10>>3 
+coral reefs and community ecology>>3
+labor day holiday>>3
+diseases and parasites: biological adaptations>>3
+diseases and parasites: human ecology>>3
+final examination: via gauchospace and zoom *note: all of these dates and topics are subject to change. keep on your toes!>>2
+-
+CHUNK 4
+-
+ta: johanna fornberg sections: th, 12:30, 2, 3:30 pm>>4
+aug 6 introduction & (the lscf) excel tutorial (*complete prior to formal meeting)>>4
+case study #1: forest fragmentation  modeling & computer simulations>>
+2 aug 13 case study #1: forest fragmentation  modeling & computer simulations continued>>4
+(case study #1 due, upload via gauchospace)>>1
+aug 20 case study #2: coral reef degradation  modeling & computer simulations>>4
+4 aug 27 case study #2: coral reef degradation  modeling & computer simulations continued>>4
+(case study #2 due, upload via gauchospace)>>1
+sept 3 case study #3: infectious disease and climate change  modeling & computer simulations>>4
+sept 10 case study #3: infectious disease and climate change  modeling & computer simulations continued>>4
+(case study #3 due, upload via gauchospace)>>1

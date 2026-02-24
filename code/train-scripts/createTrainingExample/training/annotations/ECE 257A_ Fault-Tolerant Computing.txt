@@ -1,0 +1,41 @@
+CHUNK 1
+-
+meetings: tuesdays and thursdays, 10:00-11:30 am, phelps 1431>>3
+-
+CHUNK 2
+-
+general requirements>>1
+t 10/03 2 dependability measures>>3
+r 10/05 3 combinational modeling>>3
+t 10/10 4 state-space modeling>>3
+research topic defined>>1
+r 10/12 5 defect avoidance and circumvention>>3
+t 10/17 6 fault testing>>3
+r 10/19 7 fault masking>>3
+t 10/24 8 error detection>>3
+r 10/26 9 error correction>>3
+preliminary references due>>1
+t 10/31  instructor away at conference (no lecture)>>3
+r 11/02 10 malfunction diagnosis and tolerance>>3
+t 11/07 1-9 midterm exam: open-book (10:00-11:50 am)>>2
+r 11/09 11 degradation allowance and management>>3
+t 11/14 12 failure confinement>>3
+paper title and references due>>1
+r 11/16 13 hardware implementation strategies>>3
+t 11/21 14 self-checking modules>>3
+r 11/23  thanksgiving holiday (no lecture)>>3
+t 11/28 15 reconfiguration and voting>>3
+voting paper abstract and outline due>>1
+r 11/30 16 software reliability and redundancy>>3
+t 12/05 17 algorithm design methods>>3
+r 12/07 18 agreement and adjudication>>3
+f 12/08 10-18 final exam: open-book (1:00-3:00 pm)  held in 4164 hfh (engineering i)>>2
+complete paper due>>1
+homework #1: dependability measures and modeling (lectures 1-4, due thursday, oct. 12)>>1
+homework #2: dealing with low-level impairments (lectures 5-8, due thursday, oct. 26)>>1
+-
+CHUNK 3
+-
+homework #3: dealing with high-level impairments (lectures 9-12, due tuesday, nov. 21)>>1
+homework #4: hardware implementation topics (lectures 13-15, due tuesday, dec. 5)>>1
+

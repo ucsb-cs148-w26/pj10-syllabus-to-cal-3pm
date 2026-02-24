@@ -1,0 +1,98 @@
+CHUNK 1
+-
+mwf lectures 9:00  9:50 am, girv 1004, john hartman 12:00 noon  12:50 pm, iv theater 1, alisa tazhitdinova 12:00 noon  12:50 pm, buchanan 1910, olivier deschenes r 8:00  8:50 am, campbell hall (all lectures attend)>>3
+-
+CHUNK 4
+-
+request to an instructor with your original, unaltered solutions no later than the fourth lecture after exams are rst passed back in section. (exception: if there are less than 4 lectures remaining after the second midterm is handed back in section for the rst time, you will also need to get your re-grade request to your instructor by the end of the last lecture.) you must explain clearly why you believe your score is in error. any students participating in the disabled students program (dsp) must make the appropriate arrangements with the dsp ofce as necessary. any requests made to dsp without sufcient time to make the appropriate arrangements will lead to the student being tested under the same time and room conditions as other students in the class. dsp students are urged to meet with their instructors during ofce hours before midterm 1 in order to prevent any confusion about the test-taking parameters. it is the students responsibility to make sure that he/she knows how much time will be available for her/his test, even if it differs from the accommodation set up through dsp. academic integrity: you may work with other students on problem sets. on midterms and the nal exam, the standard rules apply as outlined in academic integrity at ucsb: a students guide. on those exams, you are cheating if you copy from another student, allow another student to copy from you, consult notes or a textbook during the exam, have another student take an exam for you, or communicate with another student about answers to the exam. electronic devices of any kind (calculators, cell phones, computers, etc.) are not permitted. any student who cheats during an exam will receive an f for the course and/or the incident will be reported to the ofce of judicial affairs for further sanctions. possible sanctions include suspension and dismissal. the economics department has established a hotline at which you can anonymously report cheating incidents. the url is https://econ.ucsb.edu/cheating/ we also photocopy all open response answers of midterms. any re-grade request must include an unaltered copy of your open-response problems from test day. any changes made to your open-response sheet and subsequently submitted for a re-grade may be reported to the university as academic misconduct. email: econ 10a instructors and tas do not answer subject-related questions via email. please save these questions for ofce hours. email is best for small administrative questions. this syllabus is subject to change. any changes will be made in lecture and/or gauchospace with at least one week of notice, except under extraordinary circumstances. other important information may be given in lecture, which you are responsible for knowing. some students become distressed from the pressure of econ 10a. some good sources for help may include counseling & psychological services (http://caps.sa.ucsb.edu/). if you are looking for group study space, please check https://www.library.ucsb.edu/services/group-study. the schedule of lectures and sections begins on the next page. schedule of lecture topics (bold italic thursday lectures are in campbell hall) (bold italic thursday lectures are in campbell hall)>>1
+sept. 26 a review of important mathematical concepts relevant to econ 10a>>3
+sept. 27 introduction>>3
+1-11>>1
+sept. 30 budget constraints>>3
+20-32>>1
+oct. 2 preferences>>3
+33-48>>1
+3 oct. 3 a guide for studying econ 10a material>>3
+oct. 4 the marginal rate of substitution>>3
+48-52>>1
+oct. 7 utility theory>>3
+54-69>>1
+oct. 9 maximizing utility>>3
+73-82>>1
+oct. 10 preparation for midterm 1>>3
+oct. 11 finding a utility maximum>>3
+83-91>>1
+oct. 14 changes in prices and income>>3
+96-113>>1
+oct. 16 substitutes and complements>>3
+114-117>>1
+oct. 17 midterm 1 (40 minutes)>>2
+oct 18 substitution and income effects>>3
+137-145 & 155-157>>1
+-
+CHUNK 5
+-
+oct. 18 substitution and income effects>>3
+137 145 & 155 157>>1
+oct. 21 buying and selling>>3
+161-168>>1
+oct. 23 labor supply>>3
+176-182>>1
+oct. 24 midterm 1 review>>3
+oct. 25 borrowing and lending>>3
+183-188>>1
+oct. 28 investing and present value>>3
+191-203>>1
+oct. 30 the demand for insurance>>3
+219-224>>1
+oct. 31 no class meeting>>3
+nov. 1 expected utility>>3
+225-234>>1
+nov. 4 consumers surplus>>3
+254-270>>1
+nov. 6 market demand>>3
+273-289>>1
+nov. 7 preparation for midterm 2>>3
+nov. 8 equilibrium>>3
+295-309>>1
+nov. 11 no class meeting (holiday)>>3
+nov. 13 technology>>3
+nov. 14 midterm 2 (40 minutes)>>2
+nov. 15 cost minimization>>3
+366-371 & 386-398>>1
+nov. 18 short-run and long-run cost curves>>3
+400-415>>1
+nov. 20 firm supply>>3
+416-432>>1
+nov. 21 midterm 2 review>>3
+nov. 22 factor demand>>3
+372-379>>1
+nov. 25 industry supply>>3
+434-445>>1
+nov. 27-29 no class meeting>>3
+dec. 2 economic rent>>3
+446-448>>1
+dec. 4 extending econ 10a concepts to preview econ 100b material>>3
+dec. 5 preparation for final examination>>3
+dec. 6 finish course material>>3
+dec. 7 final examination (7:30 pm  10:30 pm slot, 2 hours)>>2
+september 30/october 1>>4
+problem set 1>>1
+october 7/8>>4
+problem set 2>>1
+october 14/15>>4
+problem set 3>>1
+october 21/22>>4
+problem set 4>>1
+october 28/29>>4
+problem set 5>>1
+november 4/5>>4
+problem set 6>>1
+november 12>>4
+problem set 7>>1
+november 18/19>>4
+problem set 8>>1
+november 25/26>>4
+problem set 9>>1
+december 2/3>>4
+problem set 10>>1

@@ -1,0 +1,42 @@
+CHUNK 1
+-
+class time: online location: online>>3
+labs: online thursdays 9:00 am thru 12:00 pm>>4
+-
+CHUNK 6
+-
+introduction to the class>>3
+background history, the ic process>>3
+technology metrics>>3
+quiz 1>>2
+assignment 1>>1
+cpu instructions>>3
+parallelism; translating, starting programs>>3
+quiz 2>>2
+assignment 2>>1
+arithmetic for computers>>3
+floating point representations>>3
+quiz 3>>2
+assignment 3>>1
+logic design conventions>>3
+intro to cpu datapaths; alu design>>3
+quiz 4>>2
+assignment 4>>1
+intro to pipelined datapaths>>3
+pipelined datapath implementation>>3
+quiz 5>>2
+assignment 5>>1
+data hazards & control hazards>>3
+exceptions>>3
+quiz 6>>2
+assignment 6>>1
+memory hierarchy and technologies>>3
+memory cache performance>>3
+quiz 7>>2
+assignment 7>>1
+memorial day  holiday (monday, may 25th)>>3
+memory failure and redundancy>>3
+quiz 8>>2
+assignment 8>>1
+virtual memory>>3
+quiz 9>>2

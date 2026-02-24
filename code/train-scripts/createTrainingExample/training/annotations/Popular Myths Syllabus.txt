@@ -1,0 +1,16 @@
+CHUNK 1
+-
+location: class will be held in baker hall 340a, unless an announcement is made in class>>3
+time: tuesdays and thursdays, 12  1:20 pm>>3
+-
+CHUNK 5
+-
+exam 1 20% october 1>>2
+final exam 20% tba>>2
+homework 1 5% september 10>>1
+homework 2 7% october 24>>1
+hypothesis 3% november 5>>1
+proposal & rationale 15% november 21>>1
+requires 2 meetings in office hours to discuss progress>>1
+post and answer your own question 5% once on scheduled date>>1
+answer 10 questions posted by others 10% 10 times during the semester (1% each)>>1

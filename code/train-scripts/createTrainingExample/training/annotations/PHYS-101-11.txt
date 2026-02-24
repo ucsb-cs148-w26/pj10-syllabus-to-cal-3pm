@@ -1,0 +1,70 @@
+CHUNK 2
+-
+lecture lecture will be held every day of the week mtwrf from 8:30am to 10:00am in room 502, reiss science building.>>3
+in the same room as lecture.>>4
+mw 10:15am to 11:15am>>4
+tr 10:15am to 11:15am.>>4
+-
+CHUNK 3
+-
+8:3010:00am friday 6/14/2019>>2
+8:3010:00am monday 6/24/2019>>2
+8:3010:00am friday 7/5/2018>>2 
+-
+CHUNK 5
+-
+june 3 introduction>>3
+motion ch. 1>>1
+motion diagrams>>1
+4 kinematics>>3
+vectors ch. 2, 3>>1
+motion diagrams>>1
+5 projectile motion, forces intro>>3
+ch. 4>>1
+kinematics>>1
+6 newtons laws>>3
+ch. 5>>1
+7 1d dynamics>>3
+ch. 6>>1
+10 newtons 3rd law>>3
+ch. 7>>1
+statics>>1
+11 2d dynamics>>3
+ch. 8>>1
+12 work and kinetic energy>>3
+ch. 9>>1
+dynamics>>1
+13 potential energy>>3
+17 energy conservation>>3
+ch. 10>>1
+energy>>1
+18 impulse and momentum>>3
+ch. 11>>1
+19 rotational motion>>3
+ch. 12.112.5>>1
+momentum/rotations>>1
+20 rotational dynamics>>3
+ch. 12.512.8>>1
+21 angular momentum>>3
+ch. 12.912.11>>1
+24 exam 2>>2
+25 gravity>>3
+ch. 13>>1
+gravity>>1
+26 fluids>>3
+ch. 14>>1
+27 oscillations>>3
+ch. 15>>1
+uids/oscillations>>1
+28 phases of matter>>3
+ch. 18>>1
+july 1 first law of thermodynamics>>3
+ch. 19>>1 
+2 micro/macro connection>>3
+ch. 20>>1
+thermodynamics>>1
+3 engines>>3 
+ch. 21>>1
+4 holiday>>3
+5 exam 3>>2
+13 exam 1>>2

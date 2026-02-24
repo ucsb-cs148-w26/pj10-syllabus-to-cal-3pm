@@ -1,0 +1,6 @@
+CHUNK 1
+-
+course meeting place: phelps 2516>>3
+lectures: tuesdays and thursdays, 3:30 pm - 4:45 pm>>3
+midterm exam is preliminarily scheduled for tuesday, november 4, 3:30 pm - 4:30 pm>>2
+the final exam is scheduled for thursday, december 11, 4:00-7:00pm.>>2
