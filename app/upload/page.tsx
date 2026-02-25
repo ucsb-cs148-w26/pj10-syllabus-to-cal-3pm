@@ -10,7 +10,6 @@ type UploadedFile = { filename: string; url: string; size?: number; uploadedAt?:
 
 function UploadPageContent() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [rawCsvText, setRawCsvText] = useState<string>("");
   const [calendarStatus, setCalendarStatus] = useState<
     "idle" | "loading" | "ok" | "error"
   >("idle");
@@ -132,7 +131,6 @@ function UploadPageContent() {
       }
 
       const { csvText } = await res.json();
-      setRawCsvText(csvText);
 
       function parseCsvLine(line: string) {
         const result: string[] = [];
@@ -164,27 +162,13 @@ function UploadPageContent() {
         .filter((line: string) => line.trim() !== "")
         .slice(1)
         .map((line: string) => {
-<<<<<<< HEAD
           const [title, start, allDayStr, description, location, className] =
             parseCsvLine(line);
-=======
-          const [title, type, allDayStr, time, date, className] = line.split(",");
-
-          const allDay = (allDayStr ?? "").toLowerCase() === "true";
-
-          // make a start value that your CalendarEvent can use
-          const start = allDay
-            ? (date ?? "").trim()
-            : `${(date ?? "").trim()}T${(time ?? "00:00").trim()}:00`;
-
-          const description = (type ?? "").trim(); // or "" if you don’t want it
-          const location = "";
->>>>>>> bf6ccb1 (Changed prompt as well as fixed the spacing issue in show raw csv)
 
           return {
-            title: `${(className ?? "").trim()} ${(title ?? "").trim()}`.trim(),
+            title,
             start,
-            allDay,
+            allDay: allDayStr?.toLowerCase() === "true",
             description,
             location,
             class: className,   // optional property
@@ -229,7 +213,7 @@ function UploadPageContent() {
       setCalendarStatus("ok");
       setCalendarMessage(
         data.message ||
-        `Successfully added ${data.count ?? events.length} event(s) to Google Calendar!`
+          `Successfully added ${data.count ?? events.length} event(s) to Google Calendar!`
       );
     } catch (err) {
       console.error(err);
@@ -268,7 +252,6 @@ function UploadPageContent() {
   }
 
   function handleDownloadCsv() {
-<<<<<<< HEAD
     if (events.length === 0) return;
     const header = "title,start,allDay,description,location,class";
     const rows = events.map((e) => {
@@ -284,11 +267,6 @@ function UploadPageContent() {
     });
     const csv = [header, ...rows].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-=======
-    if (!rawCsvText.trim()) return;
-  
-    const blob = new Blob([rawCsvText], { type: "text/csv;charset=utf-8" });
->>>>>>> bf6ccb1 (Changed prompt as well as fixed the spacing issue in show raw csv)
     const filename = `syllabus-events-${new Date().toISOString().slice(0, 10)}.csv`;
     saveAs(blob, filename);
   }
@@ -412,10 +390,10 @@ function UploadPageContent() {
               {calendarStatus === "loading"
                 ? "Adding..."
                 : accessToken && events.length > 0
-                  ? "Add to Google Calendar"
-                  : accessToken
-                    ? "Connect to Google Calendar"
-                    : "Connect & Add to Google Calendar"}
+                ? "Add to Google Calendar"
+                : accessToken
+                ? "Connect to Google Calendar"
+                : "Connect & Add to Google Calendar"}
             </button>
           </div>
 
@@ -426,10 +404,11 @@ function UploadPageContent() {
           )}
           {calendarMessage && (
             <p
-              className={`text-sm ${calendarStatus === "error"
-                ? "text-red-600"
-                : "text-green-600"
-                }`}
+              className={`text-sm ${
+                calendarStatus === "error"
+                  ? "text-red-600"
+                  : "text-green-600"
+              }`}
             >
               {calendarMessage}
             </p>
