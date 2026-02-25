@@ -79,18 +79,20 @@ export function StudyPlan() {
   for(let a=0; a<events.length; a++){
     const event = events[a];
     const score = priority_score(event);
-    studySessions.push(
-      {
-        id: String(a),
-        assignment: event.title,
-        course: 'course', 
-        suggestedTime: String(score), 
-        duration: 'duration', 
-        date: Number.isNaN(score) ? 'none' : event.start,
-        score: score,
-        priority: 'high'
-      }
-    );
+    if(score >= 0){
+      studySessions.push(
+        {
+          id: String(a),
+          assignment: event.title,
+          course: 'course', 
+          suggestedTime: String(score), 
+          duration: 'duration', 
+          date: Number.isNaN(score) ? 'none' : event.start,
+          score: score,
+          priority: 'high'
+        }
+      );
+    }
   }
   studySessions.sort(compare_study_sessions);
   for(const studySession of studySessions){
