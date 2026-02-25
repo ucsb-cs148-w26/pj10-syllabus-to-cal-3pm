@@ -293,6 +293,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   const [step, setStep] = useState<UploadStep>(1);
   const [showDocuments, setShowDocuments] = useState(false);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [rawCsvText, setRawCsvText] = useState<string>('');
   const [calendarStatus, setCalendarStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [calendarMessage, setCalendarMessage] = useState('');
   const [pendingText, setPendingText] = useState<string | null>(null);
@@ -408,7 +409,12 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
 
   function handleSyllabusText(rawText: string, uploaded?: string[] | UploadedFileMeta[]) {
-    setPendingText(rawText);
+    setPendingText((prev) => {
+      const next = (rawText ?? "").trim();
+      if (!next) return prev;
+      if (!prev) return next;
+      return `${prev}\n\n----- NEW FILE -----\n\n${next}`;
+    });
     setHasSynced(false);
     setSyncBurst(false);
     setLastProcessOk(false);
@@ -476,14 +482,31 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       }
 
       const { csvText } = await res.json();
+      setRawCsvText(csvText);
       const eventsFromCsv: CalendarEvent[] = csvText
         .split('\n')
         .filter((line: string) => line.trim() !== '')
         .slice(1)
         .map((line: string) => {
-          const [title, start, allDayStr, description, location] = line.split(',');
-          return { title, start, allDay: allDayStr?.toLowerCase() === 'true', description, location } as CalendarEvent;
-        });
+          const [title, type, allDayStr, time, date, className] = line.split(",");
+          const allDay = (allDayStr ?? "").toLowerCase() === "true";
+
+          // Build a safe start value
+          const start = allDay
+            ? (date ?? "").trim()
+            : `${(date ?? "").trim()}T${(time ?? "00:00").trim()}:00`;
+
+          const description = (type ?? "").trim();
+          const location = "";
+
+          return {
+            title: `${(className ?? "").trim()} ${(title ?? "").trim()}`.trim(),
+            start,
+            allDay,
+            description,
+            location,
+          } as CalendarEvent;
+        })
 
       setEvents(eventsFromCsv);
       localStorage.setItem('calendarEvents', JSON.stringify(eventsFromCsv));
@@ -549,7 +572,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       setCalendarStatus('ok');
       setCalendarMessage(
         data.message ||
-          `All set — ${count} event${count === 1 ? '' : 's'} added to ${calLabel}.`,
+        `All set — ${count} event${count === 1 ? '' : 's'} added to ${calLabel}.`,
       );
       setSyncBurst(true);
       window.setTimeout(() => setSyncBurst(false), 900);
@@ -585,21 +608,18 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   }
 
   function handleDownloadCsv() {
-    if (events.length === 0) return;
-    const header = 'title,start,allDay,description,location';
-    const rows = events.map((e) => {
-      const esc = (v?: string) => JSON.stringify(v ?? '').slice(1, -1);
-      return [esc(e.title), e.start, String(e.allDay), esc(e.description), esc(e.location ?? '')].join(',');
-    });
-    const csv = [header, ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    if (!rawCsvText.trim()) return;
+  
+    const blob = new Blob([rawCsvText], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
+  
     const a = document.createElement('a');
     a.href = url;
     a.download = `syllabus-events-${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
+  
     URL.revokeObjectURL(url);
   }
 
@@ -836,7 +856,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                   onClick={() => setShowRegenerateModal(true)}
                   disabled={!pendingText || calendarStatus === 'loading'}
                   className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >               
+                >
                   Regenerate
                 </button>
 
@@ -866,13 +886,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                 <p className="text-gray-500">No events to display. Upload a syllabus first.</p>
               ) : (
                 <pre className="whitespace-pre-wrap break-words text-xs">
-                  title,start,allDay,description,location
-                  {events
-                    .map(
-                      (e) =>
-                        `${e.title},${e.start},${String(e.allDay)},${e.description ?? ''},${e.location ?? ''}`,
-                    )
-                    .join('\n')}
+                  {rawCsvText}
                 </pre>
               )}
             </div>
@@ -1081,7 +1095,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
           </div>
         </div>
       )}
-    
+
       {showRegenerateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
@@ -1127,7 +1141,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
           </div>
         </div>
       )}
-    
+
     </div>
   );
 }
