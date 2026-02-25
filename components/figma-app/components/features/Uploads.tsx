@@ -293,7 +293,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   const [step, setStep] = useState<UploadStep>(1);
   const [showDocuments, setShowDocuments] = useState(false);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [rawCsvText, setRawCsvText] = useState<string>('');
   const [calendarStatus, setCalendarStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [calendarMessage, setCalendarMessage] = useState('');
   const [pendingText, setPendingText] = useState<string | null>(null);
@@ -409,12 +408,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
 
   function handleSyllabusText(rawText: string, uploaded?: string[] | UploadedFileMeta[]) {
-    setPendingText((prev) => {
-      const next = (rawText ?? "").trim();
-      if (!next) return prev;
-      if (!prev) return next;
-      return `${prev}\n\n----- NEW FILE -----\n\n${next}`;
-    });
+    setPendingText(rawText);
     setHasSynced(false);
     setSyncBurst(false);
     setLastProcessOk(false);
@@ -482,31 +476,23 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       }
 
       const { csvText } = await res.json();
-      setRawCsvText(csvText);
       const eventsFromCsv: CalendarEvent[] = csvText
         .split('\n')
         .filter((line: string) => line.trim() !== '')
         .slice(1)
         .map((line: string) => {
-          const [title, type, allDayStr, time, date, className] = line.split(",");
-          const allDay = (allDayStr ?? "").toLowerCase() === "true";
-
-          // Build a safe start value
-          const start = allDay
-            ? (date ?? "").trim()
-            : `${(date ?? "").trim()}T${(time ?? "00:00").trim()}:00`;
-
-          const description = (type ?? "").trim();
-          const location = "";
+          const [title, start, allDayStr, description, location, className] =
+            line.split(',');
 
           return {
-            title: `${(className ?? "").trim()} ${(title ?? "").trim()}`.trim(),
+            title,
             start,
-            allDay,
+            allDay: allDayStr?.toLowerCase() === 'true',
             description,
             location,
+            class: className,
           } as CalendarEvent;
-        })
+        });
 
       setEvents(eventsFromCsv);
       localStorage.setItem('calendarEvents', JSON.stringify(eventsFromCsv));
@@ -608,18 +594,28 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   }
 
   function handleDownloadCsv() {
-    if (!rawCsvText.trim()) return;
-  
-    const blob = new Blob([rawCsvText], { type: 'text/csv;charset=utf-8' });
+    if (events.length === 0) return;
+    const header = 'title,start,allDay,description,location,class';
+    const rows = events.map((e) => {
+      const esc = (v?: string) => JSON.stringify(v ?? '').slice(1, -1);
+      return [
+        esc(e.title),
+        e.start,
+        String(e.allDay),
+        esc(e.description),
+        esc(e.location ?? ''),
+        esc((e as any).class ?? '')
+      ].join(',');
+    });
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-  
     const a = document.createElement('a');
     a.href = url;
     a.download = `syllabus-events-${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
-  
     URL.revokeObjectURL(url);
   }
 
@@ -886,7 +882,13 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                 <p className="text-gray-500">No events to display. Upload a syllabus first.</p>
               ) : (
                 <pre className="whitespace-pre-wrap break-words text-xs">
-                  {rawCsvText}
+                  title,start,allDay,description,location,class{"\n"}
+                  {events
+                    .map(
+                      (e) =>
+                        `${e.title},${e.start},${String(e.allDay)},${e.description ?? ''},${e.location ?? ''},${(e as any).class ?? ''}`,
+                    )
+                    .join('\n')}
                 </pre>
               )}
             </div>
