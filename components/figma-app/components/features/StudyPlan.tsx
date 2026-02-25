@@ -1,6 +1,9 @@
 'use client';
 
 import { Clock, Calendar, BookOpen } from 'lucide-react';
+import { useState } from 'react';
+import type { CalendarEvent } from '@/lib/googleCalendar';
+import { get_events } from "@/components/figma-app/components/features/Uploads";
 
 interface StudySession {
   id: string;
@@ -9,75 +12,102 @@ interface StudySession {
   suggestedTime: string;
   duration: string;
   date: string;
+  score: number;
   priority: 'high' | 'medium' | 'low';
+
+}
+//function to help compare study sessions for sort
+function compare_study_sessions(a : StudySession, b : StudySession){
+  if(Number.isNaN(a.score) && Number.isNaN(b.score)) return 0;
+  if(Number.isNaN(a.score)) return 1;
+  if(Number.isNaN(b.score)) return -1;
+  if(a.score >= 0 && b.score < 0) return -1;
+  if(a.score < 0 && b.score >= 0) return 1;
+  if(a.score < b.score) return -1;
+  if(a.score > b.score) return 1;
+  return 0;
+}
+function priority_score(event : CalendarEvent){
+    //higher score: lower priority
+    //consts
+    const TIME_MULTIPLICATIVE_WEIGHT : number = 10; //per hour
+    const NOT_EXAM_ADDITIVE_WEIGHT : number = TIME_MULTIPLICATIVE_WEIGHT * 2.1 * 24; //proritize exam if 2 there's one two days after another event
+    let score = NOT_EXAM_ADDITIVE_WEIGHT;
+
+    //regexp to validate date formatting
+    const pattern : RegExp = new RegExp("[0-9]{4}-[0-9]{2}-[0-9]{2}")
+    let start : Date | undefined;
+    let end : Date | undefined;
+    if(event.start !== undefined && pattern.test(event.start)){
+      start = new Date(event.start);
+    }
+    else{
+      return NaN;
+    }
+
+    //*note: end is pretty much never defined; probably will not use; not currently using
+    if(event.end !== undefined && pattern.test(event.end)){
+      end = new Date(event.end);
+    }
+    
+    // if(end.getTime() < start.getTime()){
+    //   throw new Error("End time before start");
+    // }
+      
+      const time_until_start : number = (start.getTime() - (new Date()).getTime()) / 1000 / 60 / 60; //ms -> hours
+      score += time_until_start * TIME_MULTIPLICATIVE_WEIGHT
+      
+      const split_title : Array<string> = event.title.trim().split(" ")
+      for(let a = 0; a < split_title.length; a++){
+        split_title[a] = split_title[a].trim().toLowerCase();
+      }
+      const EXAM_KEYWORDS : Set<string> = new Set<string>(["final", "midterm", "exam", "test", "project"])
+      for(const word of split_title){
+        if(EXAM_KEYWORDS.has(word)){
+          score -= NOT_EXAM_ADDITIVE_WEIGHT
+          break;
+        }
+      }
+    return score;
 }
 
 export function StudyPlan() {
-  const studySessions: StudySession[] = [
-    {
-      id: '1',
-      assignment: 'Programming Assignment 1',
-      course: 'CS 101',
-      suggestedTime: '2:00 PM - 4:00 PM',
-      duration: '2 hours',
-      date: 'Monday, Jan 22',
-      priority: 'high'
-    },
-    {
-      id: '2',
-      assignment: 'Calculus Midterm Prep',
-      course: 'MATH 201',
-      suggestedTime: '6:00 PM - 8:00 PM',
-      duration: '2 hours',
-      date: 'Monday, Jan 22',
-      priority: 'high'
-    },
-    {
-      id: '3',
-      assignment: 'English Essay Outline',
-      course: 'ENG 150',
-      suggestedTime: '10:00 AM - 11:30 AM',
-      duration: '1.5 hours',
-      date: 'Tuesday, Jan 23',
-      priority: 'medium'
-    },
-    {
-      id: '4',
-      assignment: 'English Essay Draft',
-      course: 'ENG 150',
-      suggestedTime: '3:00 PM - 5:00 PM',
-      duration: '2 hours',
-      date: 'Wednesday, Jan 24',
-      priority: 'medium'
-    },
-    {
-      id: '5',
-      assignment: 'Calculus Practice Problems',
-      course: 'MATH 201',
-      suggestedTime: '4:00 PM - 6:00 PM',
-      duration: '2 hours',
-      date: 'Thursday, Jan 25',
-      priority: 'high'
-    },
-    {
-      id: '6',
-      assignment: 'Lab Report Research',
-      course: 'CS 101',
-      suggestedTime: '1:00 PM - 3:00 PM',
-      duration: '2 hours',
-      date: 'Friday, Jan 26',
-      priority: 'medium'
-    },
-    {
-      id: '7',
-      assignment: 'Calculus Final Review',
-      course: 'MATH 201',
-      suggestedTime: '11:00 AM - 1:00 PM',
-      duration: '2 hours',
-      date: 'Saturday, Jan 27',
-      priority: 'high'
+  const HIGH_PRIORITY_THRESHOLD = 480;//~2 days
+  const MEDIUM_PRIORITY_THRESHOLD = 1680;//~ 1 week
+  const events = get_events();
+  const studySessions : StudySession[] = [];
+  for(let a=0; a<events.length; a++){
+    const event = events[a];
+    const score = priority_score(event);
+    studySessions.push(
+      {
+        id: String(a),
+        assignment: event.title,
+        course: 'course', 
+        suggestedTime: String(score), 
+        duration: 'duration', 
+        date: Number.isNaN(score) ? 'none' : event.start,
+        score: score,
+        priority: 'high'
+      }
+    );
+  }
+  studySessions.sort(compare_study_sessions);
+  for(const studySession of studySessions){
+    if(Number.isNaN(studySession.score) || studySession.score < 0){
+      studySession.priority = 'low';
+      continue;
     }
-  ];
+    if(studySession.score < HIGH_PRIORITY_THRESHOLD){
+      studySession.priority = 'high';
+      continue;
+    }
+    if(studySession.score < MEDIUM_PRIORITY_THRESHOLD){
+      studySession.priority = 'medium';
+      continue;
+    }
+    studySession.priority = 'low';
+  }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
