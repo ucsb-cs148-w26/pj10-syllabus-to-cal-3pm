@@ -481,8 +481,17 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
         .filter((line: string) => line.trim() !== '')
         .slice(1)
         .map((line: string) => {
-          const [title, start, allDayStr, description, location] = line.split(',');
-          return { title, start, allDay: allDayStr?.toLowerCase() === 'true', description, location } as CalendarEvent;
+          const [title, start, allDayStr, description, location, className] =
+            line.split(',');
+
+          return {
+            title,
+            start,
+            allDay: allDayStr?.toLowerCase() === 'true',
+            description,
+            location,
+            class: className,
+          } as CalendarEvent;
         });
 
       setEvents(eventsFromCsv);
@@ -549,7 +558,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       setCalendarStatus('ok');
       setCalendarMessage(
         data.message ||
-          `All set — ${count} event${count === 1 ? '' : 's'} added to ${calLabel}.`,
+        `All set — ${count} event${count === 1 ? '' : 's'} added to ${calLabel}.`,
       );
       setSyncBurst(true);
       window.setTimeout(() => setSyncBurst(false), 900);
@@ -586,10 +595,17 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
   function handleDownloadCsv() {
     if (events.length === 0) return;
-    const header = 'title,start,allDay,description,location';
+    const header = 'title,start,allDay,description,location,class';
     const rows = events.map((e) => {
       const esc = (v?: string) => JSON.stringify(v ?? '').slice(1, -1);
-      return [esc(e.title), e.start, String(e.allDay), esc(e.description), esc(e.location ?? '')].join(',');
+      return [
+        esc(e.title),
+        e.start,
+        String(e.allDay),
+        esc(e.description),
+        esc(e.location ?? ''),
+        esc((e as any).class ?? '')
+      ].join(',');
     });
     const csv = [header, ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
@@ -836,7 +852,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                   onClick={() => setShowRegenerateModal(true)}
                   disabled={!pendingText || calendarStatus === 'loading'}
                   className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >               
+                >
                   Regenerate
                 </button>
 
@@ -866,11 +882,11 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                 <p className="text-gray-500">No events to display. Upload a syllabus first.</p>
               ) : (
                 <pre className="whitespace-pre-wrap break-words text-xs">
-                  title,start,allDay,description,location
+                  title,start,allDay,description,location,class{"\n"}
                   {events
                     .map(
                       (e) =>
-                        `${e.title},${e.start},${String(e.allDay)},${e.description ?? ''},${e.location ?? ''}`,
+                        `${e.title},${e.start},${String(e.allDay)},${e.description ?? ''},${e.location ?? ''},${(e as any).class ?? ''}`,
                     )
                     .join('\n')}
                 </pre>
@@ -1081,7 +1097,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
           </div>
         </div>
       )}
-    
+
       {showRegenerateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
@@ -1127,7 +1143,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
           </div>
         </div>
       )}
-    
+
     </div>
   );
 }
