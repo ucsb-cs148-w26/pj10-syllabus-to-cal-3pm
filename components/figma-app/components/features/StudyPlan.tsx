@@ -35,19 +35,22 @@ function priority_score(event : CalendarEvent){
     let score = NOT_EXAM_ADDITIVE_WEIGHT;
 
     //regexp to validate date formatting
-    const pattern : RegExp = new RegExp("[0-9]{4}-[0-9]{2}-[0-9]{2}")
+    const date_pattern_1 : RegExp = new RegExp("[0-9]{4}-[0-9]{2}-[0-9]{2}") //YYYY-..-..
+    const date_pattern_2 : RegExp = new RegExp("[0-9]{2}-[0-9]{2}-[0-9]{4}") //..-..-YYYY
+    const date_pattern_3 : RegExp = new RegExp("[0-9]{4}/[0-9]{2}/[0-9]{2}") //YYYY/../..
+    const date_pattern_4 : RegExp = new RegExp("[0-9]{2}/[0-9]{2}/[0-9]{4}") //../../YYYY
     let start : Date | undefined;
     let end : Date | undefined;
-    if(event.start !== undefined && pattern.test(event.start)){
-      start = new Date(event.start);
+    if(event.start !== undefined){
+      const start_valid = date_pattern_1.test(event.start) || date_pattern_2.test(event.start) || date_pattern_3.test(event.start) || date_pattern_4.test(event.start);
+      if(start_valid) start = new Date(event.start);
     }
-    else{
-      return NaN;
-    }
+    else return NaN;
 
     //*note: end is pretty much never defined; probably will not use; not currently using
-    if(event.end !== undefined && pattern.test(event.end)){
-      end = new Date(event.end);
+    if(event.end !== undefined){
+      const end_valid = date_pattern_1.test(event.end) || date_pattern_2.test(event.end) || date_pattern_3.test(event.end) || date_pattern_4.test(event.end);
+      if(end_valid) end = new Date(event.end);
     }
     
     // if(end.getTime() < start.getTime()){
