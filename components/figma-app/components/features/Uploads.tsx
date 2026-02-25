@@ -293,6 +293,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   const [step, setStep] = useState<UploadStep>(1);
   const [showDocuments, setShowDocuments] = useState(false);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [rawCsvText, setRawCsvText] = useState<string>('');
   const [calendarStatus, setCalendarStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [calendarMessage, setCalendarMessage] = useState('');
   const [pendingText, setPendingText] = useState<string | null>(null);
@@ -411,7 +412,12 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
 
   function handleSyllabusText(rawText: string, uploaded?: string[] | UploadedFileMeta[]) {
-    setPendingText(rawText);
+    setPendingText((prev) => {
+      const next = (rawText ?? "").trim();
+      if (!next) return prev;
+      if (!prev) return next;
+      return `${prev}\n\n----- NEW FILE -----\n\n${next}`;
+    });
     setHasSynced(false);
     setSyncBurst(false);
     setLastProcessOk(false);
@@ -479,6 +485,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       }
 
       const { csvText } = await res.json();
+      setRawCsvText(csvText);
       const eventsFromCsv: CalendarEvent[] = csvText
         .split('\n')
         .filter((line: string) => line.trim() !== '')
@@ -613,12 +620,14 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     const csv = [header, ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
+
     const a = document.createElement('a');
     a.href = url;
     a.download = `syllabus-events-${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
+
     URL.revokeObjectURL(url);
   }
 
@@ -819,7 +828,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                   { key: 'ALL', label: 'All' },
                   { key: 'LECTURE', label: 'Lectures' },
                   { key: 'ASSIGNMENT', label: 'Assignments' },
-                  { key: 'EXAM', label: 'Tests & Exams' },
+                  { key: 'EXAM', label: 'Exams' },
                 ] as { key: CategoryFilter; label: string }[]
               ).map(({ key, label }) => {
                 const count = key === 'ALL' ? events.length : events.filter((e) => e.description === key).length;
