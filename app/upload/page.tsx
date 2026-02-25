@@ -168,7 +168,7 @@ function UploadPageContent() {
           return {
             title,
             start,
-            allDay: allDayStr === "true",
+            allDay: allDayStr?.toLowerCase() === "true",
             description,
             location,
             class: className,   // optional property
