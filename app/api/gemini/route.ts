@@ -124,3 +124,4 @@ Now extract events from this syllabus transcript:
     return NextResponse.json({ error: "Failed to call Gemini" }, { status: 500 });
   }
 }
+
