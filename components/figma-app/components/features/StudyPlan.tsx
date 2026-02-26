@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock, Calendar, BookOpen } from 'lucide-react';
+import { Clock, Calendar, BookOpen, ScrollText } from 'lucide-react';
 import { useState } from 'react';
 import type { CalendarEvent } from '@/lib/googleCalendar';
 import { get_events } from "@/components/figma-app/components/features/Uploads";
@@ -60,6 +60,9 @@ function priority_score(event : CalendarEvent){
     // }
       
     const time_until_start : number = (start.getTime() - (new Date()).getTime()) / 1000 / 60 / 60; //ms -> hours
+    if(time_until_start < 0){
+      return NaN
+    }
     score += time_until_start * TIME_MULTIPLICATIVE_WEIGHT
     
     const split_title : Array<string> = event.title.trim().split(" ")
@@ -84,13 +87,13 @@ export function StudyPlan() {
   for(let a=0; a<events.length; a++){
     const event = events[a];
     const score = priority_score(event);
-    if(score >= 0){
+    if(score >= 0 && !Number.isNaN(score)){
       studySessions.push(
         {
           id: String(a),
           assignment: event.title,
           course: 'course', 
-          suggestedTime: String(score), 
+          suggestedTime: Number.isNaN(score) ? 'none' : score, 
           duration: 'duration', 
           date: Number.isNaN(score) ? 'none' : event.start,
           score: score,
