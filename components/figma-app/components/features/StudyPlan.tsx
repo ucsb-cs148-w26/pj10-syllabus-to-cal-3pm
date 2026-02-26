@@ -93,7 +93,7 @@ export function StudyPlan() {
           id: String(a),
           assignment: event.title,
           course: 'course', 
-          suggestedTime: Number.isNaN(score) ? 'none' : score, 
+          suggestedTime: 'time', 
           duration: 'duration', 
           date: Number.isNaN(score) ? 'none' : event.start,
           score: score,
