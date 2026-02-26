@@ -306,6 +306,9 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   const [hasSynced, setHasSynced] = useState(false);
   const [syncBurst, setSyncBurst] = useState(false);
 
+  type CategoryFilter = 'ALL' | 'LECTURE' | 'ASSIGNMENT' | 'EXAM';
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('ALL');
+
   const [includeLectures, setIncludeLectures] = useState(true);
   const [includeAssignments, setIncludeAssignments] = useState(true);
   const [includeExams, setIncludeExams] = useState(true);
@@ -481,8 +484,17 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
         .filter((line: string) => line.trim() !== '')
         .slice(1)
         .map((line: string) => {
-          const [title, start, allDayStr, description, location] = line.split(',');
-          return { title, start, allDay: allDayStr?.toLowerCase() === 'true', description, location } as CalendarEvent;
+          const [title, start, allDayStr, description, location, className] =
+            line.split(',');
+
+          return {
+            title,
+            start,
+            allDay: allDayStr?.toLowerCase() === 'true',
+            description,
+            location,
+            class: className,
+          } as CalendarEvent;
         });
 
       setEvents(eventsFromCsv);
@@ -549,7 +561,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       setCalendarStatus('ok');
       setCalendarMessage(
         data.message ||
-          `All set — ${count} event${count === 1 ? '' : 's'} added to ${calLabel}.`,
+        `All set — ${count} event${count === 1 ? '' : 's'} added to ${calLabel}.`,
       );
       setSyncBurst(true);
       window.setTimeout(() => setSyncBurst(false), 900);
@@ -586,10 +598,17 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
   function handleDownloadCsv() {
     if (events.length === 0) return;
-    const header = 'title,start,allDay,description,location';
+    const header = 'title,start,allDay,description,location,class';
     const rows = events.map((e) => {
       const esc = (v?: string) => JSON.stringify(v ?? '').slice(1, -1);
-      return [esc(e.title), e.start, String(e.allDay), esc(e.description), esc(e.location ?? '')].join(',');
+      return [
+        esc(e.title),
+        e.start,
+        String(e.allDay),
+        esc(e.description),
+        esc(e.location ?? ''),
+        esc((e as any).class ?? '')
+      ].join(',');
     });
     const csv = [header, ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
@@ -647,6 +666,13 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     if (calendarStatus === 'ok' || lastProcessOk) return 'ok';
     return 'neutral';
   }, [calendarStatus, lastProcessOk]);
+
+  const filteredEvents = useMemo(() =>
+      categoryFilter === 'ALL'
+        ? events
+        : events.filter((e) => e.description === categoryFilter),
+      [events, categoryFilter],
+  );
 
   const isSyncComplete = hasSynced && calendarStatus === 'ok';
 
@@ -779,11 +805,46 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       {step === 2 && (
         <div className="mb-8 space-y-6 transition-all duration-500 ease-out animate-[fadeInUp_260ms_ease-out]">
           <div className="bg-white/90 backdrop-blur rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-gray-900 text-lg">Review Extracted Events</h3>
               <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
-                {events.length} event{events.length === 1 ? '' : 's'}
+                {filteredEvents.length}{categoryFilter !== 'ALL' && `/${events.length}`} event{events.length === 1 ? '' : 's'}
               </span>
+            </div>
+
+            {/* Category filter buttons */}
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              {(
+                [
+                  { key: 'ALL', label: 'All' },
+                  { key: 'LECTURE', label: 'Lectures' },
+                  { key: 'ASSIGNMENT', label: 'Assignments' },
+                  { key: 'EXAM', label: 'Tests & Exams' },
+                ] as { key: CategoryFilter; label: string }[]
+              ).map(({ key, label }) => {
+                const count = key === 'ALL' ? events.length : events.filter((e) => e.description === key).length;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setCategoryFilter(key)}
+                    className={
+                      'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ' +
+                      (categoryFilter === key
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200')
+                    }
+                  >
+                    {label}
+                    <span className={
+                      'rounded-full px-1.5 py-0.5 text-[10px] font-semibold ' +
+                      (categoryFilter === key ? 'bg-white/20 text-white' : 'bg-white text-gray-500')
+                    }>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             {!hasEvents ? (
@@ -792,16 +853,32 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                 <p className="text-sm mb-1">No events yet.</p>
                 <p className="text-xs text-gray-400">Upload and process a syllabus to see events here.</p>
               </div>
+            ) : filteredEvents.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-gray-500 py-6">
+                <FileText className="w-8 h-8 mb-2 text-gray-400" />
+                <p className="text-sm mb-1">No {categoryFilter.toLowerCase()} events found.</p>
+                <p className="text-xs text-gray-400">Try a different filter or re-process your syllabus.</p>
+              </div>
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto text-sm">
-                {events.slice(0, 10).map((e, idx) => (
+                {filteredEvents.slice(0, 50).map((e, idx) => (
                   <div
                     key={idx}
                     className="flex items-start justify-between border-b border-gray-100 last:border-0 py-2"
                   >
                     <div className="pr-4">
                       <p className="font-medium text-gray-900 line-clamp-2">{e.title}</p>
-                      {e.description && <p className="text-xs text-gray-500 line-clamp-1">{e.description}</p>}
+                      {e.description && (
+                        <span className={
+                          'mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ' +
+                          (e.description === 'LECTURE' ? 'bg-blue-50 text-blue-600' :
+                          e.description === 'ASSIGNMENT' ? 'bg-amber-50 text-amber-600' :
+                          e.description === 'EXAM' ? 'bg-rose-50 text-rose-600' :
+                          'bg-gray-100 text-gray-500')
+                        }>
+                          {e.description}
+                        </span>
+                      )}
                     </div>
                     <div className="text-right text-xs text-gray-500 whitespace-nowrap">
                       <p>{new Date(e.start).toLocaleString()}</p>
@@ -809,7 +886,9 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                     </div>
                   </div>
                 ))}
-                {events.length > 10 && <p className="text-xs text-gray-400 mt-1">Showing first 10 events.</p>}
+                {filteredEvents.length > 50 && (
+                  <p className="text-xs text-gray-400 mt-1">Showing first 50 of {filteredEvents.length} events.</p>
+                )}
               </div>
             )}
 
@@ -836,7 +915,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                   onClick={() => setShowRegenerateModal(true)}
                   disabled={!pendingText || calendarStatus === 'loading'}
                   className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >               
+                >
                   Regenerate
                 </button>
 
@@ -866,11 +945,11 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                 <p className="text-gray-500">No events to display. Upload a syllabus first.</p>
               ) : (
                 <pre className="whitespace-pre-wrap break-words text-xs">
-                  title,start,allDay,description,location
+                  title,start,allDay,description,location,class{"\n"}
                   {events
                     .map(
                       (e) =>
-                        `${e.title},${e.start},${String(e.allDay)},${e.description ?? ''},${e.location ?? ''}`,
+                        `${e.title},${e.start},${String(e.allDay)},${e.description ?? ''},${e.location ?? ''},${(e as any).class ?? ''}`,
                     )
                     .join('\n')}
                 </pre>
@@ -1081,7 +1160,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
           </div>
         </div>
       )}
-    
+
       {showRegenerateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
@@ -1127,7 +1206,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
           </div>
         </div>
       )}
-    
+
     </div>
   );
 }

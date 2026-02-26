@@ -30,7 +30,58 @@ export async function POST(req: NextRequest) {
           ? `${types[0]} and ${types[1]}`
           : `${types[0]}, ${types[1]}, and ${types[2]}`;
 
-  const prompt = `You will receive a transcript of a syllabus from a class. Your task is to output a CSV file with all class events (${eventTypesStr}) that can be imported into Google Calendar. Only include the event types requested. Only provide the CSV content; no markdown or extra text. Here is the syllabus transcript:"""${text}"""`;
+  const prompt = `
+You are an information extraction system.
+Extract calendar events from a syllabus transcript and output ONLY a CSV.
+No markdown. No explanations.
+
+Only include: ${eventTypesStr}
+
+RULES:
+- Ignore holidays, office hours, breaks, readings, or optional items.
+
+OUTPUT FORMAT (STRICT):
+Output EXACTLY 6 columns in this EXACT order:
+
+title,start,allDay,description,location,class
+
+FIRST LINE MUST BE EXACTLY:
+title,start,allDay,description,location,class
+
+COLUMN RULES:
+
+title:
+- Short human‑friendly event title, should within 15 words
+- Do NOT include course name
+- Do NOT include commas
+
+start:
+- If allDay=false → YYYY-MM-DDTHH:MM:SS
+- If allDay=true → YYYY-MM-DD
+
+allDay:
+- true or false (lowercase)
+
+description:
+- Use event type (LECTURE / ASSIGNMENT / EXAM)
+
+location:
+- ALWAYS leave empty
+
+class:
+- Use course code if present (CMPSC 130A, WRIT 105CW)
+- Otherwise use full course name
+- MUST be identical for all rows
+
+EXAMPLE:
+
+title,start,allDay,description,location,class
+Lecture,2025-03-31T08:00:00,false,LECTURE,,WRIT 105CW
+Service Pledge Due,2025-04-23,true,ASSIGNMENT,,WRIT 105CW
+
+Now extract events from this syllabus transcript:
+"""${text}"""
+`.trim();
 
   try {
     const response = await fetch(
