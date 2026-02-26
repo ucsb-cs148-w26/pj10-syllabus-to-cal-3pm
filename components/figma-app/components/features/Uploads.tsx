@@ -314,6 +314,9 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   const [hasSynced, setHasSynced] = useState(false);
   const [syncBurst, setSyncBurst] = useState(false);
 
+  type CategoryFilter = 'ALL' | 'LECTURE' | 'ASSIGNMENT' | 'EXAM';
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('ALL');
+
   const [includeLectures, setIncludeLectures] = useState(true);
   const [includeAssignments, setIncludeAssignments] = useState(true);
   const [includeExams, setIncludeExams] = useState(true);
@@ -553,7 +556,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setHasSynced(false);
+        // setHasSynced(false);
         setSyncBurst(false);
         setCalendarStatus('error');
         setCalendarMessage(data.error || `Failed to add events (${res.status})`);
@@ -671,6 +674,13 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     if (calendarStatus === 'ok' || lastProcessOk) return 'ok';
     return 'neutral';
   }, [calendarStatus, lastProcessOk]);
+
+  const filteredEvents = useMemo(() =>
+      categoryFilter === 'ALL'
+        ? events
+        : events.filter((e) => e.description === categoryFilter),
+      [events, categoryFilter],
+  );
 
   const isSyncComplete = hasSynced && calendarStatus === 'ok';
 
@@ -803,11 +813,46 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       {step === 2 && (
         <div className="mb-8 space-y-6 transition-all duration-500 ease-out animate-[fadeInUp_260ms_ease-out]">
           <div className="bg-white/90 backdrop-blur rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-3">
               <h3 className="font-semibold text-gray-900 text-lg">Review Extracted Events</h3>
               <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
-                {events.length} event{events.length === 1 ? '' : 's'}
+                {filteredEvents.length}{categoryFilter !== 'ALL' && `/${events.length}`} event{events.length === 1 ? '' : 's'}
               </span>
+            </div>
+
+            {/* Category filter buttons */}
+            <div className="flex flex-wrap gap-1.5 mb-4">
+              {(
+                [
+                  { key: 'ALL', label: 'All' },
+                  { key: 'LECTURE', label: 'Lectures' },
+                  { key: 'ASSIGNMENT', label: 'Assignments' },
+                  { key: 'EXAM', label: 'Exams' },
+                ] as { key: CategoryFilter; label: string }[]
+              ).map(({ key, label }) => {
+                const count = key === 'ALL' ? events.length : events.filter((e) => e.description === key).length;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setCategoryFilter(key)}
+                    className={
+                      'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ' +
+                      (categoryFilter === key
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200')
+                    }
+                  >
+                    {label}
+                    <span className={
+                      'rounded-full px-1.5 py-0.5 text-[10px] font-semibold ' +
+                      (categoryFilter === key ? 'bg-white/20 text-white' : 'bg-white text-gray-500')
+                    }>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             {!hasEvents ? (
@@ -816,16 +861,32 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                 <p className="text-sm mb-1">No events yet.</p>
                 <p className="text-xs text-gray-400">Upload and process a syllabus to see events here.</p>
               </div>
+            ) : filteredEvents.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-gray-500 py-6">
+                <FileText className="w-8 h-8 mb-2 text-gray-400" />
+                <p className="text-sm mb-1">No {categoryFilter.toLowerCase()} events found.</p>
+                <p className="text-xs text-gray-400">Try a different filter or re-process your syllabus.</p>
+              </div>
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto text-sm">
-                {events.slice(0, 10).map((e, idx) => (
+                {filteredEvents.slice(0, 50).map((e, idx) => (
                   <div
                     key={idx}
                     className="flex items-start justify-between border-b border-gray-100 last:border-0 py-2"
                   >
                     <div className="pr-4">
                       <p className="font-medium text-gray-900 line-clamp-2">{e.title}</p>
-                      {e.description && <p className="text-xs text-gray-500 line-clamp-1">{e.description}</p>}
+                      {e.description && (
+                        <span className={
+                          'mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ' +
+                          (e.description === 'LECTURE' ? 'bg-blue-50 text-blue-600' :
+                          e.description === 'ASSIGNMENT' ? 'bg-amber-50 text-amber-600' :
+                          e.description === 'EXAM' ? 'bg-rose-50 text-rose-600' :
+                          'bg-gray-100 text-gray-500')
+                        }>
+                          {e.description}
+                        </span>
+                      )}
                     </div>
                     <div className="text-right text-xs text-gray-500 whitespace-nowrap">
                       <p>{new Date(e.start).toLocaleString()}</p>
@@ -833,7 +894,9 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                     </div>
                   </div>
                 ))}
-                {events.length > 10 && <p className="text-xs text-gray-400 mt-1">Showing first 10 events.</p>}
+                {filteredEvents.length > 50 && (
+                  <p className="text-xs text-gray-400 mt-1">Showing first 50 of {filteredEvents.length} events.</p>
+                )}
               </div>
             )}
 

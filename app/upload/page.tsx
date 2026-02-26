@@ -136,15 +136,14 @@ function UploadPageContent() {
         const result: string[] = [];
         let current = "";
         let insideQuotes = false;
-      
+
         for (let i = 0; i < line.length; i++) {
           const char = line[i];
-      
+
           if (char === '"') {
             insideQuotes = !insideQuotes;
             continue;
           }
-      
           if (char === "," && !insideQuotes) {
             result.push(current);
             current = "";
@@ -152,11 +151,11 @@ function UploadPageContent() {
             current += char;
           }
         }
-      
+
         result.push(current);
         return result;
       }
-      
+
       const eventsFromCsv: CalendarEvent[] = csvText
         .split("\n")
         .filter((line: string) => line.trim() !== "")
@@ -164,7 +163,6 @@ function UploadPageContent() {
         .map((line: string) => {
           const [title, start, allDayStr, description, location, className] =
             parseCsvLine(line);
-      
           return {
             title,
             start,
