@@ -44,6 +44,7 @@ function priority_score(event : CalendarEvent){
     if(event.start !== undefined){
       const start_valid = date_pattern_1.test(event.start) || date_pattern_2.test(event.start) || date_pattern_3.test(event.start) || date_pattern_4.test(event.start);
       if(start_valid) start = new Date(event.start);
+      else return NaN;
     }
     else return NaN;
 
@@ -52,25 +53,26 @@ function priority_score(event : CalendarEvent){
       const end_valid = date_pattern_1.test(event.end) || date_pattern_2.test(event.end) || date_pattern_3.test(event.end) || date_pattern_4.test(event.end);
       if(end_valid) end = new Date(event.end);
     }
+
     
     // if(end.getTime() < start.getTime()){
     //   throw new Error("End time before start");
     // }
       
-      const time_until_start : number = (start.getTime() - (new Date()).getTime()) / 1000 / 60 / 60; //ms -> hours
-      score += time_until_start * TIME_MULTIPLICATIVE_WEIGHT
-      
-      const split_title : Array<string> = event.title.trim().split(" ")
-      for(let a = 0; a < split_title.length; a++){
-        split_title[a] = split_title[a].trim().toLowerCase();
+    const time_until_start : number = (start.getTime() - (new Date()).getTime()) / 1000 / 60 / 60; //ms -> hours
+    score += time_until_start * TIME_MULTIPLICATIVE_WEIGHT
+    
+    const split_title : Array<string> = event.title.trim().split(" ")
+    for(let a = 0; a < split_title.length; a++){
+      split_title[a] = split_title[a].trim().toLowerCase();
+    }
+    const EXAM_KEYWORDS : Set<string> = new Set<string>(["final", "midterm", "exam", "test", "project"])
+    for(const word of split_title){
+      if(EXAM_KEYWORDS.has(word)){
+        score -= NOT_EXAM_ADDITIVE_WEIGHT
+        break;
       }
-      const EXAM_KEYWORDS : Set<string> = new Set<string>(["final", "midterm", "exam", "test", "project"])
-      for(const word of split_title){
-        if(EXAM_KEYWORDS.has(word)){
-          score -= NOT_EXAM_ADDITIVE_WEIGHT
-          break;
-        }
-      }
+    }
     return score;
 }
 
