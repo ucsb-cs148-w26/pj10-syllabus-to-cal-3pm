@@ -144,7 +144,6 @@ function UploadPageContent() {
             insideQuotes = !insideQuotes;
             continue;
           }
-
           if (char === "," && !insideQuotes) {
             result.push(current);
             current = "";
@@ -164,7 +163,6 @@ function UploadPageContent() {
         .map((line: string) => {
           const [title, start, allDayStr, description, location, className] =
             parseCsvLine(line);
-
           return {
             title,
             start,
