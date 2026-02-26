@@ -556,7 +556,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setHasSynced(false);
+        // setHasSynced(false);
         setSyncBurst(false);
         setCalendarStatus('error');
         setCalendarMessage(data.error || `Failed to add events (${res.status})`);
