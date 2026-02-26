@@ -287,12 +287,20 @@ function CalendarPicker({
     </div>
   );
 }
+let uploaded_events : CalendarEvent[];
 
-
+export function get_events(){
+  if(uploaded_events === undefined){
+    const empty_list : CalendarEvent[] = [];
+    return empty_list;
+  }
+  return uploaded_events;
+}
 export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProps) {
   const [step, setStep] = useState<UploadStep>(1);
   const [showDocuments, setShowDocuments] = useState(false);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
+  uploaded_events = events;
   const [calendarStatus, setCalendarStatus] = useState<'idle' | 'loading' | 'ok' | 'error'>('idle');
   const [calendarMessage, setCalendarMessage] = useState('');
   const [pendingText, setPendingText] = useState<string | null>(null);
