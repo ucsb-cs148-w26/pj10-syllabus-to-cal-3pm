@@ -129,7 +129,12 @@ export default function FigmaApp() {
           />
         )}
         {currentView === "study-plan" && <StudyPlan />}
-        {currentView === "profile" && <Profile />}
+        {currentView === "profile" && (
+          <Profile
+            accessToken={accessToken}
+            onGoToUploads={() => setCurrentView("uploads")}
+          />
+        )}
       </main>
     </div>
   );
