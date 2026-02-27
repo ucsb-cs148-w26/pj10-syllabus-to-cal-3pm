@@ -7,7 +7,7 @@
 | Fri 02/06 | Matthew Ahmadpour | MVP Peer Feedback Eval Leader                          |
 | Fri 02/13 | Timothy Lou       | Led second Retro                                       |
 | N/A       |        | New Product Owner                                             |
-| N/A       |        | New Scrum Master                                              |
+| N/A       | Lucy Deng | New Scrum Master                                              |
 | N/A       |        | Testing/QA Coordinator                                              |
 | N/A       |        | Retro 3 Leader                                              |
 | N/A       |        | UX Coordinator                                              |
