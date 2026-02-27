@@ -11,7 +11,7 @@
 | N/A       | Nataly Gonzalez | Testing/QA Coordinator                                              |
 | N/A       |        | Retro 3 Leader                                              |
 | N/A       |        | UX Coordinator                                              |
-| N/A       |        | Design Document Coordinator                                              |
+| N/A       | Timothy Lou | Design Document Coordinator                                              |
 | N/A       |        | Deployment Document Coordinator                                              |
 | N/A       |        | User Manual Coordinator                                              |
 | N/A       | Matthew Ahmadpour | Final Presentation Leader                                              |
