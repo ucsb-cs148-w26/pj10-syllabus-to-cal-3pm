@@ -10,7 +10,7 @@
 | N/A       | Lucy Deng | New Scrum Master                                              |
 | N/A       | Nataly Gonzalez | Testing/QA Coordinator                                              |
 | N/A       |        | Retro 3 Leader                                              |
-| N/A       |        | UX Coordinator                                              |
+| N/A       | Matthew Ahmadpour       | UX Coordinator                                              |
 | N/A       | Timothy Lou | Design Document Coordinator                                              |
 | N/A       |        | Deployment Document Coordinator                                              |
 | N/A       |        | User Manual Coordinator                                              |
