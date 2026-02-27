@@ -6,13 +6,13 @@
 | Fri 01/24 | Nataly Gonzalez   | Will lead first Retro                                  | 
 | Fri 02/06 | Matthew Ahmadpour | MVP Peer Feedback Eval Leader                          |
 | Fri 02/13 | Timothy Lou       | Led second Retro                                       |
-| N/A       |        | New Product Owner                                             |
+| N/A       |      | New Product Owner                                             |
 | N/A       | Lucy Deng | New Scrum Master                                              |
-| N/A       |        | Testing/QA Coordinator                                              |
+| N/A       | Nataly Gonzalez | Testing/QA Coordinator                                              |
 | N/A       |        | Retro 3 Leader                                              |
 | N/A       |        | UX Coordinator                                              |
 | N/A       |        | Design Document Coordinator                                              |
 | N/A       |        | Deployment Document Coordinator                                              |
 | N/A       |        | User Manual Coordinator                                              |
-| N/A       |        | Final Presentation Leader                                              |
+| N/A       | Matthew Ahmadpour | Final Presentation Leader                                              |
  
