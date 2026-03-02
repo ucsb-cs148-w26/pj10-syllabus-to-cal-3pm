@@ -4,6 +4,7 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import PdfUpload from "@/components/PdfUpload";
 import type { CalendarEvent } from "@/lib/googleCalendar";
+import { parseCsvToCalendarEvents } from "@/lib/csvEvents";
 import { saveAs } from "file-saver";
 
 type UploadedFile = { filename: string; url: string; size?: number; uploadedAt?: string };
@@ -144,21 +145,7 @@ function UploadPageContent() {
       }
 
       const { csvText } = await res.json();
-
-      const eventsFromCsv: CalendarEvent[] = csvText
-        .split("\n")
-        .filter((line: string) => line.trim() !== "")
-        .slice(1)
-        .map((line: string) => {
-          const [title, start, allDayStr, description, location] = line.split(",");
-          return {
-            title,
-            start,
-            allDay: allDayStr?.toLowerCase() === "true",
-            description,
-            location,
-          } as CalendarEvent;
-        });
+      const eventsFromCsv: CalendarEvent[] = parseCsvToCalendarEvents(csvText);
 
       setEvents(eventsFromCsv);
       localStorage.setItem("calendarEvents", JSON.stringify(eventsFromCsv));

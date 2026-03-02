@@ -14,6 +14,7 @@ import {
 import PdfUpload from '@/components/PdfUpload';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { CalendarEvent } from '@/lib/googleCalendar';
+import { parseCsvToCalendarEvents } from '@/lib/csvEvents';
 
 /** Sample events so users can open Review/Sync without uploading first (e.g. after "New upload"). Same titles as the original Calendar mock events on main. */
 function getSampleEvents(): CalendarEvent[] {
@@ -497,14 +498,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       }
 
       const { csvText } = await res.json();
-      const eventsFromCsv: CalendarEvent[] = csvText
-        .split('\n')
-        .filter((line: string) => line.trim() !== '')
-        .slice(1)
-        .map((line: string) => {
-          const [title, start, allDayStr, description, location] = line.split(',');
-          return { title, start, allDay: allDayStr?.toLowerCase() === 'true', description, location } as CalendarEvent;
-        });
+      const eventsFromCsv: CalendarEvent[] = parseCsvToCalendarEvents(csvText);
 
       setEvents(eventsFromCsv);
       localStorage.setItem('calendarEvents', JSON.stringify(eventsFromCsv));
