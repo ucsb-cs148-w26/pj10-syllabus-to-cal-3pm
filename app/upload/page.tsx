@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import PdfUpload from "@/components/PdfUpload";
 import type { CalendarEvent } from "@/lib/googleCalendar";
 import { saveAs } from "file-saver";
+import { parseFilterDays, getDayOfWeek } from "@/lib/promptUtils";
 
 type UploadedFile = { filename: string; url: string; size?: number; uploadedAt?: string };
 
@@ -23,6 +24,9 @@ function UploadPageContent() {
   const [includeLectures, setIncludeLectures] = useState(true);
   const [includeAssignments, setIncludeAssignments] = useState(true);
   const [includeExams, setIncludeExams] = useState(true);
+  const [userPrompt, setUserPrompt] = useState("");
+
+  const MAX_PROMPT_LENGTH = 500;
 
   const searchParams = useSearchParams();
 
@@ -118,6 +122,7 @@ function UploadPageContent() {
           includeLectures,
           includeAssignments,
           includeExams,
+          userPrompt: userPrompt.trim().slice(0, MAX_PROMPT_LENGTH),
         }),
       });
 
@@ -163,8 +168,10 @@ function UploadPageContent() {
         .map((line: string) => {
           const [title, start, allDayStr, description, location, className] =
             parseCsvLine(line);
+          const cleanClass = className?.trim() ?? "";
+          const cleanTitle = title?.trim() ?? "";
           return {
-            title,
+            title: cleanClass ? `${cleanClass} ${cleanTitle}` : cleanTitle,
             start,
             allDay: allDayStr?.toLowerCase() === "true",
             description,
@@ -173,11 +180,17 @@ function UploadPageContent() {
           } as CalendarEvent;
         });
 
-      setEvents(eventsFromCsv);
-      localStorage.setItem("calendarEvents", JSON.stringify(eventsFromCsv));
+      // Deterministic day-of-week filtering — more reliable than asking the LLM.
+      const filterDays = parseFilterDays(userPrompt);
+      const finalEvents = filterDays.size > 0
+        ? eventsFromCsv.filter((e) => !filterDays.has(getDayOfWeek(e.start)))
+        : eventsFromCsv;
+
+      setEvents(finalEvents);
+      localStorage.setItem("calendarEvents", JSON.stringify(finalEvents));
       setCalendarStatus("ok");
       setCalendarMessage(
-        `Successfully processed syllabus! ${eventsFromCsv.length} event(s) loaded.`
+        `Successfully processed syllabus! ${finalEvents.length} event(s) loaded.`
       );
     } catch (err) {
       console.error(err);
@@ -281,6 +294,32 @@ function UploadPageContent() {
         </div>
 
         <PdfUpload onTextExtracted={handleSyllabusText} />
+
+        <div className="space-y-2">
+          <label
+            htmlFor="user-prompt"
+            className="block text-sm font-medium text-slate-700"
+          >
+            Additional instructions{" "}
+            <span className="text-slate-400 font-normal">(optional)</span>
+          </label>
+          <textarea
+            id="user-prompt"
+            value={userPrompt}
+            onChange={(e) =>
+              setUserPrompt(e.target.value.slice(0, MAX_PROMPT_LENGTH))
+            }
+            placeholder={
+              "e.g. \"My CS148 section meets Fridays 2–3pm\" or \"Remove all Friday lectures\"\nNote: Specifying the date and year is recommended (e.g. 2026/03/06 at 7pm instead of \"this Friday\")."
+            }
+            rows={3}
+            maxLength={MAX_PROMPT_LENGTH}
+            className="w-full resize-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 placeholder-slate-400 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition"
+          />
+          <p className="text-right text-xs text-slate-400">
+            {userPrompt.length}/{MAX_PROMPT_LENGTH}
+          </p>
+        </div>
 
         <div className="flex flex-col items-center justify-center gap-3 py-4">
           <p className="text-sm font-medium text-slate-700">Include in calendar</p>
