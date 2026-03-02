@@ -1,9 +1,9 @@
-import  { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { google } from 'googleapis'
-import { access } from 'fs';
+import { getCalendarAccessToken } from '@/lib/calendarAuth'
 
 export async function GET(req: NextRequest) {
-    const accessToken = req.headers.get('authorization')?.replace('Bearer', '');
+    const accessToken = getCalendarAccessToken(req);
 
     if (!accessToken) {
         return NextResponse.json({ error: 'Missing access token' }, { status: 401 });
@@ -27,11 +27,16 @@ export async function GET(req: NextRequest) {
         }));
 
         return NextResponse.json({ calendars });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('[calendar/calendars] Error fetching calendars:', error);
-        const status = error?.code === 401 ? 401 : 500;
+        const code =
+            typeof error === 'object' && error !== null && 'code' in error
+                ? (error as { code?: number | string }).code
+                : undefined;
+        const message = error instanceof Error ? error.message : 'Failed to fetch calendars';
+        const status = code === 401 || code === '401' ? 401 : 500;
         return NextResponse.json(
-            { error: error?.message ?? 'Failed to fetch calendars' },
+            { error: message },
             { status },
         );
     }

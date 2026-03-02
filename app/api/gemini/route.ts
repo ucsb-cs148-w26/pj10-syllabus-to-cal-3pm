@@ -3,9 +3,34 @@ import { NextRequest, NextResponse } from "next/server";
 type GeminiPart = { text?: string };
 type GeminiCandidate = { content?: { parts?: GeminiPart[] } };
 type GeminiResponse = { candidates?: GeminiCandidate[] };
+type GeminiErrorResponse = { error?: { message?: string } };
+
+function getGeminiErrorMessage(data: unknown): string | null {
+  if (!data || typeof data !== "object") return null;
+  const maybeError = (data as GeminiErrorResponse).error;
+  if (!maybeError || typeof maybeError !== "object") return null;
+  if (typeof maybeError.message !== "string" || maybeError.message.trim() === "") return null;
+  return maybeError.message;
+}
 
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json({ error: "Missing GEMINI_API_KEY" }, { status: 500 });
+  }
+
+  let body: {
+    text?: string;
+    includeLectures?: boolean;
+    includeAssignments?: boolean;
+    includeExams?: boolean;
+  };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
   const {
     text,
     includeLectures = true,
@@ -85,7 +110,7 @@ Now extract events from this syllabus transcript:
 
   try {
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: {
@@ -100,13 +125,21 @@ Now extract events from this syllabus transcript:
           ],
           generationConfig: {
             temperature: 0.25,
-            maxOutputTokens: 30000,
+            maxOutputTokens: 8192,
           },
         }),
       }
     );
 
-    const data: GeminiResponse = await response.json();
+    const data: GeminiResponse | GeminiErrorResponse = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      const detail = getGeminiErrorMessage(data) ?? `HTTP ${response.status}`;
+      return NextResponse.json(
+        { error: `Gemini request failed: ${detail}` },
+        { status: 502 }
+      );
+    }
 
     const csvText = (data?.candidates || [])
       .map((candidate: GeminiCandidate) =>
@@ -114,11 +147,17 @@ Now extract events from this syllabus transcript:
       )
       .join("\n");
 
-    if (!csvText) {
+    const cleanedCsv = csvText
+      .replace(/^```csv\s*/i, "")
+      .replace(/^```\s*/i, "")
+      .replace(/\s*```$/, "")
+      .trim();
+
+    if (!cleanedCsv) {
       return NextResponse.json({ error: "Failed to return CSV" }, { status: 500 });
     }
 
-    return NextResponse.json({ csvText });
+    return NextResponse.json({ csvText: cleanedCsv });
   } catch (err) {
     console.error("Failed to call Gemini", err);
     return NextResponse.json({ error: "Failed to call Gemini" }, { status: 500 });

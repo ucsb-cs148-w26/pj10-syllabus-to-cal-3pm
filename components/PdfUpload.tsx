@@ -31,17 +31,18 @@ export default function PdfUpload({ onTextExtracted, uploadedFiles, onDeleteUplo
 
   // Recompute transcript when uploaded list changes (e.g., deletions)
   useEffect(() => {
-    if (!uploadedFiles || uploadedFiles.length === 0) return;
+    const files = uploadedFiles ?? [];
+    if (files.length === 0) return;
 
     let cancelled = false;
 
     async function recompute() {
       try {
         setMessage("");
-        const texts = await extractAllTexts(uploadedFiles);
+        const texts = await extractAllTexts(files);
         if (cancelled) return;
         const transcript = texts.filter(Boolean).join("\n\n").trim();
-        onTextExtracted(transcript, uploadedFiles);
+        onTextExtracted(transcript, files);
       } catch {
         // silent
       }
