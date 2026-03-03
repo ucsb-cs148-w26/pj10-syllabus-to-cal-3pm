@@ -168,10 +168,8 @@ function UploadPageContent() {
         .map((line: string) => {
           const [title, start, allDayStr, description, location, className] =
             parseCsvLine(line);
-          const cleanClass = className?.trim() ?? "";
-          const cleanTitle = title?.trim() ?? "";
           return {
-            title: cleanClass ? `${cleanClass} ${cleanTitle}` : cleanTitle,
+            title: title?.trim() ?? "",
             start,
             allDay: allDayStr?.toLowerCase() === "true",
             description,

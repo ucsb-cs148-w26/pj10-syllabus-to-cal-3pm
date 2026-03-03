@@ -505,10 +505,8 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
           const [title, start, allDayStr, description, location, className] =
             line.split(',');
 
-          const cleanClass = className?.trim() ?? '';
-          const cleanTitle = title?.trim() ?? '';
           return {
-            title: cleanClass ? `${cleanClass} ${cleanTitle}` : cleanTitle,
+            title: title?.trim() ?? '',
             start,
             allDay: allDayStr?.toLowerCase() === 'true',
             description,
