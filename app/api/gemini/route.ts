@@ -50,29 +50,29 @@ function sanitizeUserPrompt(raw: unknown): string {
 }
 
 export async function POST(req: NextRequest) {
- const apiKey = process.env.GEMINI_API_KEY;                                               
-    if (!apiKey) {                                                                           
-      return NextResponse.json({ error: "Missing GEMINI_API_KEY" }, { status: 500 });        
-    }                                                                                        
-                  
-    let body: GeminiRequestBody & { userPrompt?: unknown };
-    try {
-      body = await req.json();
-    } catch {
-      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-    }
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return NextResponse.json({ error: "Missing GEMINI_API_KEY" }, { status: 500 });
+  }
 
-    if (!body || typeof body !== "object") {
-      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
-    }
+  let body: GeminiRequestBody & { userPrompt?: unknown };
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
 
-    const text = typeof body.text === "string" ? body.text.trim() : "";
-    const includeLectures = typeof body.includeLectures === "boolean" ? body.includeLectures
-  : true;
-    const includeAssignments =
-      typeof body.includeAssignments === "boolean" ? body.includeAssignments : true;
-    const includeExams = typeof body.includeExams === "boolean" ? body.includeExams : true;
-    const userPrompt = body.userPrompt;
+  if (!body || typeof body !== "object") {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  const text = typeof body.text === "string" ? body.text.trim() : "";
+  const includeLectures = typeof body.includeLectures === "boolean" ? body.includeLectures
+    : true;
+  const includeAssignments =
+    typeof body.includeAssignments === "boolean" ? body.includeAssignments : true;
+  const includeExams = typeof body.includeExams === "boolean" ? body.includeExams : true;
+  const userPrompt = body.userPrompt;
 
   if (!text) {
     return NextResponse.json({ error: "Failed to provide text" }, { status: 400 });

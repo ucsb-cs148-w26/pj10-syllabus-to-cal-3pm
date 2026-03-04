@@ -532,23 +532,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
       const { csvText } = await res.json();
       const eventsFromCsv: CalendarEvent[] = parseCsvToCalendarEvents(csvText);
-      const eventsFromCsv: CalendarEvent[] = csvText
-        .split('\n')
-        .filter((line: string) => line.trim() !== '')
-        .slice(1)
-        .map((line: string) => {
-          const [title, start, allDayStr, description, location, className] =
-            line.split(',');
-
-          return {
-            title: title?.trim() ?? '',
-            start,
-            allDay: allDayStr?.toLowerCase() === 'true',
-            description,
-            location,
-            class: className,
-          } as CalendarEvent;
-        });
 
       // Deterministic day-of-week filtering — more reliable than asking the LLM.
       const filterDays = parseFilterDays(userPrompt);
@@ -1123,23 +1106,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                   </div>
 
                   {isGoogleConnected ? (
-                    <CalendarPicker
-                      selectedCalendarId={selectedCalendarId}
-                      selectedCalendarSummary={selectedCalendarSummary}
-                      onSelect={(id, summary) => {
-                        setSelectedCalendarId(id);
-                        setSelectedCalendarSummary(summary);
-                        try {
-                          localStorage.setItem(CALENDAR_PREF_KEY, JSON.stringify({ id, summary }));
-                        } catch { /* ignore */ }
-                        if (hasSynced) {
-                          setHasSynced(false);
-                          setSyncBurst(false);
-                          setCalendarStatus('idle');
-                          setCalendarMessage('');
-                        }
-                      }}
-                    />
                     <div className="inline-flex items-center gap-2">
                       <CalendarPicker
                         accessToken={accessToken!}
