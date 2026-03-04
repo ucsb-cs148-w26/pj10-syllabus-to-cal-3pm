@@ -1,1 +1,3 @@
-
+- PDF text extraction
+- NLP NER training in early quarter
+- Priority scoring function + Study Scheduler backend
