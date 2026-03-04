@@ -1,6 +1,7 @@
 ## Lucy – Contributions
 
 - Refined the AI prompt to ensure the system extracts only lectures, assignments, and exams while excluding holidays and office hours with slow noise.
+- NLP training data set creation. 
 - Tested the consistency and effectiveness of the AI prompt through trails of testings. 
 - Implemented CSV output formatting and normalization to enforce the schema:
   title,start,allDay,description,location,class.
