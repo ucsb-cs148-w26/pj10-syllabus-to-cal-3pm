@@ -1,3 +1,3 @@
 - PDF text extraction
-- NLP NER training in early quarter
+- NLP NER training in early quarter (scripts to create training sets, set creation, raw data collection, training models)
 - Priority scoring function + Study Scheduler backend
