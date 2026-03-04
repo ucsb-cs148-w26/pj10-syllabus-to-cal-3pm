@@ -627,7 +627,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
         String(e.allDay),
         esc(e.description),
         esc(e.location ?? ''),
-        esc((e as any).class ?? '')
+        esc(e.class ?? '')
       ].join(',');
     });
     const csv = [header, ...rows].join('\n');

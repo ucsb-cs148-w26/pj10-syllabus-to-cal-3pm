@@ -54,17 +54,17 @@ function priority_score(event : CalendarEvent){
       if(end_valid) end = new Date(event.end);
     }
 
-    
+
     // if(end.getTime() < start.getTime()){
     //   throw new Error("End time before start");
     // }
-      
+
     const time_until_start : number = (start.getTime() - (new Date()).getTime()) / 1000 / 60 / 60; //ms -> hours
     if(time_until_start < 0){
       return NaN
     }
     score += time_until_start * TIME_MULTIPLICATIVE_WEIGHT
-    
+
     const split_title : Array<string> = event.title.trim().split(" ")
     for(let a = 0; a < split_title.length; a++){
       split_title[a] = split_title[a].trim().toLowerCase();
@@ -83,18 +83,20 @@ export function StudyPlan() {
   const HIGH_PRIORITY_THRESHOLD = 480;//~2 days
   const MEDIUM_PRIORITY_THRESHOLD = 1680;//~ 1 week
   const events = get_events();
+  // console.log('[StudyPlan] Raw events from get_events():', events);
   const studySessions : StudySession[] = [];
   for(let a=0; a<events.length; a++){
     const event = events[a];
+    // console.log(`[StudyPlan] Event ${a}:`, { title: event.title, class: event.class, allProperties: event });
     const score = priority_score(event);
     if(score >= 0 && !Number.isNaN(score)){
       studySessions.push(
         {
           id: String(a),
           assignment: event.title,
-          course: 'course', 
-          suggestedTime: 'time', 
-          duration: 'duration', 
+          course: event.class || 'Unknown Course',
+          suggestedTime: 'time',
+          duration: 'duration',
           date: Number.isNaN(score) ? 'none' : event.start,
           score: score,
           priority: 'high'
@@ -103,6 +105,7 @@ export function StudyPlan() {
     }
   }
   studySessions.sort(compare_study_sessions);
+  // console.log('[StudyPlan] Final study sessions with course info:', studySessions);
   for(const studySession of studySessions){
     if(Number.isNaN(studySession.score) || studySession.score < 0){
       studySession.priority = 'low';
