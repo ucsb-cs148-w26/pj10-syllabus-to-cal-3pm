@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import PdfUpload from '@/components/PdfUpload';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CreateCalendarDialog } from './CreateCalendarDialog';
 import type { CalendarEvent } from '@/lib/googleCalendar';
 
 /** Sample events so users can open Review/Sync without uploading first (e.g. after "New upload"). Same titles as the original Calendar mock events on main. */
@@ -141,11 +142,13 @@ function CalendarPicker({
   selectedCalendarId,
   selectedCalendarSummary,
   onSelect,
+  refetchTrigger,
 }: {
   accessToken: string;
   selectedCalendarId: string;
   selectedCalendarSummary: string,
   onSelect: (id: string, summary: string) => void;
+  refetchTrigger?: number;
 }) {
   const [open, setOpen] = useState(false);
   const [calendars, setCalendars] = useState<GoogleCalendarMeta[]>([]);
@@ -164,7 +167,7 @@ function CalendarPicker({
   }, [open]);
 
   async function fetchCalendars() {
-    if (fetchStatus === 'ok' || fetchStatus === 'loading') return;
+    if (fetchStatus === 'loading') return;
     setFetchStatus('loading');
     try {
       const res = await fetch('/api/calendar/calendars', {
@@ -180,8 +183,16 @@ function CalendarPicker({
     }
   }
 
+  // Refetch when refetchTrigger changes
+  useEffect(() => {
+    fetchCalendars();
+  }, [refetchTrigger]);
+
   function handleToggle() {
-    if (!open) fetchCalendars();
+    if (!open) {
+      setFetchStatus('idle');
+      fetchCalendars();
+    }
     setOpen((o) => !o);
   }
 
@@ -344,6 +355,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     } catch { /* ignore */ }
     return 'Default calendar';
   });
+  const [calendarRefetchTrigger, setCalendarRefetchTrigger] = useState(0);
 
   const accessToken = initialAccessToken;
   const hasEvents = events.length > 0;
@@ -1035,30 +1047,44 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                     <p className="text-sm font-semibold text-gray-900">Calendar</p>
                     <p className="text-xs text-gray-500">
                       {isGoogleConnected
-                        ? 'Choose which calendar to sync events into.'
-                        : 'Connect Google to choose a calendar.'}
+                        ? 'Create or choose which calendar to sync events into.'
+                        : 'Connect Google to create or choose a calendar.'}
                     </p>
                   </div>
 
                   {isGoogleConnected ? (
-                    <CalendarPicker
-                      accessToken={accessToken!}
-                      selectedCalendarId={selectedCalendarId}
-                      selectedCalendarSummary={selectedCalendarSummary}
-                      onSelect={(id, summary) => {
-                        setSelectedCalendarId(id);
-                        setSelectedCalendarSummary(summary);
-                        try {
-                          localStorage.setItem(CALENDAR_PREF_KEY, JSON.stringify({ id, summary }));
-                        } catch { /* ignore */ }
-                        if (hasSynced) {
-                          setHasSynced(false);
-                          setSyncBurst(false);
-                          setCalendarStatus('idle');
-                          setCalendarMessage('');
-                        }
-                      }}
-                    />
+                    <div className="inline-flex items-center gap-2">
+                      <CalendarPicker
+                        accessToken={accessToken!}
+                        selectedCalendarId={selectedCalendarId}
+                        selectedCalendarSummary={selectedCalendarSummary}
+                        refetchTrigger={calendarRefetchTrigger}
+                        onSelect={(id, summary) => {
+                          setSelectedCalendarId(id);
+                          setSelectedCalendarSummary(summary);
+                          try {
+                            localStorage.setItem(CALENDAR_PREF_KEY, JSON.stringify({ id, summary }));
+                          } catch { /* ignore */ }
+                          if (hasSynced) {
+                            setHasSynced(false);
+                            setSyncBurst(false);
+                            setCalendarStatus('idle');
+                            setCalendarMessage('');
+                          }
+                        }}
+                      />
+                      <CreateCalendarDialog
+                        accessToken={accessToken!}
+                        onCalendarCreated={(id, summary) => {
+                          setCalendarRefetchTrigger((t) => t + 1);
+                          setSelectedCalendarId(id);
+                          setSelectedCalendarSummary(summary);
+                          try {
+                            localStorage.setItem(CALENDAR_PREF_KEY, JSON.stringify({ id, summary }));
+                          } catch { /* ignore */ }
+                        }}
+                      />
+                    </div>
                   ) : (
                     <span className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-400">
                       <span className="h-2.5 w-2.5 rounded-full bg-gray-300" />
