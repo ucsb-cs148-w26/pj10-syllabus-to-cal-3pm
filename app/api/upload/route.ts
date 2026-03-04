@@ -3,6 +3,7 @@ import { list, put, del } from "@vercel/blob";
 import { writeFile, readdir, stat, unlink, mkdir } from "fs/promises";
 import { join } from "path";
 import { sanitizeFilename, validateUploadFile } from "@/lib/fileValidation";
+import { getRequestUserId, toUserScope } from "@/lib/supabase/requestUser";
 
 type UploadedFileMeta = { filename: string; url: string };
 export const runtime = "nodejs";
@@ -10,8 +11,24 @@ export const runtime = "nodejs";
 const UPLOADS_DIR = join(process.cwd(), "uploads");
 const USE_LOCAL = !process.env.BLOB_READ_WRITE_TOKEN;
 
-async function ensureUploadsDir() {
-  await mkdir(UPLOADS_DIR, { recursive: true });
+function getOwnerPrefix(userId: string): string {
+  return `${toUserScope(userId)}/`;
+}
+
+function getOwnerUploadsDir(userId: string): string {
+  return join(UPLOADS_DIR, toUserScope(userId));
+}
+
+async function ensureOwnerUploadsDir(userId: string) {
+  await mkdir(getOwnerUploadsDir(userId), { recursive: true });
+}
+
+function uploadServeUrl(origin: string, filename: string): string {
+  return `${origin}/api/upload/serve/${encodeURIComponent(filename)}`;
+}
+
+function stripOwnerPrefix(pathname: string, ownerPrefix: string): string {
+  return pathname.startsWith(ownerPrefix) ? pathname.slice(ownerPrefix.length) : pathname;
 }
 
 export async function POST(request: NextRequest) {
@@ -29,9 +46,15 @@ export async function POST(request: NextRequest) {
   const origin = request.headers.get("host")
     ? `${request.headers.get("x-forwarded-proto") || "http"}://${request.headers.get("host")}`
     : "http://localhost:3000";
+  const userId = await getRequestUserId(request);
+  if (!userId) {
+    return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+  }
+  const ownerPrefix = getOwnerPrefix(userId);
 
   if (USE_LOCAL) {
-    await ensureUploadsDir();
+    const ownerDir = getOwnerUploadsDir(userId);
+    await ensureOwnerUploadsDir(userId);
     for (const file of files) {
       const v = validateUploadFile(file);
       if (!v.ok) {
@@ -41,13 +64,13 @@ export async function POST(request: NextRequest) {
         );
       }
       const uniqueName = `${Date.now()}-${v.safeName}`;
-      const filePath = join(UPLOADS_DIR, uniqueName);
+      const filePath = join(ownerDir, uniqueName);
       const buf = Buffer.from(await file.arrayBuffer());
       await writeFile(filePath, buf);
-      const url = `${origin}/api/upload/serve/${uniqueName}`;
+      const url = uploadServeUrl(origin, uniqueName);
       uploadedFiles.push({ filename: uniqueName, url });
     }
-    const allFiles = await listLocalFiles(origin);
+    const allFiles = await listLocalFiles(origin, userId);
     return NextResponse.json({
       success: true,
       uploadedFiles,
@@ -61,23 +84,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: v.error },
         { status: 400 }
-      );
+        );
+      }
+      const uniqueName = `${Date.now()}-${v.safeName}`;
+      const blobPath = `${ownerPrefix}${uniqueName}`;
+      await put(blobPath, file, {
+        access: "private",
+        contentType: file.type || undefined,
+      });
+      uploadedFiles.push({
+        filename: uniqueName,
+        url: uploadServeUrl(origin, uniqueName),
+      });
     }
-    const uniqueName = `${Date.now()}-${v.safeName}`;
-    const blob = await put(uniqueName, file, {
-      access: "public",
-      contentType: file.type || undefined,
-    });
-    uploadedFiles.push({
-      filename: blob.pathname,
-      url: blob.url,
-    });
-  }
 
-  const { blobs } = await list();
+  const { blobs } = await list({ prefix: ownerPrefix });
   const allFiles = blobs.map((b) => ({
-    filename: b.pathname,
-    url: b.url,
+    filename: stripOwnerPrefix(b.pathname, ownerPrefix),
+    url: uploadServeUrl(origin, stripOwnerPrefix(b.pathname, ownerPrefix)),
     size: b.size,
     uploadedAt: b.uploadedAt,
   }));
@@ -89,18 +113,19 @@ export async function POST(request: NextRequest) {
   });
 }
 
-async function listLocalFiles(origin: string) {
+async function listLocalFiles(origin: string, userId: string) {
   try {
-    await ensureUploadsDir();
-    const names = await readdir(UPLOADS_DIR);
+    const ownerDir = getOwnerUploadsDir(userId);
+    await ensureOwnerUploadsDir(userId);
+    const names = await readdir(ownerDir);
     const files: Array<{ filename: string; url: string; size?: number; uploadedAt?: Date }> = [];
     for (const name of names) {
-      const p = join(UPLOADS_DIR, name);
+      const p = join(ownerDir, name);
       const st = await stat(p);
       if (st.isFile()) {
         files.push({
           filename: name,
-          url: `${origin}/api/upload/serve/${name}`,
+          url: uploadServeUrl(origin, name),
           size: st.size,
           uploadedAt: st.mtime,
         });
@@ -117,9 +142,14 @@ export async function GET(request: NextRequest) {
     const origin = request.headers.get("host")
       ? `${request.headers.get("x-forwarded-proto") || "http"}://${request.headers.get("host")}`
       : "http://localhost:3000";
+    const userId = await getRequestUserId(request);
+    if (!userId) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    const ownerPrefix = getOwnerPrefix(userId);
 
     if (USE_LOCAL) {
-      const files = await listLocalFiles(origin);
+      const files = await listLocalFiles(origin, userId);
       const totalSize = files.reduce((acc: number, f) => acc + (f.size ?? 0), 0);
       return NextResponse.json({
         success: true,
@@ -130,10 +160,10 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const { blobs } = await list();
+    const { blobs } = await list({ prefix: ownerPrefix });
     const files = blobs.map((blob) => ({
-      filename: blob.pathname,
-      url: blob.url,
+      filename: stripOwnerPrefix(blob.pathname, ownerPrefix),
+      url: uploadServeUrl(origin, stripOwnerPrefix(blob.pathname, ownerPrefix)),
       size: blob.size,
       uploadedAt: blob.uploadedAt,
     }));
@@ -159,18 +189,24 @@ export async function GET(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const url = new URL(request.url);
+    const userId = await getRequestUserId(request);
+    if (!userId) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+    const ownerPrefix = getOwnerPrefix(userId);
 
     if (USE_LOCAL) {
+      const ownerDir = getOwnerUploadsDir(userId);
       const deleteAll = url.searchParams.get("all") === "true";
       if (deleteAll) {
         const limitRaw = url.searchParams.get("limit");
         const limit = limitRaw
           ? Math.max(1, Math.min(1000, Number(limitRaw)))
           : undefined;
-        const names = await readdir(UPLOADS_DIR).catch(() => []);
+        const names = await readdir(ownerDir).catch(() => []);
         const targets = limit ? names.slice(0, limit) : names;
         for (const name of targets) {
-          const p = join(UPLOADS_DIR, name);
+          const p = join(ownerDir, name);
           try {
             await unlink(p);
           } catch { /* ignore */ }
@@ -197,8 +233,8 @@ export async function DELETE(request: NextRequest) {
         return NextResponse.json({ success: false, error: "Missing filename" }, { status: 400 });
       }
       const filename = sanitizeFilename(filenameRaw);
-      const filePath = join(UPLOADS_DIR, filename);
-      if (!filePath.startsWith(UPLOADS_DIR)) {
+      const filePath = join(ownerDir, filename);
+      if (!filePath.startsWith(ownerDir)) {
         return NextResponse.json({ success: false, error: "Invalid path" }, { status: 400 });
       }
       await unlink(filePath);
@@ -210,7 +246,7 @@ export async function DELETE(request: NextRequest) {
     if (deleteAll) {
       const limitRaw = url.searchParams.get("limit");
       const limit = limitRaw ? Math.max(1, Math.min(1000, Number(limitRaw))) : undefined;
-      const { blobs } = await list();
+      const { blobs } = await list({ prefix: ownerPrefix });
       const targets = limit ? blobs.slice(0, limit) : blobs;
       await Promise.all(targets.map((b) => del(b.pathname)));
       return NextResponse.json({
@@ -234,7 +270,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Missing filename" }, { status: 400 });
     }
     const filename = sanitizeFilename(filenameRaw);
-    await del(filename);
+    await del(`${ownerPrefix}${filename}`);
     return NextResponse.json({ success: true, filename });
   } catch (error) {
     console.error("Error deleting file:", error);
