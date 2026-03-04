@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Uploads } from "../../../components/figma-app/components/features/Uploads";
 import { describe, test, expect, beforeEach } from "@jest/globals";
@@ -7,6 +7,14 @@ import { describe, test, expect, beforeEach } from "@jest/globals";
 const MOCK_EVENTS = [
   { title: "Midterm Exam", start: "2025-03-15T10:00:00Z", allDay: false },
   { title: "Final Project Due", start: "2025-04-30T23:59:00Z", allDay: false },
+];
+
+const CATEGORISED_EVENTS = [
+  { title: "CS 101 Lecture: Intro",    start: "2025-04-07T08:00:00", allDay: false, description: "LECTURE",    location: "" },
+  { title: "CS 101 Lecture: Arrays",   start: "2025-04-09T08:00:00", allDay: false, description: "LECTURE",    location: "" },
+  { title: "Programming Assignment 1", start: "2025-04-14",          allDay: true,  description: "ASSIGNMENT", location: "" },
+  { title: "Midterm Exam",             start: "2025-04-21",          allDay: true,  description: "EXAM",       location: "" },
+  { title: "Quiz 1",                   start: "2025-04-10",          allDay: true,  description: "EXAM",       location: "" },
 ];
 
 function renderUploads(accessToken: string | null = null) {
@@ -20,8 +28,8 @@ function renderUploads(accessToken: string | null = null) {
   return { onAccessTokenChange };
 }
 
-function seedEvents() {
-  localStorage.setItem("calendarEvents", JSON.stringify(MOCK_EVENTS));
+function seedEvents(events = MOCK_EVENTS) {
+  localStorage.setItem("calendarEvents", JSON.stringify(events));
 }
 
 
@@ -34,7 +42,7 @@ describe("Uploads unit tests", () => {
   });
 
 
-  describe("Step 1 – initial render", () => {
+  describe("Step 1 - initial render", () => {
     test("renders the Upload & Sync heading", () => {
       renderUploads();
       expect(screen.getByText("Upload & Sync")).toBeInTheDocument();
@@ -61,10 +69,10 @@ describe("Uploads unit tests", () => {
       ).toHaveAttribute("aria-current", "step");
     });
 
-    test("Review and Sync step buttons are disabled when no events exist", () => {
+    test("Review and Sync step buttons are enabled when getSampleEvents seeds events on mount", () => {
       renderUploads();
-      expect(screen.getByRole("button", { name: /2.*review/i })).toBeDisabled();
-      expect(screen.getByRole("button", { name: /3.*sync/i })).toBeDisabled();
+      expect(screen.getByRole("button", { name: /2.*review/i })).not.toBeDisabled();
+      expect(screen.getByRole("button", { name: /3.*sync/i })).not.toBeDisabled();
     });
 
     test("Process button is disabled when no PDF has been added", () => {
@@ -76,7 +84,7 @@ describe("Uploads unit tests", () => {
       renderUploads();
       expect(
         screen.getByRole("button", { name: /review previous/i })
-      ).toBeDisabled();
+      ).not.toBeDisabled();
     });
 
     test("renders all three filter checkboxes", () => {
@@ -102,9 +110,9 @@ describe("Uploads unit tests", () => {
       );
     });
 
-    test("status pill shows 'Upload a PDF to begin' when nothing is uploaded", () => {
+    test("step rail shows 'Upload a syllabus to begin' when nothing is uploaded", () => {
       renderUploads();
-      expect(screen.getByText(/upload a pdf to begin/i)).toBeInTheDocument();
+      expect(screen.getByText(/upload a syllabus to begin/i)).toBeInTheDocument();
     });
 
     test("Review and Sync step buttons are enabled when events exist in localStorage", () => {
@@ -130,7 +138,7 @@ describe("Uploads unit tests", () => {
   });
 
 
-  describe("Step 1 – filter checkboxes", () => {
+  describe("Step 1 - filter checkboxes", () => {
     test("clicking Lectures checkbox unchecks it", async () => {
       renderUploads();
       const checkbox = screen.getByRole("checkbox", { name: /lectures/i });
@@ -163,7 +171,7 @@ describe("Uploads unit tests", () => {
   });
 
 
-  describe("Step 1 → Step 2: navigation", () => {
+  describe("Step 1 -> Step 2: navigation", () => {
     test("clicking Review Previous navigates to step 2 when events exist", async () => {
       seedEvents();
       renderUploads();
@@ -184,7 +192,7 @@ describe("Uploads unit tests", () => {
   });
 
 
-  describe("Step 1 – Process button", () => {
+  describe("Step 1 - Process button", () => {
     test("shows processing spinner after clicking Process", async () => {
       let resolveGemini!: (v: unknown) => void;
       global.fetch = jest.fn().mockReturnValueOnce(
@@ -249,7 +257,7 @@ describe("Uploads unit tests", () => {
   });
 
 
-  describe("Step 2 – Review panel", () => {
+  describe("Step 2 - Review panel", () => {
     beforeEach(() => {
       seedEvents();
     });
@@ -324,7 +332,7 @@ describe("Uploads unit tests", () => {
 
       await userEvent.click(screen.getByRole("button", { name: /show raw csv/i }));
       expect(screen.getByText(/hide raw csv/i)).toBeInTheDocument();
-      expect(screen.getByText(/title,start,allday/i)).toBeInTheDocument();
+      expect(screen.getByText(/title,start,allDay,description,location,class/i)).toBeInTheDocument();
     });
 
     test("raw CSV panel hides again when Hide raw CSV is clicked", async () => {
@@ -334,12 +342,144 @@ describe("Uploads unit tests", () => {
 
       await userEvent.click(screen.getByRole("button", { name: /show raw csv/i }));
       await userEvent.click(screen.getByRole("button", { name: /hide raw csv/i }));
-      expect(screen.queryByText(/title,start,allday/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/title,start,allDay,description,location,class/i)).not.toBeInTheDocument();
+    });
+
+
+    describe("category filter buttons", () => {
+      beforeEach(() => {
+        localStorage.setItem("calendarEvents", JSON.stringify(CATEGORISED_EVENTS));
+      });
+
+      test("renders all four filter buttons", async () => {
+        renderUploads();
+        await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+
+        expect(screen.getByRole("button", { name: /^All/i })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /^Lectures/i })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /^Assignments/i })).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: /^Exams/i })).toBeInTheDocument();
+      });
+
+      test("'All' filter is active by default", async () => {
+        renderUploads();
+        await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+
+        expect(screen.getByRole("button", { name: /^All/i }).className).toMatch(/bg-indigo-600/);
+      });
+
+      test("filter buttons show correct per-category counts", async () => {
+        renderUploads();
+        await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+
+        expect(within(screen.getByRole("button", { name: /^All/i })).getByText("5")).toBeInTheDocument();
+        expect(within(screen.getByRole("button", { name: /^Lectures/i })).getByText("2")).toBeInTheDocument();
+        expect(within(screen.getByRole("button", { name: /^Assignments/i })).getByText("1")).toBeInTheDocument();
+        expect(within(screen.getByRole("button", { name: /^Exams/i })).getByText("2")).toBeInTheDocument();
+      });
+
+      test("'Lectures' filter shows only lecture events", async () => {
+        renderUploads();
+        await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+        await userEvent.click(screen.getByRole("button", { name: /^Lectures/i }));
+
+        expect(screen.getByText("CS 101 Lecture: Intro")).toBeInTheDocument();
+        expect(screen.getByText("CS 101 Lecture: Arrays")).toBeInTheDocument();
+        expect(screen.queryByText("Programming Assignment 1")).not.toBeInTheDocument();
+        expect(screen.queryByText("Midterm Exam")).not.toBeInTheDocument();
+        expect(screen.queryByText("Quiz 1")).not.toBeInTheDocument();
+      });
+
+      test("'Assignments' filter shows only assignment events", async () => {
+        renderUploads();
+        await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+        await userEvent.click(screen.getByRole("button", { name: /^Assignments/i }));
+
+        expect(screen.getByText("Programming Assignment 1")).toBeInTheDocument();
+        expect(screen.queryByText("CS 101 Lecture: Intro")).not.toBeInTheDocument();
+        expect(screen.queryByText("Midterm Exam")).not.toBeInTheDocument();
+        expect(screen.queryByText("Quiz 1")).not.toBeInTheDocument();
+      });
+
+      test("'Exams' filter shows both exams and quizzes", async () => {
+        renderUploads();
+        await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+        await userEvent.click(screen.getByRole("button", { name: /^Exams/i }));
+
+        expect(screen.getByText("Midterm Exam")).toBeInTheDocument();
+        expect(screen.getByText("Quiz 1")).toBeInTheDocument();
+        expect(screen.queryByText("CS 101 Lecture: Intro")).not.toBeInTheDocument();
+        expect(screen.queryByText("Programming Assignment 1")).not.toBeInTheDocument();
+      });
+
+      test("clicking 'All' after a filter restores all events", async () => {
+        renderUploads();
+        await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+        await userEvent.click(screen.getByRole("button", { name: /^Lectures/i }));
+        await userEvent.click(screen.getByRole("button", { name: /^All/i }));
+
+        for (const e of CATEGORISED_EVENTS) {
+          expect(screen.getByText(e.title)).toBeInTheDocument();
+        }
+      });
+
+      test("clicked filter button becomes active, others become inactive", async () => {
+        renderUploads();
+        await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+        await userEvent.click(screen.getByRole("button", { name: /^Lectures/i }));
+
+        expect(screen.getByRole("button", { name: /^Lectures/i }).className).toMatch(/bg-indigo-600/);
+        expect(screen.getByRole("button", { name: /^All/i }).className).not.toMatch(/bg-indigo-600/);
+        expect(screen.getByRole("button", { name: /^Assignments/i }).className).not.toMatch(/bg-indigo-600/);
+        expect(screen.getByRole("button", { name: /^Exams/i }).className).not.toMatch(/bg-indigo-600/);
+      });
+
+      test("shows empty state message when no events match the selected filter", async () => {
+        localStorage.setItem("calendarEvents", JSON.stringify([
+          { title: "CS 101 Lecture", start: "2025-04-07T08:00:00", allDay: false, description: "LECTURE", location: "" },
+        ]));
+        renderUploads();
+        await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+        await userEvent.click(screen.getByRole("button", { name: /^Assignments/i }));
+
+        expect(screen.getByText(/no assignment events found/i)).toBeInTheDocument();
+      });
+
+      test("event count badge shows only total when 'All' is active", async () => {
+        renderUploads();
+        await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+
+        expect(screen.getByText(`${CATEGORISED_EVENTS.length} events`)).toBeInTheDocument();
+        expect(screen.queryByText(`${CATEGORISED_EVENTS.length}/${CATEGORISED_EVENTS.length}`)).not.toBeInTheDocument();
+      });
+
+      test("event count badge shows filtered/total when a category filter is active", async () => {
+        renderUploads();
+        await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+        await userEvent.click(screen.getByRole("button", { name: /^Lectures/i }));
+
+        const badge = document.querySelector(
+          'span.rounded-full.bg-gray-100.px-2\\.5'
+        ) as HTMLElement;
+        expect(badge).not.toBeNull();
+        expect(badge.textContent?.replace(/\s/g, '')).toBe(`2/${CATEGORISED_EVENTS.length}events`);
+      });
+
+      test("switching filters never triggers an API call", async () => {
+        renderUploads();
+        await userEvent.click(screen.getByRole("button", { name: /2.*review/i }));
+        await userEvent.click(screen.getByRole("button", { name: /^Lectures/i }));
+        await userEvent.click(screen.getByRole("button", { name: /^Assignments/i }));
+        await userEvent.click(screen.getByRole("button", { name: /^Exams/i }));
+        await userEvent.click(screen.getByRole("button", { name: /^All/i }));
+
+        expect(global.fetch).not.toHaveBeenCalled();
+      });
     });
   });
 
 
-  describe("Step 3 – Sync panel", () => {
+  describe("Step 3 - Sync panel", () => {
     beforeEach(() => {
       seedEvents();
     });
@@ -474,7 +614,7 @@ describe("Uploads unit tests", () => {
   });
 
 
-  describe("Full flow", () => {
+  describe("Full path (Step 1 reset)", () => {
     test("New Upload button resets to step 1 and clears localStorage", async () => {
       seedEvents();
       global.fetch = jest.fn().mockResolvedValueOnce({

@@ -147,6 +147,47 @@ function UploadPageContent() {
       const { csvText } = await res.json();
       const eventsFromCsv: CalendarEvent[] = parseCsvToCalendarEvents(csvText);
 
+      function parseCsvLine(line: string) {
+        const result: string[] = [];
+        let current = "";
+        let insideQuotes = false;
+
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+
+          if (char === '"') {
+            insideQuotes = !insideQuotes;
+            continue;
+          }
+          if (char === "," && !insideQuotes) {
+            result.push(current);
+            current = "";
+          } else {
+            current += char;
+          }
+        }
+
+        result.push(current);
+        return result;
+      }
+
+      const eventsFromCsv: CalendarEvent[] = csvText
+        .split("\n")
+        .filter((line: string) => line.trim() !== "")
+        .slice(1)
+        .map((line: string) => {
+          const [title, start, allDayStr, description, location, className] =
+            parseCsvLine(line);
+          return {
+            title,
+            start,
+            allDay: allDayStr?.toLowerCase() === "true",
+            description,
+            location,
+            class: className,   // optional property
+          } as CalendarEvent;
+        });
+
       setEvents(eventsFromCsv);
       localStorage.setItem("calendarEvents", JSON.stringify(eventsFromCsv));
       setCalendarStatus("ok");
@@ -225,7 +266,7 @@ function UploadPageContent() {
 
   function handleDownloadCsv() {
     if (events.length === 0) return;
-    const header = "title,start,allDay,description,location";
+    const header = "title,start,allDay,description,location,class";
     const rows = events.map((e) => {
       const esc = (v?: string) =>
         JSON.stringify(v ?? "").slice(1, -1); // minimal CSV-safe escaping
