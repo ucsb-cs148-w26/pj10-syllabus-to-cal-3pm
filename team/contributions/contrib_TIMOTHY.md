@@ -4,3 +4,5 @@
 - NLP NER training in early quarter (scripts to create training sets, set creation, raw data collection, training models)
 - much of the training and set creation work was done outside of github due to large file sizes
 - Priority scoring function + Study Scheduler backend
+
+todo: link to the issues/prs/commits
