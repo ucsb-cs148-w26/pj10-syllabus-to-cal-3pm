@@ -1,4 +1,5 @@
 - PDF text extraction
+- MVP integration of text extraction 
 - MVP text centering for text display
 - NLP NER training in early quarter (scripts to create training sets, set creation, raw data collection, training models)
 - much of the training and set creation work was done outside of github due to large file sizes
