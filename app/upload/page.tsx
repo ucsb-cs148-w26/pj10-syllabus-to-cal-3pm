@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import PdfUpload from "@/components/PdfUpload";
 import type { CalendarEvent } from "@/lib/googleCalendar";
+import { parseCsvToCalendarEvents } from "@/lib/csvEvents";
 import { saveAs } from "file-saver";
 import { parseFilterDays, getDayOfWeek } from "@/lib/promptUtils";
 
@@ -29,6 +30,16 @@ function UploadPageContent() {
   const MAX_PROMPT_LENGTH = 500;
 
   const searchParams = useSearchParams();
+
+  const syncCalendarConnection = useCallback(async () => {
+    try {
+      const res = await fetch("/api/calendar/session", { cache: "no-store" });
+      const data = await res.json().catch(() => ({}));
+      setAccessToken(data?.connected ? "google-calendar-session" : null);
+    } catch {
+      setAccessToken(null);
+    }
+  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem("calendarEvents");
@@ -57,16 +68,19 @@ function UploadPageContent() {
   }, []);
 
   useEffect(() => {
+    void syncCalendarConnection();
+  }, [syncCalendarConnection]);
+
+  useEffect(() => {
     const authSuccess = searchParams?.get("auth_success");
-    const token = searchParams?.get("access_token");
     const error = searchParams?.get("error");
 
-    if (authSuccess === "true" && token) {
-      setAccessToken(token);
+    if (authSuccess === "true") {
+      void syncCalendarConnection();
       window.history.replaceState({}, "", "/upload");
       const saved = localStorage.getItem("calendarEvents");
       if (saved) setEvents(JSON.parse(saved));
-      if (saved) void handleAddToGoogleCalendarWithToken(token);
+      if (saved) void handleAddToGoogleCalendarWithSession();
       else
         setCalendarMessage(
           "Connected! Upload a PDF and events will be added automatically."
@@ -136,6 +150,7 @@ function UploadPageContent() {
       }
 
       const { csvText } = await res.json();
+      const eventsFromCsv: CalendarEvent[] = parseCsvToCalendarEvents(csvText);
 
       function parseCsvLine(line: string) {
         const result: string[] = [];
@@ -197,7 +212,7 @@ function UploadPageContent() {
     }
   }
 
-  async function handleAddToGoogleCalendarWithToken(token: string) {
+  async function handleAddToGoogleCalendarWithSession() {
     if (events.length === 0) return;
 
     setCalendarStatus("loading");
@@ -206,7 +221,7 @@ function UploadPageContent() {
       const res = await fetch("/api/calendar/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accessToken: token, events }),
+        body: JSON.stringify({ events }),
       });
 
       const data = await res.json().catch(() => ({}));
@@ -257,7 +272,7 @@ function UploadPageContent() {
       setCalendarStatus("error");
       return;
     }
-    await handleAddToGoogleCalendarWithToken(accessToken);
+    await handleAddToGoogleCalendarWithSession();
   }
 
   function handleDownloadCsv() {

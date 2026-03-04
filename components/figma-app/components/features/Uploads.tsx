@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FileText,
   FolderOpen,
@@ -13,8 +13,10 @@ import {
 } from 'lucide-react';
 import PdfUpload from '@/components/PdfUpload';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CreateCalendarDialog } from './CreateCalendarDialog';
 import type { CalendarEvent } from '@/lib/googleCalendar';
 import { parseFilterDays, getDayOfWeek } from '@/lib/promptUtils';
+import { parseCsvToCalendarEvents } from '@/lib/csvEvents';
 
 /** Sample events so users can open Review/Sync without uploading first (e.g. after "New upload"). Same titles as the original Calendar mock events on main. */
 function getSampleEvents(): CalendarEvent[] {
@@ -138,15 +140,15 @@ function StepRail({
 
 
 function CalendarPicker({
-  accessToken,
   selectedCalendarId,
   selectedCalendarSummary,
   onSelect,
+  refetchTrigger,
 }: {
-  accessToken: string;
   selectedCalendarId: string;
   selectedCalendarSummary: string,
   onSelect: (id: string, summary: string) => void;
+  refetchTrigger?: number;
 }) {
   const [open, setOpen] = useState(false);
   const [calendars, setCalendars] = useState<GoogleCalendarMeta[]>([]);
@@ -165,12 +167,10 @@ function CalendarPicker({
   }, [open]);
 
   async function fetchCalendars() {
-    if (fetchStatus === 'ok' || fetchStatus === 'loading') return;
+    if (fetchStatus === 'loading') return;
     setFetchStatus('loading');
     try {
-      const res = await fetch('/api/calendar/calendars', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      const res = await fetch('/api/calendar/calendars');
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to fetch calendars');
       setCalendars(data.calendars as GoogleCalendarMeta[]);
@@ -181,8 +181,16 @@ function CalendarPicker({
     }
   }
 
+  // Refetch when refetchTrigger changes
+  useEffect(() => {
+    fetchCalendars();
+  }, [refetchTrigger]);
+
   function handleToggle() {
-    if (!open) fetchCalendars();
+    if (!open) {
+      setFetchStatus('idle');
+      fetchCalendars();
+    }
     setOpen((o) => !o);
   }
 
@@ -331,7 +339,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     try {
       const saved = localStorage.getItem(CALENDAR_PREF_KEY);
       if (saved) {
-        const { id, summary } = JSON.parse(saved);
+        const { id } = JSON.parse(saved);
         if (id) return id;
       }
     } catch { /* ignore */ }
@@ -348,11 +356,22 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     } catch { /* ignore */ }
     return 'Default calendar';
   });
+  const [calendarRefetchTrigger, setCalendarRefetchTrigger] = useState(0);
 
   const accessToken = initialAccessToken;
   const hasEvents = events.length > 0;
   const isGoogleConnected = !!accessToken;
   const showConnectedUi = isGoogleConnected;
+
+  const syncCalendarConnection = useCallback(async () => {
+    try {
+      const res = await fetch('/api/calendar/session', { cache: 'no-store' });
+      const data = await res.json().catch(() => ({}));
+      onAccessTokenChange(data?.connected ? 'google-calendar-session' : null);
+    } catch {
+      onAccessTokenChange(null);
+    }
+  }, [onAccessTokenChange]);
 
   useEffect(() => {
     if (!accessToken) {
@@ -383,17 +402,32 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     if (typeof window === 'undefined') return;
     const url = new URL(window.location.href);
     const authSuccess = url.searchParams.get('auth_success');
-    const token = url.searchParams.get('access_token');
-    if (authSuccess === 'true' && token) {
-      onAccessTokenChange(token);
+    const errorCode = url.searchParams.get('error');
+    if (authSuccess === 'true') {
+      void syncCalendarConnection();
       setStep(3);
       url.searchParams.delete('auth_success');
-      url.searchParams.delete('access_token');
+      url.searchParams.delete('error');
       window.history.replaceState({}, '', url.toString());
       setCalendarStatus('idle');
       setCalendarMessage('');
+    } else if (authSuccess === 'false') {
+      void syncCalendarConnection();
+      url.searchParams.delete('auth_success');
+      url.searchParams.delete('error');
+      window.history.replaceState({}, '', url.toString());
+      setCalendarStatus('error');
+      setCalendarMessage(
+        errorCode
+          ? `Google connection failed (${errorCode}). Please try again.`
+          : 'Google connection failed. Please try again.',
+      );
     }
-  }, [onAccessTokenChange]);
+  }, [syncCalendarConnection]);
+
+  useEffect(() => {
+    void syncCalendarConnection();
+  }, [syncCalendarConnection]);
 
   useEffect(() => {
     uploadedFilesRef.current = uploadedFiles;
@@ -405,7 +439,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     'inline-flex items-center justify-center rounded-lg ' +
     connectSyncSizeClass +
     ' text-xs font-semibold shadow-sm leading-none ' +
-    'transition-[background-color,color,border-color,box-shadow,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ';
+    'transition-[background-color,color,border-color,box-shadow,transform] duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] ';
 
   const secondaryActionClassName =
     'inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors';
@@ -416,7 +450,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
   const newUploadClassName =
     'inline-flex items-center justify-center rounded-lg px-3 py-2 text-xs font-semibold shadow-sm ' +
-    'transition-[background-color,color,border-color,box-shadow,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ';
+    'transition-[background-color,color,border-color,box-shadow,transform] duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] ';
 
   const newUploadNeutral = 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50';
   const newUploadPurple = 'bg-indigo-600 text-white hover:bg-indigo-700';
@@ -489,14 +523,15 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       });
 
       if (!res.ok) {
-        await res.json().catch(() => ({}));
+        const errorData = await res.json().catch(() => ({}));
         setCalendarStatus('error');
-        setCalendarMessage('Could not process file, try again.');
+        setCalendarMessage(errorData?.error || 'Could not process file, try again.');
         setStep(1);
         return;
       }
 
       const { csvText } = await res.json();
+      const eventsFromCsv: CalendarEvent[] = parseCsvToCalendarEvents(csvText);
       const eventsFromCsv: CalendarEvent[] = csvText
         .split('\n')
         .filter((line: string) => line.trim() !== '')
@@ -553,7 +588,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     }
   }
 
-  async function handleAddToGoogleCalendarWithToken(token: string) {
+  async function handleAddToGoogleCalendarWithSession() {
     if (events.length === 0) return;
     setHasSynced(true);
     setCalendarStatus('loading');
@@ -564,7 +599,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          accessToken: token,
           events,
           calendarId: selectedCalendarId,
         }),
@@ -574,6 +608,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       if (!res.ok) {
         // setHasSynced(false);
         setSyncBurst(false);
+        if (res.status === 401) onAccessTokenChange(null);
         setCalendarStatus('error');
         setCalendarMessage(data.error || `Failed to add events (${res.status})`);
         return;
@@ -609,11 +644,16 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       setCalendarMessage('No events to sync yet.');
       return;
     }
-    await handleAddToGoogleCalendarWithToken(accessToken);
+    await handleAddToGoogleCalendarWithSession();
   }
 
   async function handleSwitchGoogleAccount() {
     if (!accessToken) return;
+    try {
+      await fetch('/api/calendar/disconnect', { method: 'POST' });
+    } catch {
+      // Continue to OAuth flow even if disconnect request fails.
+    }
     onAccessTokenChange(null);
     setCalendarStatus('idle');
     setCalendarMessage('Switching account…');
@@ -1077,14 +1117,13 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                     <p className="text-sm font-semibold text-gray-900">Calendar</p>
                     <p className="text-xs text-gray-500">
                       {isGoogleConnected
-                        ? 'Choose which calendar to sync events into.'
-                        : 'Connect Google to choose a calendar.'}
+                        ? 'Create or choose which calendar to sync events into.'
+                        : 'Connect Google to create or choose a calendar.'}
                     </p>
                   </div>
 
                   {isGoogleConnected ? (
                     <CalendarPicker
-                      accessToken={accessToken!}
                       selectedCalendarId={selectedCalendarId}
                       selectedCalendarSummary={selectedCalendarSummary}
                       onSelect={(id, summary) => {
@@ -1101,6 +1140,38 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                         }
                       }}
                     />
+                    <div className="inline-flex items-center gap-2">
+                      <CalendarPicker
+                        accessToken={accessToken!}
+                        selectedCalendarId={selectedCalendarId}
+                        selectedCalendarSummary={selectedCalendarSummary}
+                        refetchTrigger={calendarRefetchTrigger}
+                        onSelect={(id, summary) => {
+                          setSelectedCalendarId(id);
+                          setSelectedCalendarSummary(summary);
+                          try {
+                            localStorage.setItem(CALENDAR_PREF_KEY, JSON.stringify({ id, summary }));
+                          } catch { /* ignore */ }
+                          if (hasSynced) {
+                            setHasSynced(false);
+                            setSyncBurst(false);
+                            setCalendarStatus('idle');
+                            setCalendarMessage('');
+                          }
+                        }}
+                      />
+                      <CreateCalendarDialog
+                        accessToken={accessToken!}
+                        onCalendarCreated={(id, summary) => {
+                          setCalendarRefetchTrigger((t) => t + 1);
+                          setSelectedCalendarId(id);
+                          setSelectedCalendarSummary(summary);
+                          try {
+                            localStorage.setItem(CALENDAR_PREF_KEY, JSON.stringify({ id, summary }));
+                          } catch { /* ignore */ }
+                        }}
+                      />
+                    </div>
                   ) : (
                     <span className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-400">
                       <span className="h-2.5 w-2.5 rounded-full bg-gray-300" />

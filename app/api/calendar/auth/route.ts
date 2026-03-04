@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { google } from "googleapis";
+import { createCalendarOAuthState, setCalendarOAuthStateCookie } from "@/lib/calendarAuth";
 
 const SCOPES = ["https://www.googleapis.com/auth/calendar"];
 
@@ -16,16 +17,21 @@ export async function GET(request: NextRequest) {
       redirectUri,
     );
 
+    const state = createCalendarOAuthState();
+
     const authUrl = oauth2Client.generateAuthUrl({
       access_type: "offline",
       scope: SCOPES,
       prompt: prompt ?? "consent",
+      state,
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       authUrl,
     });
+    setCalendarOAuthStateCookie(response, state);
+    return response;
   } catch (error: unknown) {
     console.error("Error generating auth URL:", error);
     const message = error instanceof Error ? error.message : "Failed to generate authorization URL";
