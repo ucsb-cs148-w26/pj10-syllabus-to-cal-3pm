@@ -15,6 +15,7 @@ import PdfUpload from '@/components/PdfUpload';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CreateCalendarDialog } from './CreateCalendarDialog';
 import type { CalendarEvent } from '@/lib/googleCalendar';
+import { parseFilterDays, getDayOfWeek } from '@/lib/promptUtils';
 import { parseCsvToCalendarEvents } from '@/lib/csvEvents';
 
 /** Sample events so users can open Review/Sync without uploading first (e.g. after "New upload"). Same titles as the original Calendar mock events on main. */
@@ -329,6 +330,9 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   const [includeAssignments, setIncludeAssignments] = useState(true);
   const [includeExams, setIncludeExams] = useState(true);
 
+  const [userPrompt, setUserPrompt] = useState('');
+  const MAX_PROMPT_LENGTH = 500;
+
   const CALENDAR_PREF_KEY = 'syllabus_calendar_selected';
   const [selectedCalendarId, setSelectedCalendarId] = useState<string>(() => {
     if (typeof window === 'undefined') return 'primary';
@@ -509,7 +513,13 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       const res = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: pendingText, includeLectures, includeAssignments, includeExams }),
+        body: JSON.stringify({
+          text: pendingText,
+          includeLectures,
+          includeAssignments,
+          includeExams,
+          userPrompt: userPrompt.trim().slice(0, MAX_PROMPT_LENGTH),
+        }),
       });
 
       if (!res.ok) {
@@ -522,26 +532,15 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
       const { csvText } = await res.json();
       const eventsFromCsv: CalendarEvent[] = parseCsvToCalendarEvents(csvText);
-      const eventsFromCsv: CalendarEvent[] = csvText
-        .split('\n')
-        .filter((line: string) => line.trim() !== '')
-        .slice(1)
-        .map((line: string) => {
-          const [title, start, allDayStr, description, location, className] =
-            line.split(',');
 
-          return {
-            title,
-            start,
-            allDay: allDayStr?.toLowerCase() === 'true',
-            description,
-            location,
-            class: className,
-          } as CalendarEvent;
-        });
+      // Deterministic day-of-week filtering — more reliable than asking the LLM.
+      const filterDays = parseFilterDays(userPrompt);
+      const finalEvents = filterDays.size > 0
+        ? eventsFromCsv.filter((e) => !filterDays.has(getDayOfWeek(e.start)))
+        : eventsFromCsv;
 
-      setEvents(eventsFromCsv);
-      localStorage.setItem('calendarEvents', JSON.stringify(eventsFromCsv));
+      setEvents(finalEvents);
+      localStorage.setItem('calendarEvents', JSON.stringify(finalEvents));
       setCalendarStatus('ok');
       setLastProcessOk(true);
       setCalendarMessage('');
@@ -767,6 +766,32 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
               uploadedFiles={uploadedFiles}
               onDeleteUploadedFile={handleDeleteUploadedFile}
             />
+
+            {/* User prompt / additional instructions */}
+            <div className="mt-4 space-y-1.5">
+              <label
+                htmlFor="uploads-user-prompt"
+                className="block text-xs font-medium text-gray-600"
+              >
+                Additional instructions{' '}
+                <span className="font-normal text-gray-400">(optional)</span>
+              </label>
+              <textarea
+                id="uploads-user-prompt"
+                value={userPrompt}
+                onChange={(e) =>
+                  setUserPrompt(e.target.value.slice(0, MAX_PROMPT_LENGTH))
+                }
+                placeholder={'e.g. "My CS148 section meets Tuesdays 2–3pm" or "Remove all Friday lectures"\nNote: Specifying the date and year is recommended (e.g. 2026/03/06 at 7pm instead of "this Friday").'}
+
+                rows={3}
+                maxLength={MAX_PROMPT_LENGTH}
+                className="w-full resize-none rounded-xl border border-gray-200 bg-white/90 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition"
+              />
+              <p className="text-right text-xs text-gray-400">
+                {userPrompt.length}/{MAX_PROMPT_LENGTH}
+              </p>
+            </div>
 
             <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
               <div className="flex min-w-0 flex-col gap-3">
@@ -1081,23 +1106,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                   </div>
 
                   {isGoogleConnected ? (
-                    <CalendarPicker
-                      selectedCalendarId={selectedCalendarId}
-                      selectedCalendarSummary={selectedCalendarSummary}
-                      onSelect={(id, summary) => {
-                        setSelectedCalendarId(id);
-                        setSelectedCalendarSummary(summary);
-                        try {
-                          localStorage.setItem(CALENDAR_PREF_KEY, JSON.stringify({ id, summary }));
-                        } catch { /* ignore */ }
-                        if (hasSynced) {
-                          setHasSynced(false);
-                          setSyncBurst(false);
-                          setCalendarStatus('idle');
-                          setCalendarMessage('');
-                        }
-                      }}
-                    />
                     <div className="inline-flex items-center gap-2">
                       <CalendarPicker
                         accessToken={accessToken!}
