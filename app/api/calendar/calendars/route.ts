@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
             id: response.data.id!,
             summary: response.data.summary ?? 'Unnamed Calendar',
             primary: false,
-            backgroundColor: response.data.backgroundColor ?? '#4285f4',
+            // backgroundColor: response.data.backgroundColor ?? '#4285f4',
         };
 
         return NextResponse.json({ calendar: newCalendar }, { status: 201 });
