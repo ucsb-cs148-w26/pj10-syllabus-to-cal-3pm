@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFileSync } from 'fs';
 import { join } from 'path';
-import { extractEvents, type TextBlock } from '@/lib/extractEvents';
-import type { CalendarEvent } from '@/types/events';
+import { extractEvents, type TextBlock } from './extractEvents';
+import type { CalendarEvent } from './googleCalendar';
 
 /**
  * POST /api/parse-text
