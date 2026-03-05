@@ -1108,7 +1108,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                   {isGoogleConnected ? (
                     <div className="inline-flex items-center gap-2">
                       <CalendarPicker
-                        accessToken={accessToken!}
                         selectedCalendarId={selectedCalendarId}
                         selectedCalendarSummary={selectedCalendarSummary}
                         refetchTrigger={calendarRefetchTrigger}
