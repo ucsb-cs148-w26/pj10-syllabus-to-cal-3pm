@@ -642,33 +642,79 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     setCalendarMessage('Switching account…');
     await handleGoogleCalendarAuth({ prompt: 'select_account' });
   }
+  
+function handleDownloadCsv() {
+  if (events.length === 0) return;
 
-  function handleDownloadCsv() {
-    if (events.length === 0) return;
-    const header = 'title,start,allDay,description,location,class';
-    const rows = events.map((e) => {
-      const esc = (v?: string) => JSON.stringify(v ?? '').slice(1, -1);
+  const toDate = (value?: string) => {
+    if (!value) return null;
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  };
+
+  const formatDate = (d: Date) =>
+    `${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}/${d.getFullYear()}`;
+
+  const formatTime = (d: Date) =>
+    d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+
+  const esc = (v?: string) => `"${(v ?? '').replace(/"/g, '""')}"`;
+
+  // UCSB Heuristic for Missing "End Date"
+  // If two lectures per week, guess 75 minutes for lecture, otherwise 50 minutes for three days.
+  const meetingDaysByCourse = new Map<string, Set<number>>();
+  for (const event of events) {
+    if (event.allDay) continue;
+    const d = toDate(event.start);
+    if (!d) continue;
+    const key = event.title.trim().toLowerCase();
+    if (!meetingDaysByCourse.has(key)) meetingDaysByCourse.set(key, new Set());
+    meetingDaysByCourse.get(key)!.add(d.getDay());
+  } 
+
+  const header = 'Subject,Start Date,Start Time,End Date,End Time,All Day Event,Description,Location,Private';
+
+  const rows = events
+    .map((event) => {
+      const start = toDate(event.start);
+      if (!start) return null;
+      
+    let end = toDate(event.end);
+
+    if (!event.allDay && !end) {
+      const days = meetingDaysByCourse.get(event.title.trim().toLowerCase())?.size;
+      const mins = days === 3 ? 50 : days === 2 ? 75 : null;
+      if (!mins) return null;
+      end = new Date(start.getTime() + mins * 60_000);
+    }
+
+    const safeEnd = end ?? start;
+
       return [
-        esc(e.title),
-        e.start,
-        String(e.allDay),
-        esc(e.description),
-        esc(e.location ?? ''),
-        esc((e as any).class ?? '')
+        esc(event.title),
+        esc(formatDate(start)),
+        esc(event.allDay ? '' : formatTime(start)),
+        esc(formatDate(safeEnd)),
+        esc(event.allDay ? '' : formatTime(safeEnd)),
+        esc(event.allDay ? 'True' : 'False'),
+        esc(event.description),
+        esc(event.location ?? ''),
+        esc('False'),
       ].join(',');
-    });
-    const csv = [header, ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `syllabus-events-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
+    })
+    .filter((row): row is string => !!row);
 
+  const csv = [header, ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `syllabus-events-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
   function resetFlow() {
     setStep(1);
     setEvents(getSampleEvents());
@@ -773,8 +819,8 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                 htmlFor="uploads-user-prompt"
                 className="block text-xs font-medium text-gray-600"
               >
-                Additional instructions{' '}
-                <span className="font-normal text-gray-400">(optional)</span>
+                Additional Instructions{' '}
+                <span className="font-normal text-gray-400">(Optional)</span>
               </label>
               <textarea
                 id="uploads-user-prompt"
