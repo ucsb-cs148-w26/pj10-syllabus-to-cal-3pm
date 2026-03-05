@@ -643,9 +643,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     await handleGoogleCalendarAuth({ prompt: 'select_account' });
   }
   
-function handleDownloadCsv() {
-  if (events.length === 0) return;
-
+function buildGoogleCsv(evts: CalendarEvent[]): string {
   const toDate = (value?: string) => {
     if (!value) return null;
     const d = new Date(value);
@@ -663,7 +661,7 @@ function handleDownloadCsv() {
   // UCSB Heuristic for Missing "End Date"
   // If two lectures per week, guess 75 minutes for lecture, otherwise 50 minutes for three days.
   const meetingDaysByCourse = new Map<string, Set<number>>();
-  for (const event of events) {
+  for (const event of evts) {
     if (event.allDay) continue;
     const d = toDate(event.start);
     if (!d) continue;
@@ -674,7 +672,7 @@ function handleDownloadCsv() {
 
   const header = 'Subject,Start Date,Start Time,End Date,End Time,All Day Event,Description,Location,Private';
 
-  const rows = events
+  const rows = evts
     .map((event) => {
       const start = toDate(event.start);
       if (!start) return null;
@@ -704,7 +702,12 @@ function handleDownloadCsv() {
     })
     .filter((row): row is string => !!row);
 
-  const csv = [header, ...rows].join('\n');
+  return [header, ...rows].join('\n');
+}
+
+function handleDownloadCsv() {
+  if (events.length === 0) return;
+  const csv = buildGoogleCsv(events);
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1064,13 +1067,7 @@ function handleDownloadCsv() {
                 <p className="text-gray-500">No events to display. Upload a syllabus first.</p>
               ) : (
                 <pre className="whitespace-pre-wrap break-words text-xs">
-                  title,start,allDay,description,location,class{"\n"}
-                  {events
-                    .map(
-                      (e) =>
-                        `${e.title},${e.start},${String(e.allDay)},${e.description ?? ''},${e.location ?? ''},${(e as any).class ?? ''}`,
-                    )
-                    .join('\n')}
+                  {buildGoogleCsv(events)}
                 </pre>
               )}
             </div>
