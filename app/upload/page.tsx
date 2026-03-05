@@ -152,48 +152,7 @@ function UploadPageContent() {
       const { csvText } = await res.json();
       const eventsFromCsv: CalendarEvent[] = parseCsvToCalendarEvents(csvText);
 
-      function parseCsvLine(line: string) {
-        const result: string[] = [];
-        let current = "";
-        let insideQuotes = false;
-
-        for (let i = 0; i < line.length; i++) {
-          const char = line[i];
-
-          if (char === '"') {
-            insideQuotes = !insideQuotes;
-            continue;
-          }
-          if (char === "," && !insideQuotes) {
-            result.push(current);
-            current = "";
-          } else {
-            current += char;
-          }
-        }
-
-        result.push(current);
-        return result;
-      }
-
-      const eventsFromCsv: CalendarEvent[] = csvText
-        .split("\n")
-        .filter((line: string) => line.trim() !== "")
-        .slice(1)
-        .map((line: string) => {
-          const [title, start, allDayStr, description, location, className] =
-            parseCsvLine(line);
-          return {
-            title: title?.trim() ?? "",
-            start,
-            allDay: allDayStr?.toLowerCase() === "true",
-            description,
-            location,
-            class: className,   // optional property
-          } as CalendarEvent;
-        });
-
-      // Deterministic day-of-week filtering — more reliable than asking the LLM.
+      // Deterministic filtering
       const filterDays = parseFilterDays(userPrompt);
       const finalEvents = filterDays.size > 0
         ? eventsFromCsv.filter((e) => !filterDays.has(getDayOfWeek(e.start)))
