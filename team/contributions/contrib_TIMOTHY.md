@@ -10,6 +10,17 @@
 issue: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/issues/63
 pr: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/118
 
+### MVP UI changes 
+Changing background color: 
+- https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/commit/3afeb138dd67173e8d035da75b65bc8d836710ac
+- https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/commit/81fd6cde243f933819db4de01f2ae847e5661078
+Testing text to Pdf rough display: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/commit/3ef4f2a411a5b5f5966b987db6ce2cea2ef33d10
+Testing text alignment:
+- https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/commit/0ded92b60d987f8177cfff32f084f076c60a6697
+- https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/commit/c2e448c720bc22318355083c155e29b3f8e5ced3
+- https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/commit/1e5bb073882b1450a9a7978fcb76da9782c4ad61
+- https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/commit/800cd508691626b832caa37e4e697027dcd3f485
+
 ### Pdf to Text MVP integration:
 issue: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/issues/119#issue-3883763518
 https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/118
