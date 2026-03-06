@@ -6,11 +6,31 @@ import {
   deleteCalendarEvent,
   CalendarEvent,
 } from "@/lib/googleCalendar";
+import { getCalendarAccessToken, requireSameOrigin } from "@/lib/calendarAuth";
 
-/** GET /api/calendar/events?month=YYYY-MM OR ?timeMin=ISO&timeMax=ISO — list events. Auth: Authorization: Bearer <access_token> */
+type CalendarApiError = {
+  code?: number | string;
+  message?: string;
+  response?: { data?: { error?: { message?: string; code?: number | string } } };
+};
+
+function parseError(error: unknown): {
+  status: number;
+  message: string;
+  unauthorized: boolean;
+} {
+  const err = error as CalendarApiError;
+  const code = err.code ?? err.response?.data?.error?.code;
+  const googleMessage = err.response?.data?.error?.message;
+  const message = googleMessage ?? err.message ?? "Calendar request failed";
+  const unauthorized = code === 401 || code === "401";
+  const status = unauthorized ? 401 : code === 403 || code === "403" ? 403 : 500;
+  return { status, message, unauthorized };
+}
+
+/** GET /api/calendar/events?month=YYYY-MM OR ?timeMin=ISO&timeMax=ISO */
 export async function GET(request: NextRequest) {
-  const authHeader = request.headers.get("authorization");
-  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  const token = getCalendarAccessToken(request);
   const { searchParams } = new URL(request.url);
   const monthParam = searchParams.get("month");
   const timeMinParam = searchParams.get("timeMin");
@@ -20,18 +40,15 @@ export async function GET(request: NextRequest) {
     ? calendarsParam.split(",").map((s) => s.trim()).filter(Boolean)
     : ["primary"];
 
-  console.log("[calendar/events GET] token:", token ? "present" : "MISSING", "month:", monthParam ?? "range", "calendars:", calendarIds.length);
-
   if (!token) {
     return NextResponse.json(
-      { success: false, error: "Authorization required (Bearer token)" },
+      { success: false, error: "Google Calendar authentication is required" },
       { status: 401 }
     );
   }
 
   let timeMin: string;
   let timeMax: string;
-
   if (timeMinParam && timeMaxParam) {
     timeMin = timeMinParam;
     timeMax = timeMaxParam;
@@ -41,177 +58,171 @@ export async function GET(request: NextRequest) {
     timeMax = new Date(Date.UTC(year, month, 1)).toISOString();
   } else {
     return NextResponse.json(
-      { success: false, error: "Query 'month' (YYYY-MM) or 'timeMin' and 'timeMax' (ISO) required" },
+      { success: false, error: "Query 'month' (YYYY-MM) or 'timeMin'/'timeMax' (ISO) required" },
       { status: 400 }
     );
   }
 
   try {
     const events = await listCalendarEvents(token, timeMin, timeMax, calendarIds);
-    console.log("[calendar/events GET] success, events count:", events.length);
     return NextResponse.json({ success: true, events });
   } catch (error: unknown) {
-    const err = error as { code?: number; message?: string; response?: { data?: { error?: { message?: string; code?: number } } } };
-    const googleMessage = err.response?.data?.error?.message;
-    const message = googleMessage ?? err.message ?? "Failed to list calendar events";
-    console.error("[calendar/events GET] error:", message, err.code ?? "", err.response?.data?.error ?? "");
-    if (err.code === 401) {
-      return NextResponse.json(
-        { success: false, error: "Invalid or expired token. Please re-authenticate." },
-        { status: 401 }
-      );
-    }
+    const parsed = parseError(error);
     return NextResponse.json(
-      { success: false, error: message },
-      { status: err.code === 403 ? 403 : 500 }
+      {
+        success: false,
+        error: parsed.unauthorized
+          ? "Invalid or expired Google Calendar session. Please reconnect."
+          : parsed.message,
+      },
+      { status: parsed.status }
     );
   }
 }
 
+/** POST /api/calendar/events — create events. Body: { events, calendarId? } */
 export async function POST(request: NextRequest) {
+  const originError = requireSameOrigin(request);
+  if (originError) return originError;
+
+  let body: { events?: CalendarEvent[]; calendarId?: string };
   try {
-    const body = await request.json();
-    const { accessToken, events, calendarId } = body as {
-      accessToken?: string;
-      events?: CalendarEvent[];
-      calendarId?: string;
-    };
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ success: false, error: "Invalid JSON body" }, { status: 400 });
+  }
 
-    if (!accessToken) {
+  const token = getCalendarAccessToken(request);
+  if (!token) {
+    return NextResponse.json(
+      { success: false, error: "Google Calendar authentication is required" },
+      { status: 401 }
+    );
+  }
+
+  if (!Array.isArray(body.events) || body.events.length === 0) {
+    return NextResponse.json(
+      { success: false, error: "Events array is required and must not be empty" },
+      { status: 400 }
+    );
+  }
+
+  for (const event of body.events) {
+    if (!event.title || !event.start) {
       return NextResponse.json(
-        { success: false, error: "Access token is required" },
+        { success: false, error: "Invalid event structure: title and start are required" },
         { status: 400 }
       );
     }
+  }
 
-    if (!Array.isArray(events) || events.length === 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Events array is required and must not be empty",
-        },
-        { status: 400 }
-      );
-    }
-
-    for (const event of events) {
-      if (!event.title || !event.start) {
-        return NextResponse.json(
-          {
-            success: false,
-            error:
-              "Invalid event structure: title and start are required",
-          },
-          { status: 400 }
-        );
-      }
-    }
-
-    const eventIds = await createCalendarEvents(accessToken, events, calendarId ?? "primary");
-
+  try {
+    const eventIds = await createCalendarEvents(token, body.events, body.calendarId ?? "primary");
     return NextResponse.json({
       success: true,
       message: `Successfully created ${eventIds.length} event(s) in Google Calendar`,
       eventIds,
       count: eventIds.length,
     });
-  } catch (error: any) {
-    console.error("Error creating calendar events:", error);
-    if (error.code === 401) {
-      return NextResponse.json(
-        {
-          success: false,
-          error:
-            "Invalid or expired access token. Please re-authenticate.",
-        },
-        { status: 401 }
-      );
-    }
+  } catch (error: unknown) {
+    const parsed = parseError(error);
     return NextResponse.json(
       {
         success: false,
-        error: error.message || "Failed to create calendar events",
+        error: parsed.unauthorized
+          ? "Invalid or expired Google Calendar session. Please reconnect."
+          : parsed.message,
       },
-      { status: 500 }
+      { status: parsed.status }
     );
   }
 }
 
-/** PATCH /api/calendar/events — update one event. Body: { accessToken, eventId, title?, start?, end?, allDay?, description?, recurrence? } */
+/** PATCH /api/calendar/events — update one event. Body: { eventId, ... } */
 export async function PATCH(request: NextRequest) {
+  const originError = requireSameOrigin(request);
+  if (originError) return originError;
+
+  let body: {
+    eventId?: string;
+    title?: string;
+    start?: string;
+    end?: string;
+    allDay?: boolean;
+    description?: string;
+    recurrence?: string[];
+  };
   try {
-    const body = await request.json();
-    const { accessToken, eventId, title, start, end, allDay, description, recurrence } = body as {
-      accessToken?: string;
-      eventId?: string;
-      title?: string;
-      start?: string;
-      end?: string;
-      allDay?: boolean;
-      description?: string;
-      recurrence?: string[];
-    };
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ success: false, error: "Invalid JSON body" }, { status: 400 });
+  }
 
-    if (!accessToken || !eventId) {
-      return NextResponse.json(
-        { success: false, error: "accessToken and eventId are required" },
-        { status: 400 }
-      );
-    }
+  const token = getCalendarAccessToken(request);
+  if (!token || !body.eventId) {
+    return NextResponse.json(
+      { success: false, error: "Google Calendar authentication and eventId are required" },
+      { status: 400 }
+    );
+  }
 
-    await updateCalendarEvent(accessToken, eventId, {
-      ...(title !== undefined && { title }),
-      ...(start !== undefined && { start }),
-      ...(end !== undefined && { end }),
-      ...(allDay !== undefined && { allDay }),
-      ...(description !== undefined && { description }),
-      ...(recurrence !== undefined && { recurrence }),
+  try {
+    await updateCalendarEvent(token, body.eventId, {
+      ...(body.title !== undefined && { title: body.title }),
+      ...(body.start !== undefined && { start: body.start }),
+      ...(body.end !== undefined && { end: body.end }),
+      ...(body.allDay !== undefined && { allDay: body.allDay }),
+      ...(body.description !== undefined && { description: body.description }),
+      ...(body.recurrence !== undefined && { recurrence: body.recurrence }),
     });
-
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
-    const err = error as { code?: number; message?: string };
-    console.error("Error updating calendar event:", error);
-    if (err.code === 401) {
-      return NextResponse.json(
-        { success: false, error: "Invalid or expired token. Please re-authenticate." },
-        { status: 401 }
-      );
-    }
+    const parsed = parseError(error);
     return NextResponse.json(
-      { success: false, error: err.message ?? "Failed to update event" },
-      { status: 500 }
+      {
+        success: false,
+        error: parsed.unauthorized
+          ? "Invalid or expired Google Calendar session. Please reconnect."
+          : parsed.message,
+      },
+      { status: parsed.status }
     );
   }
 }
 
-/** DELETE /api/calendar/events — delete one event. Body: { accessToken, eventId } */
+/** DELETE /api/calendar/events — delete one event. Body: { eventId } */
 export async function DELETE(request: NextRequest) {
+  const originError = requireSameOrigin(request);
+  if (originError) return originError;
+
+  let body: { eventId?: string };
   try {
-    const body = await request.json();
-    const { accessToken, eventId } = body as { accessToken?: string; eventId?: string };
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ success: false, error: "Invalid JSON body" }, { status: 400 });
+  }
 
-    if (!accessToken || !eventId) {
-      return NextResponse.json(
-        { success: false, error: "accessToken and eventId are required" },
-        { status: 400 }
-      );
-    }
+  const token = getCalendarAccessToken(request);
+  if (!token || !body.eventId) {
+    return NextResponse.json(
+      { success: false, error: "Google Calendar authentication and eventId are required" },
+      { status: 400 }
+    );
+  }
 
-    await deleteCalendarEvent(accessToken, eventId);
+  try {
+    await deleteCalendarEvent(token, body.eventId);
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
-    const err = error as { code?: number; message?: string };
-    console.error("Error deleting calendar event:", error);
-    if (err.code === 401) {
-      return NextResponse.json(
-        { success: false, error: "Invalid or expired token. Please re-authenticate." },
-        { status: 401 }
-      );
-    }
+    const parsed = parseError(error);
     return NextResponse.json(
-      { success: false, error: err.message ?? "Failed to delete event" },
-      { status: 500 }
+      {
+        success: false,
+        error: parsed.unauthorized
+          ? "Invalid or expired Google Calendar session. Please reconnect."
+          : parsed.message,
+      },
+      { status: parsed.status }
     );
   }
 }

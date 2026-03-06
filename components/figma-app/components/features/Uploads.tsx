@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FileText,
   FolderOpen,
@@ -15,6 +15,8 @@ import PdfUpload from '@/components/PdfUpload';
 import { Checkbox } from '@/components/ui/checkbox';
 import { CreateCalendarDialog } from './CreateCalendarDialog';
 import type { CalendarEvent } from '@/lib/googleCalendar';
+import { parseFilterDays, getDayOfWeek } from '@/lib/promptUtils';
+import { parseCsvToCalendarEvents } from '@/lib/csvEvents';
 
 /** Sample events so users can open Review/Sync without uploading first (e.g. after "New upload"). Same titles as the original Calendar mock events on main. */
 function getSampleEvents(): CalendarEvent[] {
@@ -138,13 +140,11 @@ function StepRail({
 
 
 function CalendarPicker({
-  accessToken,
   selectedCalendarId,
   selectedCalendarSummary,
   onSelect,
   refetchTrigger,
 }: {
-  accessToken: string;
   selectedCalendarId: string;
   selectedCalendarSummary: string,
   onSelect: (id: string, summary: string) => void;
@@ -170,9 +170,7 @@ function CalendarPicker({
     if (fetchStatus === 'loading') return;
     setFetchStatus('loading');
     try {
-      const res = await fetch('/api/calendar/calendars', {
-        headers: { Authorization: `Bearer ${accessToken}` },
-      });
+      const res = await fetch('/api/calendar/calendars');
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to fetch calendars');
       setCalendars(data.calendars as GoogleCalendarMeta[]);
@@ -332,13 +330,16 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   const [includeAssignments, setIncludeAssignments] = useState(true);
   const [includeExams, setIncludeExams] = useState(true);
 
+  const [userPrompt, setUserPrompt] = useState('');
+  const MAX_PROMPT_LENGTH = 500;
+
   const CALENDAR_PREF_KEY = 'syllabus_calendar_selected';
   const [selectedCalendarId, setSelectedCalendarId] = useState<string>(() => {
     if (typeof window === 'undefined') return 'primary';
     try {
       const saved = localStorage.getItem(CALENDAR_PREF_KEY);
       if (saved) {
-        const { id, summary } = JSON.parse(saved);
+        const { id } = JSON.parse(saved);
         if (id) return id;
       }
     } catch { /* ignore */ }
@@ -361,6 +362,16 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   const hasEvents = events.length > 0;
   const isGoogleConnected = !!accessToken;
   const showConnectedUi = isGoogleConnected;
+
+  const syncCalendarConnection = useCallback(async () => {
+    try {
+      const res = await fetch('/api/calendar/session', { cache: 'no-store' });
+      const data = await res.json().catch(() => ({}));
+      onAccessTokenChange(data?.connected ? 'google-calendar-session' : null);
+    } catch {
+      onAccessTokenChange(null);
+    }
+  }, [onAccessTokenChange]);
 
   useEffect(() => {
     if (!accessToken) {
@@ -391,17 +402,32 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     if (typeof window === 'undefined') return;
     const url = new URL(window.location.href);
     const authSuccess = url.searchParams.get('auth_success');
-    const token = url.searchParams.get('access_token');
-    if (authSuccess === 'true' && token) {
-      onAccessTokenChange(token);
+    const errorCode = url.searchParams.get('error');
+    if (authSuccess === 'true') {
+      void syncCalendarConnection();
       setStep(3);
       url.searchParams.delete('auth_success');
-      url.searchParams.delete('access_token');
+      url.searchParams.delete('error');
       window.history.replaceState({}, '', url.toString());
       setCalendarStatus('idle');
       setCalendarMessage('');
+    } else if (authSuccess === 'false') {
+      void syncCalendarConnection();
+      url.searchParams.delete('auth_success');
+      url.searchParams.delete('error');
+      window.history.replaceState({}, '', url.toString());
+      setCalendarStatus('error');
+      setCalendarMessage(
+        errorCode
+          ? `Google connection failed (${errorCode}). Please try again.`
+          : 'Google connection failed. Please try again.',
+      );
     }
-  }, [onAccessTokenChange]);
+  }, [syncCalendarConnection]);
+
+  useEffect(() => {
+    void syncCalendarConnection();
+  }, [syncCalendarConnection]);
 
   useEffect(() => {
     uploadedFilesRef.current = uploadedFiles;
@@ -413,7 +439,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     'inline-flex items-center justify-center rounded-lg ' +
     connectSyncSizeClass +
     ' text-xs font-semibold shadow-sm leading-none ' +
-    'transition-[background-color,color,border-color,box-shadow,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ';
+    'transition-[background-color,color,border-color,box-shadow,transform] duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] ';
 
   const secondaryActionClassName =
     'inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors';
@@ -424,7 +450,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
   const newUploadClassName =
     'inline-flex items-center justify-center rounded-lg px-3 py-2 text-xs font-semibold shadow-sm ' +
-    'transition-[background-color,color,border-color,box-shadow,transform] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] ';
+    'transition-[background-color,color,border-color,box-shadow,transform] duration-500 [transition-timing-function:cubic-bezier(0.16,1,0.3,1)] ';
 
   const newUploadNeutral = 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50';
   const newUploadPurple = 'bg-indigo-600 text-white hover:bg-indigo-700';
@@ -487,38 +513,34 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       const res = await fetch('/api/gemini', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: pendingText, includeLectures, includeAssignments, includeExams }),
+        body: JSON.stringify({
+          text: pendingText,
+          includeLectures,
+          includeAssignments,
+          includeExams,
+          userPrompt: userPrompt.trim().slice(0, MAX_PROMPT_LENGTH),
+        }),
       });
 
       if (!res.ok) {
-        await res.json().catch(() => ({}));
+        const errorData = await res.json().catch(() => ({}));
         setCalendarStatus('error');
-        setCalendarMessage('Could not process file, try again.');
+        setCalendarMessage(errorData?.error || 'Could not process file, try again.');
         setStep(1);
         return;
       }
 
       const { csvText } = await res.json();
-      const eventsFromCsv: CalendarEvent[] = csvText
-        .split('\n')
-        .filter((line: string) => line.trim() !== '')
-        .slice(1)
-        .map((line: string) => {
-          const [title, start, allDayStr, description, location, className] =
-            line.split(',');
+      const eventsFromCsv: CalendarEvent[] = parseCsvToCalendarEvents(csvText);
 
-          return {
-            title,
-            start,
-            allDay: allDayStr?.toLowerCase() === 'true',
-            description,
-            location,
-            class: className,
-          } as CalendarEvent;
-        });
+      // Deterministic day-of-week filtering — more reliable than asking the LLM.
+      const filterDays = parseFilterDays(userPrompt);
+      const finalEvents = filterDays.size > 0
+        ? eventsFromCsv.filter((e) => !filterDays.has(getDayOfWeek(e.start)))
+        : eventsFromCsv;
 
-      setEvents(eventsFromCsv);
-      localStorage.setItem('calendarEvents', JSON.stringify(eventsFromCsv));
+      setEvents(finalEvents);
+      localStorage.setItem('calendarEvents', JSON.stringify(finalEvents));
       setCalendarStatus('ok');
       setLastProcessOk(true);
       setCalendarMessage('');
@@ -549,7 +571,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     }
   }
 
-  async function handleAddToGoogleCalendarWithToken(token: string) {
+  async function handleAddToGoogleCalendarWithSession() {
     if (events.length === 0) return;
     setHasSynced(true);
     setCalendarStatus('loading');
@@ -560,7 +582,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          accessToken: token,
           events,
           calendarId: selectedCalendarId,
         }),
@@ -570,6 +591,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       if (!res.ok) {
         // setHasSynced(false);
         setSyncBurst(false);
+        if (res.status === 401) onAccessTokenChange(null);
         setCalendarStatus('error');
         setCalendarMessage(data.error || `Failed to add events (${res.status})`);
         return;
@@ -605,11 +627,16 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       setCalendarMessage('No events to sync yet.');
       return;
     }
-    await handleAddToGoogleCalendarWithToken(accessToken);
+    await handleAddToGoogleCalendarWithSession();
   }
 
   async function handleSwitchGoogleAccount() {
     if (!accessToken) return;
+    try {
+      await fetch('/api/calendar/disconnect', { method: 'POST' });
+    } catch {
+      // Continue to OAuth flow even if disconnect request fails.
+    }
     onAccessTokenChange(null);
     setCalendarStatus('idle');
     setCalendarMessage('Switching account…');
@@ -739,6 +766,32 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
               uploadedFiles={uploadedFiles}
               onDeleteUploadedFile={handleDeleteUploadedFile}
             />
+
+            {/* User prompt / additional instructions */}
+            <div className="mt-4 space-y-1.5">
+              <label
+                htmlFor="uploads-user-prompt"
+                className="block text-xs font-medium text-gray-600"
+              >
+                Additional instructions{' '}
+                <span className="font-normal text-gray-400">(optional)</span>
+              </label>
+              <textarea
+                id="uploads-user-prompt"
+                value={userPrompt}
+                onChange={(e) =>
+                  setUserPrompt(e.target.value.slice(0, MAX_PROMPT_LENGTH))
+                }
+                placeholder={'e.g. "My CS148 section meets Tuesdays 2–3pm" or "Remove all Friday lectures"\nNote: Specifying the date and year is recommended (e.g. 2026/03/06 at 7pm instead of "this Friday").'}
+
+                rows={3}
+                maxLength={MAX_PROMPT_LENGTH}
+                className="w-full resize-none rounded-xl border border-gray-200 bg-white/90 px-4 py-3 text-sm text-gray-800 placeholder-gray-400 shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-200 transition"
+              />
+              <p className="text-right text-xs text-gray-400">
+                {userPrompt.length}/{MAX_PROMPT_LENGTH}
+              </p>
+            </div>
 
             <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-end">
               <div className="flex min-w-0 flex-col gap-3">
@@ -1055,7 +1108,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                   {isGoogleConnected ? (
                     <div className="inline-flex items-center gap-2">
                       <CalendarPicker
-                        accessToken={accessToken!}
                         selectedCalendarId={selectedCalendarId}
                         selectedCalendarSummary={selectedCalendarSummary}
                         refetchTrigger={calendarRefetchTrigger}

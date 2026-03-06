@@ -13,11 +13,9 @@ interface CalendarMeta {
 }
 
 function CalendarMultiPicker({
-  accessToken,
   selectedIds,
   onChange,
 }: {
-  accessToken: string;
   selectedIds: string[];
   onChange: (ids: string[]) => void;
 }) {
@@ -39,7 +37,7 @@ function CalendarMultiPicker({
     if (!open) return;
     if (fetchStatus !== 'idle') return;
     setFetchStatus('loading');
-    fetch('/api/calendar/calendars', { headers: { Authorization: `Bearer ${accessToken}` } })
+    fetch('/api/calendar/calendars')
       .then((res) => res.json())
       .then((data) => {
         if (data.calendars) {
@@ -49,7 +47,7 @@ function CalendarMultiPicker({
         setFetchStatus('ok');
       })
       .catch(() => setFetchStatus('error'));
-  }, [open, accessToken, fetchStatus]);
+  }, [open, fetchStatus]);
 
   const toggle = (id: string) => {
     if (selectedIds.includes(id)) {
@@ -238,12 +236,27 @@ function isSameDay(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
+function getWeekStart(d: Date): Date {
+  const x = new Date(d);
+  const day = x.getDay();
+  x.setDate(x.getDate() - day);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+function getWeekEnd(d: Date): Date {
+  const start = getWeekStart(d);
+  const end = new Date(start);
+  end.setDate(end.getDate() + 7);
+  return end;
+}
+
 function WeekView({
   weekStart,
   events,
   accessToken,
   openCreateForDate,
-  openEditForEvent,
+  openViewForEvent,
   formatEventTime,
 }: {
   weekStart: Date;
@@ -279,7 +292,10 @@ function WeekView({
             key={d}
             role="button"
             tabIndex={0}
-            onClick={() => accessToken && openCreateForDate(getDateStr(date))}
+            onClick={() => {
+              if (!accessToken) return;
+              openCreateForDate(getDateStr(date));
+            }}
             onKeyDown={(e) => {
               if ((e.key === 'Enter' || e.key === ' ') && accessToken) {
                 e.preventDefault();
@@ -309,11 +325,16 @@ function WeekView({
                 key={ev.id}
                 role="button"
                 tabIndex={0}
-                onClick={(e) => { e.stopPropagation(); accessToken && openViewForEvent(ev); }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (!accessToken) return;
+                  openViewForEvent(ev);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    accessToken && openViewForEvent(ev);
+                    if (!accessToken) return;
+                    openViewForEvent(ev);
                   }
                 }}
                 className="text-xs px-1 py-0.5 rounded bg-indigo-400 text-white truncate cursor-pointer hover:bg-indigo-500"
@@ -344,11 +365,16 @@ function WeekView({
                     key={ev.id}
                     role="button"
                     tabIndex={0}
-                    onClick={(e) => { e.stopPropagation(); accessToken && openViewForEvent(ev); }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!accessToken) return;
+                      openViewForEvent(ev);
+                    }}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault();
-                        accessToken && openViewForEvent(ev);
+                        if (!accessToken) return;
+                        openViewForEvent(ev);
                       }
                     }}
                     className="text-xs px-1 py-0.5 rounded bg-indigo-500 text-white truncate cursor-pointer hover:bg-indigo-600"
@@ -399,7 +425,6 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
   const [createStartTime, setCreateStartTime] = useState('09:00');
   const [createEndTime, setCreateEndTime] = useState('10:00');
   const [createDescription, setCreateDescription] = useState('');
-  const [createRecurrence, setCreateRecurrence] = useState<string[]>([]);
   const [createRepeat, setCreateRepeat] = useState<'none' | 'daily' | 'weekdays' | 'weekly'>('none');
   const [createWeeklyDays, setCreateWeeklyDays] = useState([false, false, true, true, true, true, false]); // Sun-Sat, default M-F
   const [createEndType, setCreateEndType] = useState<'never' | 'date' | 'count'>('never');
@@ -416,7 +441,6 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
   const [editStartTime, setEditStartTime] = useState('09:00');
   const [editEndTime, setEditEndTime] = useState('10:00');
   const [editDescription, setEditDescription] = useState('');
-  const [editRecurrence, setEditRecurrence] = useState<string[]>([]);
   const [editRepeat, setEditRepeat] = useState<'none' | 'daily' | 'weekdays' | 'weekly'>('none');
   const [editWeeklyDays, setEditWeeklyDays] = useState([false, false, true, true, true, true, false]);
   const [editEndType, setEditEndType] = useState<'never' | 'date' | 'count'>('never');
@@ -435,20 +459,6 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
   const month = currentDate.getMonth();
   const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
 
-  // Week view: Sunday of the week containing currentDate
-  const getWeekStart = (d: Date) => {
-    const x = new Date(d);
-    const day = x.getDay();
-    x.setDate(x.getDate() - day);
-    x.setHours(0, 0, 0, 0);
-    return x;
-  };
-  const getWeekEnd = (d: Date) => {
-    const start = getWeekStart(d);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 7);
-    return end;
-  };
   const calKey = [...selectedCalendarIds].sort().join(',');
   const periodKey = viewMode === 'week' ? getWeekStart(currentDate).toISOString().slice(0, 10) : monthKey;
   const fullCacheKey = `${periodKey}|${calKey}`;
@@ -486,10 +496,7 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
           ? `/api/calendar/events?timeMin=${getWeekStart(currentDate).toISOString()}&timeMax=${getWeekEnd(currentDate).toISOString()}`
           : `/api/calendar/events?month=${monthKey}`;
       const url = `${base}&calendars=${calendarsParam}`;
-      const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        signal,
-      });
+      const res = await fetch(url, { signal });
       const data = await res.json();
       if (id !== fetchIdRef.current) return; // stale response, ignore
       if (!res.ok) throw new Error(data.error ?? 'Failed to load events');
@@ -512,7 +519,7 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
         fetchInProgressRef.current = null;
       }
     }
-  }, [accessToken, monthKey, viewMode, currentDate, selectedCalendarIds]);
+  }, [accessToken, monthKey, viewMode, currentDate, selectedCalendarIds, fullCacheKey]);
 
   useEffect(() => {
     fetchEvents();
@@ -591,7 +598,6 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
     setEditStartTime(getTimeFromISO(event.start));
     setEditEndTime(getTimeFromISO(event.end));
     setEditDescription(event.description ?? '');
-    setEditRecurrence(event.recurrence ?? []);
     setEditRepeat(parseRecurrenceToRepeat(event.recurrence));
     setEditError('');
     setEditOpen(true);
@@ -620,7 +626,6 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          accessToken,
           events: [
             {
               title: createTitle.trim(),
@@ -666,7 +671,6 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          accessToken,
           eventId: editingEvent.id,
           title: editTitle.trim(),
           start,
@@ -695,7 +699,7 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
       const res = await fetch('/api/calendar/events', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessToken, eventId }),
+        body: JSON.stringify({ eventId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to delete event');
@@ -736,7 +740,6 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
         {accessToken && (
           <div className="flex items-center gap-3">
             <CalendarMultiPicker
-              accessToken={accessToken}
               selectedIds={selectedCalendarIds}
               onChange={(ids) => {
                 setSelectedCalendarIds(ids);
@@ -924,13 +927,15 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
                         tabIndex={0}
                         onClick={(e) => {
                           e.stopPropagation();
-                          accessToken && openViewForEvent(event);
+                          if (!accessToken) return;
+                          openViewForEvent(event);
                         }}
                         onKeyDown={(e) => {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault();
                             e.stopPropagation();
-                            accessToken && openViewForEvent(event);
+                            if (!accessToken) return;
+                            openViewForEvent(event);
                           }
                         }}
                         className="text-xs px-1 py-0.5 rounded truncate bg-indigo-500 text-white hover:bg-indigo-600 cursor-pointer"
@@ -1174,7 +1179,10 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
               </button>
               <button
                 type="button"
-                onClick={() => viewingEvent && openEditForEvent(viewingEvent)}
+                onClick={() => {
+                  if (!viewingEvent) return;
+                  openEditForEvent(viewingEvent);
+                }}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700"
               >
                 <Pencil className="w-4 h-4" />
