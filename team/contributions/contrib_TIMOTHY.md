@@ -47,4 +47,5 @@
 <img width="1869" height="1280" alt="image" src="https://github.com/user-attachments/assets/d0ceb14f-5d34-4acb-94a8-b9517e2eb580" />
 
 
-Note: Most of time spent on manually creating datasets. Realized that model could not be trained from scratch in time, as model was at 20% performance score by the halfway mark of the quarter; pivoted to Gemini. 
+## Note: 
+Most of time spent on manually creating datasets. Realized that model could not be trained from scratch in time, as model was at 20% performance score by the halfway mark of the quarter; pivoted to Gemini. 
