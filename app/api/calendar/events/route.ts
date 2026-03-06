@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
     const eventIds = await createCalendarEvents(token, body.events, body.calendarId ?? "primary");
     return NextResponse.json({
       success: true,
-      message: `Successfully created ${eventIds.length} event(s) in Google Calendar`,
+      message: `Exported ${eventIds.length} event(s) to Google Calendar.`,
       eventIds,
       count: eventIds.length,
     });

@@ -76,7 +76,7 @@ function mockFetchSyncSuccess(count = MOCK_EVENTS.length) {
     json: async () => ({
       success: true,
       count,
-      message: `Successfully created ${count} event(s) in Google Calendar`,
+      message: `Exported ${count} event(s)`,
       eventIds: Array.from({ length: count }, (_, i) => `evt-id-${i}`),
     }),
   });
