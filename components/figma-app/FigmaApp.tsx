@@ -96,12 +96,12 @@ export default function FigmaApp() {
       <nav className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center gap-2">
+            <button className="flex items-center gap-2" onClick={() => setCurrentView("uploads")}>
               <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold">SC</span>
               </div>
               <h1 className="font-semibold text-gray-900">Syllabus Calendar</h1>
-            </div>
+            </button>
 
             <div className="flex gap-2 items-center">
               <div ref={navContainerRef} className="relative flex gap-2 items-center">
