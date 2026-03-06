@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: `Successfully created ${eventIds.length} event(s) in Google Calendar`,
+      message: `Exported ${eventIds.length} event(s)`,
       eventIds,
       count: eventIds.length,
     });

@@ -133,10 +133,12 @@ export function StudyPlan() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="mb-8">
-        <h2 className="text-3xl font-semibold text-gray-900 mb-2">Smart Study Plan</h2>
-        <p className="text-gray-600">
+    <div className="relative max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 py-2">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_5%,theme(colors.indigo.100),transparent_55%),radial-gradient(1000px_circle_at_80%_35%,theme(colors.violet.100),transparent_60%),linear-gradient(to_bottom,theme(colors.white),theme(colors.slate.50))] transition-all duration-700" />
+
+      <div className="mb-2 shrink-0">
+        <h2 className="text-xl font-semibold text-gray-900 mb-0.5">Smart Study Plan</h2>
+        <p className="text-xs text-gray-600">
           Personalized study times based on your class schedule and assignment deadlines
         </p>
       </div>
@@ -147,10 +149,9 @@ export function StudyPlan() {
             <BookOpen className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="font-semibold text-indigo-900 mb-1">Study Plan Generated</h3>
+            <h3 className="font-semibold text-indigo-900 mb-1">Coming Soon</h3>
             <p className="text-indigo-700 text-sm">
-              We've analyzed your schedule and created optimal study times for your upcoming assignments.
-              These times avoid conflicts with your classes and spread out your workload evenly.
+              This page will eventually allow you to receive an automatic study and homework plan with priority levels based on your calendar schedule. 
             </p>
           </div>
         </div>
@@ -198,24 +199,6 @@ export function StudyPlan() {
             </div>
           </div>
         ))}
-      </div>
-
-      <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="font-semibold text-gray-900 mb-4">Study Tips</h3>
-        <ul className="space-y-2 text-gray-700 text-sm">
-          <li className="flex items-start gap-2">
-            <span className="text-indigo-600 mt-1">•</span>
-            <span>Take 5-10 minute breaks every hour to maintain focus</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-indigo-600 mt-1">•</span>
-            <span>Start with high-priority assignments when your energy is highest</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-indigo-600 mt-1">•</span>
-            <span>Review your study plan daily and adjust as needed</span>
-          </li>
-        </ul>
       </div>
     </div>
   );
