@@ -33,4 +33,4 @@ Study List Organization Based on Priority Scoring:
 issue: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/issues/189#issue-3986757882
 pr: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/190
 
-todo: link to the issues/prs/commits
+Note: Most of time spent on manually creating datasets. Realized that model could not be trained from scratch in time, as model was at 20% performance score by the halfway mark of the quarter; pivoted to Gemini.
