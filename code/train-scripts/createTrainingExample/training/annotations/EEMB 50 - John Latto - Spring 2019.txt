@@ -1,0 +1,32 @@
+CHUNK 2
+-
+1  introduction to course>>3
+2  health studies>>3
+3  why most health studies are wrong>>3
+4  a war on cancer>>3
+5  how cancer works part 1: mutagens and oncogenes>>3
+6  how cancer works part 2: malignancy and metastasis>>3
+7  what causes cancer?>>3
+8  screening for cancer>>3
+9  cancer risks and cancer clusters>>3
+10  the human heart: an owners manual>>3
+11  how your heart fails>>3
+12  mending a broken heart>>3
+13  number needed to treat>>3
+14  cholesterol and salt: unfairly convicted?>>3
+15  meta-analysis>>3
+midterm on monday>>2
+16  from apoplexy to stroke>>3
+17  stroke treatment: time lost is brain lost>>3
+18  lung function>>3
+19  lung disease>>3
+20  industrial disease>>3
+21  diabetes: the pissing evil>>3
+22  diabetes biology>>3
+23  diabetes and epigenetics>>3
+9 brain week holiday on monday>>3
+24  alzheimers disease (guest lecture by stu feinstein)>>3
+25  the placebo effect>>3
+26  accidental death>>3
+27  healthcare>>3
+28  overview and review>>3

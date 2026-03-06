@@ -1,0 +1,37 @@
+CHUNK 1
+-
+m-w: 3:30-4:45 2115 webb zoom 893-7838>>3
+-
+CHUNK 2
+-
+(3/30) introduction & system models>>3
+readings from consider a spherical cow>>1
+chapter 1 in principles of surface.... (1-25)>>1
+(4/6): mixing in lakes>>3
+chapter 4 in principles of surface.... (173-192)>>1
+example: gas exchange in sutherland pond problem set #1 due by 5:00 pm on 4/8>>1
+(4/13): mixing in lakes, continued>>3
+example: herman pit through flow problem set #2 due by 5:00 pm on 4/15>>1
+(4/20): molecular diffusion and advection>>3
+chapter 1 & 6 in river mixing (4-11, 285-288)>>1
+example: sediment oxygen demand problem set #3 due by 5:00 pm on 4/22>>1
+(4/27): turbulence>>3
+chapter 1 in river mixing (13-28)>>1
+wednesday 4/29 midterm>>2
+(5/4): 1-d spill model>>3
+chapter 4 in river mixing (175-193)>>1
+chapter 2 in principles of surface.... (69-78; skim 2.1 & 2.4)>>1
+example: hudson river experiment problem set #4 due by 5:00 pm on 5/6>>1
+(5/11): 1-d plumes>>3
+chapter 2 in principles of surface.... (49-69)>>1
+example: sagehen creek gas exchange problem set #5 due by 5:00 pm on 5/13>>1
+(5/18): dissolved oxygen sag model-the street-phelps equation>>3
+chapter 6 in principles of surface... (261-319; skim 6.3.3-6.3.6.2)>>1
+problem set #6 due by 5:00 pm on 5/20>>1
+(5/25): the street-phelps equation continued & 2-d river model>>3
+5/25 no class: memorial day>>3
+problem set #7 due by 5:00 pm on 5/27>>1
+(6/1): 2-d river model continued>>3
+review problem set #8 due by 5:00 pm on 6/3>>1
+exam: wednesday june 12, 4:00-7:001 1 you can replace the final exam with a short paper>>2
+

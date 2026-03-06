@@ -1,0 +1,4 @@
+CHUNK 1
+-
+lecture: 11:00am-12:15pm mw>>3
+lab (50 minute discussion section) friday 1pm, 2pm, 3pm>>4

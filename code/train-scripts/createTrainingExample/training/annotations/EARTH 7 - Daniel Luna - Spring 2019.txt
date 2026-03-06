@@ -1,0 +1,61 @@
+CHUNK 1
+-
+lecture: tuesdays & thursdays 3:304:45 pm; harold frank hall 1104 (bring iclicker)>>3
+lab sections: 50-minute labs meet weekly at psb-s 2725>>4
+tuesday 11 (ta: andy)>>4
+tuesday 12 (ta: andy)>>4
+tuesday 6 (ta: andy)>>4
+wednesday 4 (ta: jon)>>4
+wednesday 5 (ta: jon)>>4
+wednesday 6 (ta: jon)>>4
+-
+CHUNK 3
+-
+hw 1 (due april 7)>>1
+ch. 15, 1>>1
+april 2 lecture 1: course intro; scientific method; development of paleontology>>3
+april 4 lecture 2: the fossil record and age determination>>3
+lab 1: rocks and fossils>>4
+hw 2 (due april 14)>>1
+ch. 2, 3>>1
+april 9 lecture 3: the fossil record and age determination (continued)>>3
+april 11 lecture 4: evolution and the organization of life>>3
+lab 2: cladograms>>4
+hw 3 & 4 (due april 21)>>1
+ch. 3, 4>>1
+april 16 lecture 5: deep time and a brief history of life>>3
+april 18 lecture 6: dinosaurs in context: vertebrate evolution>>3
+lab 3: vertebrate evolution>>4
+hw 5 (due april 28)>>1
+ch. 4, 5>>1
+april 23 lecture 7: vertebrate evolution (continued)>>3
+april 25 lecture 8: mass extinction and an overview of dinosaurs>>3
+hw 6 (no submission)>>1
+ch. 10>>1
+april 30 midterm>>2
+may 2 lecture 9: introduction to ornithischians, and the armored dinosaurs>>3
+lab 4: armored dinosaurs>>4
+hw 7 (due may 12)>>1
+ch. 11, 12, 9>>1
+may 7 lecture 10: more ornithischians: duck bills, head-butters, and horned dinos>>3
+may 9 lecture 11: sauropodomorphs  giant long-necks and relatives>>3
+lab 5: cerapods>>4
+hw 8 (due may 19)>>1
+ch. 6, 7>>1
+may 14 lecture 12: meat-eating theropods (excluding maniraptors)>>3
+may 16 lecture 13: maniraptors and early bird evolution>>3
+lab 6: sauropodomorphs & theropods i>>4
+hw 9 (due may 26)>>1
+ch. 8, 14>>1
+may 21 lecture 14: maniraptors and early bird evolution (continued)>>3
+may 23 lecture 15: dinosaur contemporaries>>3
+lab 7: maniraptors>>4
+hw 10 (due june 2)>>1
+ch. 2, 16>>1
+may 28 lecture 16: dinosaur world>>3
+may 30 lecture 17: the k-pg mass extinction>>3
+lab 8: mass extinctions>>4
+hw 11 (due june 9)>>1
+june 4 lecture 18: after the extinction, and concluding thoughts>>3
+june 6 review>>3
+june 13 final: thursday, 47 pm, harold frank hall 1104>>2
