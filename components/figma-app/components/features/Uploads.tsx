@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FileText,
   FolderOpen,
-  Sparkles,
   CalendarCheck,
   Trash2,
   User,
@@ -720,7 +719,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       <div className="mb-2 shrink-0">
         <h2 className="text-xl font-semibold text-gray-900 mb-0.5">Calendar Upload</h2>
         <p className="text-xs text-gray-600">
-          Upload your syllabus, review extracted dates, then export to Google Calendar.
+          Upload your syllabus, review your generated calendar, then add it to Google Calendar.
         </p>
         <StepRail
           step={step}
@@ -737,7 +736,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       {/* ── Step 1: Upload ── */}
       {step === 1 && (
         <div className="transition-all duration-500 ease-out animate-[fadeInUp_260ms_ease-out]">
-          <div className="bg-white/80 backdrop-blur rounded-2xl shadow-sm border border-gray-200/80 p-8">
+          <div className="bg-white/80 backdrop-blur rounded-2xl shadow-sm border border-gray-200/80 p-6">
             <div className="mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Upload Files and Information</h3>
               <p className="text-sm text-gray-500">
@@ -768,7 +767,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                 onChange={(e) =>
                   setUserPrompt(e.target.value.slice(0, MAX_PROMPT_LENGTH))
                 }
-                placeholder={'Add directions for generation or information about your classes (e.g. section/lab times). Specific dates (e.g. 3/20/2026) are recommended for more accurate results.'}
+                placeholder={'Add directions for generation or information about your classes (e.g. section/lab times). Specific dates (e.g. \'remove lecture on 3/20/2026\") are recommended for more accurate results.'}
 
                 rows={3}
                 maxLength={MAX_PROMPT_LENGTH}
@@ -864,11 +863,9 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       {step === 2 && (
         <div className="flex flex-col gap-6 transition-all duration-500 ease-out animate-[fadeInUp_260ms_ease-out]">
           <div className="bg-white/90 backdrop-blur rounded-2xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-gray-900 text-lg">Review Extracted Events</h3>
-              <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
-                {filteredEvents.length}{categoryFilter !== 'ALL' && `/${events.length}`} event{events.length === 1 ? '' : 's'}
-              </span>
+            <div className="mb-4">
+              <h3 className="font-semibold text-gray-900 text-lg">Review Calendar</h3>
+              <p className="text-sm text-gray-500">Review and make changes to your generated calendar.</p>
             </div>
 
             {/* Category filter buttons */}
@@ -989,9 +986,9 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                   type="button"
                   onClick={() => setStep(3)}
                   disabled={!hasEvents}
-                  className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="group inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 transition-all duration-300"
                 >
-                  Continue to Export →
+                  <span className="transition-transform duration-300 group-hover:translate-x-0.5">Continue to Export →</span>
                 </button>
               </div>
             </div>
@@ -1025,8 +1022,8 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
           <div className="bg-white/90 backdrop-blur rounded-2xl shadow-sm border border-gray-200 p-6">
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Export to Google Calendar</h3>
-              <p className="text-sm text-gray-500 mt-1">
-                Connect your Google account and add the extracted events.
+              <p className="text-sm text-gray-500">
+                Connect your Google account and add your calendar to Google Calendar.
               </p>
             </div>
 
@@ -1163,9 +1160,11 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                     title={!isGoogleConnected ? 'Connect your Google account to enable exporting.' : undefined}
                   >
                     <span className="inline-flex items-center gap-2">
-                      <CalendarCheck
-                        className={'h-4 w-4 ' + (calendarStatus === 'loading' ? 'animate-pulse' : '')}
-                      />
+                      {!isSyncComplete && (
+                        <CalendarCheck
+                          className={'h-4 w-4 ' + (calendarStatus === 'loading' ? 'animate-pulse' : '')}
+                        />
+                      )}
                       {calendarStatus === 'loading' ? 'Exporting…' : isSyncComplete ? 'Exported' : 'Export'}
                     </span>
                   </button>
@@ -1186,16 +1185,16 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                 >
                   <div className="flex items-start gap-2">
                     {calendarStatus === 'ok' ? (
-                      <Sparkles
+                      <span
                         className={
-                          'mt-0.5 h-4 w-4 ' +
-                          (syncBurst ? 'animate-bounce text-emerald-700' : 'text-emerald-700')
+                          'mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-500 ' +
+                          (syncBurst ? 'animate-pulse' : '')
                         }
                       />
                     ) : calendarStatus === 'error' ? (
                       <Trash2 className="mt-0.5 h-4 w-4 text-rose-700" />
                     ) : (
-                      <span className="mt-1 h-2 w-2 rounded-full bg-indigo-500" />
+                      <span className="mt-1.5 h-2 w-2 rounded-full bg-indigo-500" />
                     )}
                     <div className="min-w-0">
                       <p className="font-medium">
@@ -1203,7 +1202,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                           ? 'Export Complete'
                           : calendarStatus === 'error'
                             ? 'Something went wrong'
-                            : 'Working…'}
+                            : 'Adding Events...'}
                       </p>
                       {calendarMessage ? <p className="text-xs opacity-80 mt-1">{calendarMessage}</p> : null}
                     </div>
@@ -1221,14 +1220,17 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                 type="button"
                 onClick={resetFlow}
                 className={
+                  'group ' +
                   newUploadClassName +
                   ' ' +
                   (isSyncComplete ? newUploadPurple : newUploadNeutral) +
                   (isSyncComplete ? ' hover:-translate-y-[1px]' : '')
                 }
               >
-                New Upload
+                <span className="transition-transform duration-300 group-hover:translate-x-0.5">New Upload →</span>
               </button>
+
+              
             </div>
           </div>
         </div>
