@@ -16,6 +16,7 @@ type View = "uploads" | "calendar" | "study-plan" | "profile";
 export default function FigmaApp() {
   const [currentView, setCurrentView] = useState<View>("uploads");
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
+  const [calendarVersion, setCalendarVersion] = useState(0);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
 
@@ -62,7 +63,10 @@ export default function FigmaApp() {
       url.searchParams.delete("auth_success");
       url.searchParams.delete("error");
       window.history.replaceState({}, "", url.toString());
-      if (authSuccess === "true") setCurrentView("uploads");
+      if (authSuccess === "true") {
+        setCurrentView("uploads");
+        setCalendarVersion((v) => v + 1);
+      }
     } else if (hasError) {
       url.searchParams.delete("error");
       window.history.replaceState({}, "", url.toString());
@@ -195,6 +199,7 @@ export default function FigmaApp() {
         )}
         {currentView === "calendar" && (
           <Calendar
+            key={calendarVersion}
             accessToken={accessToken}
             onGoToUploads={() => setCurrentView("uploads")}
           />

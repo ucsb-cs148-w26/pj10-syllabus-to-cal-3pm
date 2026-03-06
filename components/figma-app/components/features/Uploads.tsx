@@ -157,7 +157,7 @@ function CalendarPicker({
     if (fetchStatus === 'loading') return;
     setFetchStatus('loading');
     try {
-      const res = await fetch('/api/calendar/calendars');
+      const res = await fetch('/api/calendar/calendars', { cache: 'no-store' });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to fetch calendars');
       setCalendars(data.calendars as GoogleCalendarMeta[]);
@@ -168,10 +168,28 @@ function CalendarPicker({
     }
   }
 
-  // Refetch when refetchTrigger changes
+  function doFetch() {
+    setCalendars([]);
+    setFetchStatus('loading');
+    fetch('/api/calendar/calendars', { cache: 'no-store' })
+      .then(res => res.json())
+      .then(data => {
+        if (data.calendars) setCalendars(data.calendars as GoogleCalendarMeta[]);
+        setFetchStatus('ok');
+      })
+      .catch(() => setFetchStatus('error'));
+  }
+
+  // Fetch on mount
   useEffect(() => {
-    fetchCalendars();
-  }, [refetchTrigger]);
+    doFetch();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Force-refetch when account changes
+  useEffect(() => {
+    if (refetchTrigger === 0) return;
+    doFetch();
+  }, [refetchTrigger]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleToggle() {
     if (!open) {
@@ -181,7 +199,9 @@ function CalendarPicker({
     setOpen((o) => !o);
   }
 
-  const selectedCalendar = calendars.find((c) => c.id === selectedCalendarId);
+  const selectedCalendar = selectedCalendarId === 'primary'
+    ? calendars.find((c) => c.primary)
+    : calendars.find((c) => c.id === selectedCalendarId);
   const displayLabel = selectedCalendar
     ? selectedCalendar.summary
     : selectedCalendarSummary;
@@ -392,6 +412,13 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     const errorCode = url.searchParams.get('error');
     if (authSuccess === 'true') {
       void syncCalendarConnection();
+      setCalendarRefetchTrigger(t => t + 1);
+      setSelectedCalendarId('primary');
+      setSelectedCalendarSummary('Default calendar');
+      try {
+        localStorage.removeItem(CALENDAR_PREF_KEY);
+        localStorage.removeItem('syllabus_calendar_display_ids');
+      } catch { /* ignore */ }
       setStep(3);
       url.searchParams.delete('auth_success');
       url.searchParams.delete('error');
@@ -551,6 +578,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
         setCalendarMessage(data.error || 'Failed to start authentication');
         return;
       }
+      setStep(3);
       window.location.href = data.authUrl;
     } catch {
       setCalendarStatus('error');
@@ -624,7 +652,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     } catch {
       // Continue to OAuth flow even if disconnect request fails.
     }
-    onAccessTokenChange(null);
     setCalendarStatus('idle');
     setCalendarMessage('Switching account…');
     await handleGoogleCalendarAuth({ prompt: 'select_account' });
@@ -1160,11 +1187,9 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                     title={!isGoogleConnected ? 'Connect your Google account to enable exporting.' : undefined}
                   >
                     <span className="inline-flex items-center gap-2">
-                      {!isSyncComplete && (
-                        <CalendarCheck
-                          className={'h-4 w-4 ' + (calendarStatus === 'loading' ? 'animate-pulse' : '')}
-                        />
-                      )}
+                      <CalendarCheck
+                        className={'h-4 w-4 ' + (calendarStatus === 'loading' ? 'animate-pulse' : '')}
+                      />
                       {calendarStatus === 'loading' ? 'Exporting…' : isSyncComplete ? 'Exported' : 'Export'}
                     </span>
                   </button>

@@ -37,7 +37,7 @@ function CalendarMultiPicker({
     if (!open) return;
     if (fetchStatus !== 'idle') return;
     setFetchStatus('loading');
-    fetch('/api/calendar/calendars')
+    fetch('/api/calendar/calendars', { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
         if (data.calendars) {
@@ -496,7 +496,7 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
           ? `/api/calendar/events?timeMin=${getWeekStart(currentDate).toISOString()}&timeMax=${getWeekEnd(currentDate).toISOString()}`
           : `/api/calendar/events?month=${monthKey}`;
       const url = `${base}&calendars=${calendarsParam}`;
-      const res = await fetch(url, { signal });
+      const res = await fetch(url, { signal, cache: 'no-store' });
       const data = await res.json();
       if (id !== fetchIdRef.current) return; // stale response, ignore
       if (!res.ok) throw new Error(data.error ?? 'Failed to load events');
