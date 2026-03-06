@@ -6,6 +6,16 @@ html {
   scrollbar-gutter: stable;
 }
 
+@keyframes letterBounce {
+  0%, 100% { transform: translateY(0); }
+  35% { transform: translateY(-3px); }
+  65% { transform: translateY(1px); }
+}
+
+.group:hover .hover-bounce span {
+  animation: letterBounce 0.6s ease-in-out both;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

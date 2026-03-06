@@ -1000,7 +1000,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
           </div>
 
           {showDocuments && (
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-sm text-gray-700 max-h-80 overflow-auto">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 text-sm text-gray-700 max-h-90 overflow-auto -mt-4">
               {!hasEvents ? (
                 <p className="text-gray-500">No events to display. Upload a syllabus first.</p>
               ) : (

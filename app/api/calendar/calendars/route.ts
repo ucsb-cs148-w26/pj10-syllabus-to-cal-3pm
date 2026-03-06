@@ -41,9 +41,18 @@ export async function GET(req: NextRequest) {
         );
     }
 }
+    } catch (error: any) {
+        console.error('[calendar/calendars] Error fetching calendars:', error);
+        const status = error?.code === 401 ? 401 : 500;
+        return NextResponse.json(
+            { error: error?.message ?? 'Failed to fetch calendars' },
+            { status },
+        );
+    }
+}
 
 export async function POST(req: NextRequest) {
-    const accessToken = getCalendarAccessToken(req);
+    const accessToken = req.headers.get('authorization')?.replace('Bearer ', '');
 
     if (!accessToken) {
         return NextResponse.json({ error: 'Missing access token' }, { status: 401 });
@@ -77,7 +86,7 @@ export async function POST(req: NextRequest) {
             id: response.data.id!,
             summary: response.data.summary ?? 'Unnamed Calendar',
             primary: false,
-            backgroundColor: '#4285f4',
+            backgroundColor: response.data.backgroundColor ?? '#4285f4',
         };
 
         return NextResponse.json({ calendar: newCalendar }, { status: 201 });
