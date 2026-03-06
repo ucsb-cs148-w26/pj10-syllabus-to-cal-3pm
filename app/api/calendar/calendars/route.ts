@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-    const accessToken = getCalendarAccessToken(req);
+    const accessToken = req.headers.get('authorization')?.replace('Bearer ', '');
 
     if (!accessToken) {
         return NextResponse.json({ error: 'Missing access token' }, { status: 401 });
