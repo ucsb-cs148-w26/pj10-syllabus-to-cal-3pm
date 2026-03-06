@@ -6,6 +6,7 @@ type ColumnIndexes = {
   allDay: number;
   description: number;
   location: number;
+  course: number;
   hasHeader: boolean;
 };
 
@@ -79,6 +80,7 @@ function resolveColumnIndexes(firstRow: string[]): ColumnIndexes {
   const allDay = normalized.indexOf('allday');
   const description = normalized.indexOf('description');
   const location = normalized.indexOf('location');
+  const course = normalized.indexOf('course');
 
   const hasHeader = title !== -1 && start !== -1;
 
@@ -88,6 +90,7 @@ function resolveColumnIndexes(firstRow: string[]): ColumnIndexes {
     allDay: hasHeader ? allDay : 2,
     description: hasHeader ? description : 3,
     location: hasHeader ? location : 4,
+    course: hasHeader ? course : 5,
     hasHeader,
   };
 }
@@ -112,6 +115,7 @@ export function parseCsvToCalendarEvents(csvText: string): CalendarEvent[] {
     const allDayRaw = getCell(row, indexes.allDay).trim().toLowerCase();
     const description = getCell(row, indexes.description).trim();
     const location = getCell(row, indexes.location).trim();
+    const course = getCell(row, indexes.course).trim();
 
     // Skip repeated headers in the middle of output.
     if (normalizeHeaderCell(title) === 'title' && normalizeHeaderCell(start) === 'start') {
@@ -126,6 +130,7 @@ export function parseCsvToCalendarEvents(csvText: string): CalendarEvent[] {
       allDay: ['true', '1', 'yes', 'y'].includes(allDayRaw),
       description,
       location,
+      class: course
     });
   }
 

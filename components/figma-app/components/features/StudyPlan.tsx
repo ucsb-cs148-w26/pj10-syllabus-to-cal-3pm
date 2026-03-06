@@ -83,7 +83,7 @@ export function StudyPlan() {
   const HIGH_PRIORITY_THRESHOLD = 480;//~2 days
   const MEDIUM_PRIORITY_THRESHOLD = 1680;//~ 1 week
   const events = get_events();
-  // console.log('[StudyPlan] Raw events from get_events():', events);
+  console.log('[StudyPlan] Raw events from get_events():', events);
   const studySessions : StudySession[] = [];
   for(let a=0; a<events.length; a++){
     const event = events[a];
