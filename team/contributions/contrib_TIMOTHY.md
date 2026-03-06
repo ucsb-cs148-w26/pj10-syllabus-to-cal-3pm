@@ -9,8 +9,12 @@
 ### Pdf to Text Function:
 - issue: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/issues/63
 - pr: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/118
+  
+### Pdf to Text MVP integration:
+- issue: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/issues/119#issue-3883763518
+- pr: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/118
 
-### MVP UI changes 
+## MVP UI changes 
 #### Changing background color: 
 - https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/commit/3afeb138dd67173e8d035da75b65bc8d836710ac
 - https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/commit/81fd6cde243f933819db4de01f2ae847e5661078
@@ -22,9 +26,7 @@
 - https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/commit/1e5bb073882b1450a9a7978fcb76da9782c4ad61
 - https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/commit/800cd508691626b832caa37e4e697027dcd3f485
 
-### Pdf to Text MVP integration:
-- issue: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/issues/119#issue-3883763518
-- pr: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/118
+
 
 ## NER Training
 ### Script to manually create data: 
