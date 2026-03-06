@@ -1,3 +1,17 @@
+Date: 2026/03/06
+
+Project: Syllabus to Calendar
+
+Mentor: Self Mentored :)
+
+Meeting Time: lab09
+
+Type of meeting: Daily Scrum
+
+Team: Timothy [ ] , Rocky [X], Nataly [] , Lucy [ ], Wilson [ ], Matthew [ ], Saeed [ ]
+
+
+
 Timothy:
 Continue working on study schedulers. Doing PR reviews and also been talking with Matt about how UX is for study scheduler. Start a new file to keep organziation consistent. Semi blocked about class column not parsing. 
 
