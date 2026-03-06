@@ -1,10 +1,3 @@
-- PDF text extraction
-- MVP integration of text extraction 
-- MVP text centering for text display
-- NLP NER training in early quarter (scripts to create training sets, set creation, raw data collection, training models)
-- much of the training and set creation work was done outside of github due to large file sizes
-- Priority scoring function + Study Scheduler backend
-
 ## Pdf Text Extraction
 ### Pdf to Text Function:
 - issue: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/issues/63
