@@ -1,3 +1,4 @@
-1. From the start of accessing the uploads page to the moment you finished syncing your syllabus to Google Calendar, how long (in seconds) did the process take? (Were the steps for using the app intuitive? Were the options available to you at any point in the process clear to you? What can we do improve the experience? Was there anything that was ambiguous or complicated?)
-2. On a scale of 1-10, how useful would you consider a personalized scheduler that plans times and prioritizes tasks you need to work on?
-3. With the current review stage in uploads, how safe (1-10) do you feel in trusting that you would upload correct events to your calendar (how confident you are that you wouldn't miss a mistake)? Are there any other options you feel are missing that would make the process safer?
+1. How long did the entire process take (from the moment you accessed the upload page to the moment that your events were successfully uploaded to your calendar)?
+2. How many events were parsed incorrectly? (what was incorrect about each of them? e.g. priority, date, time, etc)
+3. Which part of our app was the most confusing to use? Why was it confusing to you?
+

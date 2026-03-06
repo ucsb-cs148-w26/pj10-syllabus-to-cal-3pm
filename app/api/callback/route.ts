@@ -18,7 +18,7 @@ const SAFE_OAUTH_ERROR_CODES = new Set([
 
 function redirectWithError(url: URL, code: string) {
   const response = NextResponse.redirect(
-    new URL(`/protected?auth_success=false&error=${code}`, url.origin),
+    new URL(`/?auth_success=false&error=${code}`, url.origin),
   );
   clearCalendarAccessTokenCookie(response);
   clearCalendarOAuthStateCookie(response);
@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
       return redirectWithError(url, "no_access_token");
     }
 
-    const response = NextResponse.redirect(new URL("/protected?auth_success=true", url.origin));
+    const response = NextResponse.redirect(new URL("/?auth_success=true", url.origin));
     const maxAgeSeconds =
       typeof tokens.expiry_date === "number"
         ? Math.max(60, Math.floor((tokens.expiry_date - Date.now()) / 1000))

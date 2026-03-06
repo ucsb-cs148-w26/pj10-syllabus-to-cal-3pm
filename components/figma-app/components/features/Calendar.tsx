@@ -37,7 +37,7 @@ function CalendarMultiPicker({
     if (!open) return;
     if (fetchStatus !== 'idle') return;
     setFetchStatus('loading');
-    fetch('/api/calendar/calendars')
+    fetch('/api/calendar/calendars', { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
         if (data.calendars) {
@@ -496,7 +496,7 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
           ? `/api/calendar/events?timeMin=${getWeekStart(currentDate).toISOString()}&timeMax=${getWeekEnd(currentDate).toISOString()}`
           : `/api/calendar/events?month=${monthKey}`;
       const url = `${base}&calendars=${calendarsParam}`;
-      const res = await fetch(url, { signal });
+      const res = await fetch(url, { signal, cache: 'no-store' });
       const data = await res.json();
       if (id !== fetchIdRef.current) return; // stale response, ignore
       if (!res.ok) throw new Error(data.error ?? 'Failed to load events');
@@ -727,45 +727,18 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
     `${year}-${String(month + 1).padStart(2, '0')}-${String(defaultCreateDate).padStart(2, '0')}`;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-semibold text-gray-900 mb-2">Your Schedule</h2>
-          <p className="text-gray-600">
-            {accessToken
-              ? 'Your Google Calendar events for the selected month'
-              : 'Connect your Google account to see and add events'}
-          </p>
-        </div>
-        {accessToken && (
-          <div className="flex items-center gap-3">
-            <CalendarMultiPicker
-              selectedIds={selectedCalendarIds}
-              onChange={(ids) => {
-                setSelectedCalendarIds(ids);
-                try {
-                  localStorage.setItem(DISPLAY_CALENDARS_KEY, JSON.stringify(ids));
-                } catch { /* ignore */ }
-                eventsCacheRef.current.clear();
-              }}
-            />
-            <button
-              type="button"
-              onClick={() => {
-                setCreateDate(createDateValue);
-                setCreateOpen(true);
-              }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              Add event
-            </button>
-          </div>
-        )}
+    <div className="relative max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 py-2">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_5%,theme(colors.indigo.100),transparent_55%),radial-gradient(1000px_circle_at_80%_35%,theme(colors.violet.100),transparent_60%),linear-gradient(to_bottom,theme(colors.white),theme(colors.slate.50))] transition-all duration-700" />
+
+      <div className="mb-2 shrink-0">
+        <h2 className="text-xl font-semibold text-gray-900 mb-0.5">Your Schedule</h2>
+        <p className="text-xs text-gray-600">
+          View and manage your calendar events.
+        </p>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3">
+        <div className="bg-gray-50 px-4 py-2 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -803,29 +776,56 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
                   })()}
             </h3>
           </div>
-          <div className="flex rounded-lg border border-gray-300 overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setViewMode('month')}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
-                viewMode === 'month' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              Month
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('week')}
-              className={`px-4 py-2 text-sm font-medium transition-colors ${
-                viewMode === 'week' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              Week
-            </button>
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-lg border border-gray-300 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setViewMode('month')}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  viewMode === 'month' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Month
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('week')}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  viewMode === 'week' ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                Week
+              </button>
+            </div>
+            {accessToken && (
+              <>
+                <CalendarMultiPicker
+                  selectedIds={selectedCalendarIds}
+                  onChange={(ids) => {
+                    setSelectedCalendarIds(ids);
+                    try {
+                      localStorage.setItem(DISPLAY_CALENDARS_KEY, JSON.stringify(ids));
+                    } catch { /* ignore */ }
+                    eventsCacheRef.current.clear();
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCreateDate(createDateValue);
+                    setCreateOpen(true);
+                  }}
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Event
+                </button>
+              </>
+            )}
           </div>
         </div>
 
-        <div className="p-6">
+        <div className="p-3">
           {!accessToken && (
             <div className="mb-4 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-8 text-center">
               <p className="text-gray-700 font-medium mb-2">Your calendar events will show here</p>
@@ -879,15 +879,15 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
             />
           ) : (
             <>
-          <div className="grid grid-cols-7 gap-2 mb-2">
+          <div className="grid grid-cols-7 gap-1 mb-1">
             {DAY_NAMES_SHORT.map((day) => (
-              <div key={day} className="text-center font-semibold text-gray-700 py-2">
+              <div key={day} className="text-center font-semibold text-gray-700 text-xs py-1">
                 {day}
               </div>
             ))}
           </div>
 
-          <div className="grid grid-cols-7 gap-2">
+          <div className="grid grid-cols-7 gap-1">
             {Array.from({ length: startingDayOfWeek }).map((_, index) => (
               <div key={`empty-${index}`} className="aspect-square" />
             ))}
@@ -907,7 +907,7 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
                       openCreateForDay(day);
                     }
                   }}
-                  className={`aspect-square border border-gray-200 rounded-lg p-2 transition-colors flex flex-col min-h-0 ${
+                  className={`aspect-square border border-gray-200 rounded-lg p-1.5 transition-colors flex flex-col min-h-0 ${
                     accessToken ? 'hover:bg-gray-50 cursor-pointer' : ''
                   } ${isToday(day) ? 'bg-indigo-50 border-indigo-300' : ''}`}
                   aria-label={accessToken ? `Add event for ${MONTH_NAMES[month]} ${day}` : undefined}
@@ -1445,13 +1445,6 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
         </div>
       )}
 
-      {accessToken && (
-        <div className="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <p className="text-sm text-gray-600">
-            Events are synced with your Google Calendar. Use the arrows to change month.
-          </p>
-        </div>
-      )}
     </div>
   );
 }

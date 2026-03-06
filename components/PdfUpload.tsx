@@ -204,7 +204,7 @@ export default function PdfUpload({ onTextExtracted, uploadedFiles, onDeleteUplo
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        className={`relative border-2 border-dashed rounded-2xl px-6 py-10 transition-all cursor-pointer flex flex-col items-center justify-center text-center
+        className={`relative border-2 border-dashed rounded-2xl px-6 py-10 transition-all cursor-pointer flex flex-col items-center justify-center text-center h-64
 ${isDragOver ? "border-indigo-500 bg-indigo-50/70" : "border-gray-300 bg-gray-50/80 hover:border-indigo-400 hover:bg-indigo-50/60"}
 ${loading ? "opacity-80" : ""}`}
         onClick={() => inputRef.current?.click()}
@@ -232,11 +232,9 @@ ${loading ? "opacity-80" : ""}`}
               <UploadIcon className="w-7 h-7 text-indigo-600" />
             </div>
             <div>
-              <p className="font-medium text-gray-900 text-sm md:text-base">Drag & drop your file(s) here</p>
-              <p className="text-xs md:text-sm text-gray-500 mt-1">
-                or <span className="text-indigo-600 font-semibold">browse files</span>
-              </p>
-              <p className="mt-2 text-[11px] text-gray-400">Supported: PDF, DOCX, TXT, PNG, JPG/JPEG</p>
+              <p className="font-medium text-gray-900 text-sm md:text-base">Upload Files</p>
+
+              <p className="mt-2 text-[11px] text-gray-400">PDF, DOCX, TXT, PNG, JPG/JPEG</p>
             </div>
           </label>
         ) : (
@@ -259,7 +257,7 @@ ${loading ? "opacity-80" : ""}`}
           <div className="mb-3 flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
               <FileText className="h-4 w-4 text-indigo-600" />
-              Uploaded files
+              Files
             </div>
             <div className="text-xs text-gray-500">{uploadedFiles!.length}</div>
           </div>

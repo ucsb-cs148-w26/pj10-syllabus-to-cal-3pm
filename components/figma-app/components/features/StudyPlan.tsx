@@ -1,6 +1,9 @@
 'use client';
 
-import { Clock, Calendar, BookOpen } from 'lucide-react';
+import { Clock, Calendar, BookOpen, ScrollText } from 'lucide-react';
+import { useState } from 'react';
+import type { CalendarEvent } from '@/lib/googleCalendar';
+import { get_events } from "@/components/figma-app/components/features/Uploads";
 
 interface StudySession {
   id: string;
@@ -9,75 +12,112 @@ interface StudySession {
   suggestedTime: string;
   duration: string;
   date: string;
+  score: number;
   priority: 'high' | 'medium' | 'low';
+
+}
+//function to help compare study sessions for sort
+function compare_study_sessions(a : StudySession, b : StudySession){
+  if(Number.isNaN(a.score) && Number.isNaN(b.score)) return 0;
+  if(Number.isNaN(a.score)) return 1;
+  if(Number.isNaN(b.score)) return -1;
+  if(a.score >= 0 && b.score < 0) return -1;
+  if(a.score < 0 && b.score >= 0) return 1;
+  if(a.score < b.score) return -1;
+  if(a.score > b.score) return 1;
+  return 0;
+}
+function priority_score(event : CalendarEvent){
+    //higher score: lower priority
+    //consts
+    const TIME_MULTIPLICATIVE_WEIGHT : number = 10; //per hour
+    const NOT_EXAM_ADDITIVE_WEIGHT : number = TIME_MULTIPLICATIVE_WEIGHT * 2.1 * 24; //proritize exam if 2 there's one two days after another event
+    let score = NOT_EXAM_ADDITIVE_WEIGHT;
+
+    //regexp to validate date formatting
+    const date_pattern_1 : RegExp = new RegExp("[0-9]{4}-[0-9]{2}-[0-9]{2}") //YYYY-..-..
+    const date_pattern_2 : RegExp = new RegExp("[0-9]{2}-[0-9]{2}-[0-9]{4}") //..-..-YYYY
+    const date_pattern_3 : RegExp = new RegExp("[0-9]{4}/[0-9]{2}/[0-9]{2}") //YYYY/../..
+    const date_pattern_4 : RegExp = new RegExp("[0-9]{2}/[0-9]{2}/[0-9]{4}") //../../YYYY
+    let start : Date | undefined;
+    let end : Date | undefined;
+    if(event.start !== undefined){
+      const start_valid = date_pattern_1.test(event.start) || date_pattern_2.test(event.start) || date_pattern_3.test(event.start) || date_pattern_4.test(event.start);
+      if(start_valid) start = new Date(event.start);
+      else return NaN;
+    }
+    else return NaN;
+
+    //*note: end is pretty much never defined; probably will not use; not currently using
+    if(event.end !== undefined){
+      const end_valid = date_pattern_1.test(event.end) || date_pattern_2.test(event.end) || date_pattern_3.test(event.end) || date_pattern_4.test(event.end);
+      if(end_valid) end = new Date(event.end);
+    }
+
+    
+    // if(end.getTime() < start.getTime()){
+    //   throw new Error("End time before start");
+    // }
+      
+    const time_until_start : number = (start.getTime() - (new Date()).getTime()) / 1000 / 60 / 60; //ms -> hours
+    if(time_until_start < 0){
+      return NaN
+    }
+    score += time_until_start * TIME_MULTIPLICATIVE_WEIGHT
+    
+    const split_title : Array<string> = event.title.trim().split(" ")
+    for(let a = 0; a < split_title.length; a++){
+      split_title[a] = split_title[a].trim().toLowerCase();
+    }
+    const EXAM_KEYWORDS : Set<string> = new Set<string>(["final", "midterm", "exam", "test", "project"])
+    for(const word of split_title){
+      if(EXAM_KEYWORDS.has(word)){
+        score -= NOT_EXAM_ADDITIVE_WEIGHT
+        break;
+      }
+    }
+    return score;
 }
 
 export function StudyPlan() {
-  const studySessions: StudySession[] = [
-    {
-      id: '1',
-      assignment: 'Programming Assignment 1',
-      course: 'CS 101',
-      suggestedTime: '2:00 PM - 4:00 PM',
-      duration: '2 hours',
-      date: 'Monday, Jan 22',
-      priority: 'high'
-    },
-    {
-      id: '2',
-      assignment: 'Calculus Midterm Prep',
-      course: 'MATH 201',
-      suggestedTime: '6:00 PM - 8:00 PM',
-      duration: '2 hours',
-      date: 'Monday, Jan 22',
-      priority: 'high'
-    },
-    {
-      id: '3',
-      assignment: 'English Essay Outline',
-      course: 'ENG 150',
-      suggestedTime: '10:00 AM - 11:30 AM',
-      duration: '1.5 hours',
-      date: 'Tuesday, Jan 23',
-      priority: 'medium'
-    },
-    {
-      id: '4',
-      assignment: 'English Essay Draft',
-      course: 'ENG 150',
-      suggestedTime: '3:00 PM - 5:00 PM',
-      duration: '2 hours',
-      date: 'Wednesday, Jan 24',
-      priority: 'medium'
-    },
-    {
-      id: '5',
-      assignment: 'Calculus Practice Problems',
-      course: 'MATH 201',
-      suggestedTime: '4:00 PM - 6:00 PM',
-      duration: '2 hours',
-      date: 'Thursday, Jan 25',
-      priority: 'high'
-    },
-    {
-      id: '6',
-      assignment: 'Lab Report Research',
-      course: 'CS 101',
-      suggestedTime: '1:00 PM - 3:00 PM',
-      duration: '2 hours',
-      date: 'Friday, Jan 26',
-      priority: 'medium'
-    },
-    {
-      id: '7',
-      assignment: 'Calculus Final Review',
-      course: 'MATH 201',
-      suggestedTime: '11:00 AM - 1:00 PM',
-      duration: '2 hours',
-      date: 'Saturday, Jan 27',
-      priority: 'high'
+  const HIGH_PRIORITY_THRESHOLD = 480;//~2 days
+  const MEDIUM_PRIORITY_THRESHOLD = 1680;//~ 1 week
+  const events = get_events();
+  const studySessions : StudySession[] = [];
+  for(let a=0; a<events.length; a++){
+    const event = events[a];
+    const score = priority_score(event);
+    if(score >= 0 && !Number.isNaN(score)){
+      studySessions.push(
+        {
+          id: String(a),
+          assignment: event.title,
+          course: 'course', 
+          suggestedTime: 'time', 
+          duration: 'duration', 
+          date: Number.isNaN(score) ? 'none' : event.start,
+          score: score,
+          priority: 'high'
+        }
+      );
     }
-  ];
+  }
+  studySessions.sort(compare_study_sessions);
+  for(const studySession of studySessions){
+    if(Number.isNaN(studySession.score) || studySession.score < 0){
+      studySession.priority = 'low';
+      continue;
+    }
+    if(studySession.score < HIGH_PRIORITY_THRESHOLD){
+      studySession.priority = 'high';
+      continue;
+    }
+    if(studySession.score < MEDIUM_PRIORITY_THRESHOLD){
+      studySession.priority = 'medium';
+      continue;
+    }
+    studySession.priority = 'low';
+  }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -93,10 +133,12 @@ export function StudyPlan() {
   };
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="mb-8">
-        <h2 className="text-3xl font-semibold text-gray-900 mb-2">Smart Study Plan</h2>
-        <p className="text-gray-600">
+    <div className="relative max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 py-2">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_5%,theme(colors.indigo.100),transparent_55%),radial-gradient(1000px_circle_at_80%_35%,theme(colors.violet.100),transparent_60%),linear-gradient(to_bottom,theme(colors.white),theme(colors.slate.50))] transition-all duration-700" />
+
+      <div className="mb-2 shrink-0">
+        <h2 className="text-xl font-semibold text-gray-900 mb-0.5">Smart Study Plan</h2>
+        <p className="text-xs text-gray-600">
           Personalized study times based on your class schedule and assignment deadlines
         </p>
       </div>
@@ -107,10 +149,9 @@ export function StudyPlan() {
             <BookOpen className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h3 className="font-semibold text-indigo-900 mb-1">Study Plan Generated</h3>
+            <h3 className="font-semibold text-indigo-900 mb-1">Coming Soon</h3>
             <p className="text-indigo-700 text-sm">
-              We've analyzed your schedule and created optimal study times for your upcoming assignments.
-              These times avoid conflicts with your classes and spread out your workload evenly.
+              This page will eventually allow you to receive an automatic study and homework plan with priority levels based on your calendar schedule. 
             </p>
           </div>
         </div>
@@ -158,24 +199,6 @@ export function StudyPlan() {
             </div>
           </div>
         ))}
-      </div>
-
-      <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="font-semibold text-gray-900 mb-4">Study Tips</h3>
-        <ul className="space-y-2 text-gray-700 text-sm">
-          <li className="flex items-start gap-2">
-            <span className="text-indigo-600 mt-1">•</span>
-            <span>Take 5-10 minute breaks every hour to maintain focus</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-indigo-600 mt-1">•</span>
-            <span>Start with high-priority assignments when your energy is highest</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-indigo-600 mt-1">•</span>
-            <span>Review your study plan daily and adjust as needed</span>
-          </li>
-        </ul>
       </div>
     </div>
   );
