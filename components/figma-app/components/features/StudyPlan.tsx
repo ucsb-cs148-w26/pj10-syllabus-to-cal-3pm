@@ -80,10 +80,10 @@ export function StudyPlan() {
                 <Clock className="w-4 h-4 text-indigo-600" />
                 <span className="text-sm">{session.suggestedTime}</span>
               </div>
-              <div className="flex items-center gap-2 text-gray-700">
+              {/* <div className="flex items-center gap-2 text-gray-700">
                 <BookOpen className="w-4 h-4 text-indigo-600" />
                 <span className="text-sm">{session.duration}</span>
-              </div>
+              </div> */}
             </div>
 
             <div className="mt-4 pt-4 border-t border-gray-200">

@@ -1,4 +1,6 @@
 import type { CalendarEvent } from '@/lib/googleCalendar';
+import { SpanTracker } from './spanTracker';
+import { convertServerPatchToFullTree } from 'next/dist/client/components/segment-cache/navigation';
 
 export interface StudySession {
     id: string;
@@ -24,6 +26,7 @@ function compare_study_sessions(a : StudySession, b : StudySession){
     return 0;
 }
 
+
 function priority_score(event : CalendarEvent){
     /*
     in:
@@ -32,46 +35,44 @@ function priority_score(event : CalendarEvent){
         -score: score assigned to the input event; higher score = lower priority
     */
 
+    const EXAM_OVER_NON_EXAM_DAYS : number = 6 //if there is an event that is x days away, an exam will be given the same priority as that event even if it is this many days after it.
     const TIME_MULTIPLICATIVE_WEIGHT : number = 10; //per hour
-    const NOT_EXAM_ADDITIVE_WEIGHT : number = TIME_MULTIPLICATIVE_WEIGHT * 2.1 * 24; //proritize exam if 2 there's one two days after another event
-    let score = NOT_EXAM_ADDITIVE_WEIGHT;
+    const EXAM_SUBTRACTIVE_WEIGHT : number = TIME_MULTIPLICATIVE_WEIGHT * (EXAM_OVER_NON_EXAM_DAYS + 0.1) * 24; //proritize exam if there's one 7 days after another event
+    let score = 0;
 
     //regexp to validate date formatting
-    const date_pattern_1 : RegExp = new RegExp("[0-9]{4}-[0-9]{2}-[0-9]{2}") //YYYY-..-..
-    const date_pattern_2 : RegExp = new RegExp("[0-9]{2}-[0-9]{2}-[0-9]{4}") //..-..-YYYY
-    const date_pattern_3 : RegExp = new RegExp("[0-9]{4}/[0-9]{2}/[0-9]{2}") //YYYY/../..
-    const date_pattern_4 : RegExp = new RegExp("[0-9]{2}/[0-9]{2}/[0-9]{4}") //../../YYYY
+    const date_pattern_dashes_year_first : RegExp = new RegExp("[0-9]{4}-[0-9]{2}-[0-9]{2}") //YYYY-..-..
+    const date_pattern_dashes_year_last : RegExp = new RegExp("[0-9]{2}-[0-9]{2}-[0-9]{4}") //..-..-YYYY
+    const date_pattern_slashes_year_first : RegExp = new RegExp("[0-9]{4}/[0-9]{2}/[0-9]{2}") //YYYY/../..
+    const date_pattern_slashes_year_last : RegExp = new RegExp("[0-9]{2}/[0-9]{2}/[0-9]{4}") //../../YYYY
+    const date_pattern_periods_year_first : RegExp = new RegExp("[0-9]{4}.[0-9]{2}.[0-9]{2}") //YYYY.~~.~~
+    const date_pattern_periods_year_last : RegExp = new RegExp("[0-9]{2}.[0-9]{2}.[0-9]{4}") //~~.~~.YYYY
     let start : Date | undefined;
-    let end : Date | undefined;
     if(event.start !== undefined){
-        const start_valid = date_pattern_1.test(event.start) || date_pattern_2.test(event.start) || date_pattern_3.test(event.start) || date_pattern_4.test(event.start);
-        if(start_valid) start = new Date(event.start);
-        else return NaN;
+        const start_valid = date_pattern_dashes_year_first.test(event.start) || date_pattern_dashes_year_last.test(event.start) 
+                        || date_pattern_slashes_year_first.test(event.start) || date_pattern_slashes_year_last.test(event.start)
+                        || date_pattern_periods_year_first.test(event.start) || date_pattern_periods_year_last.test(event.start);
+        if(start_valid){
+            start = new Date(event.start);
+        } 
+        else return NaN; // if date doesn't match reges formats
+            
     }
-    else return NaN;
+    else return NaN; // if start date is undefined
 
-    //*note: end is pretty much never defined; probably will not use; not currently using
-        if(event.end !== undefined){
-            const end_valid = date_pattern_1.test(event.end) || date_pattern_2.test(event.end) || date_pattern_3.test(event.end) || date_pattern_4.test(event.end);
-            if(end_valid) end = new Date(event.end);
-        }
-        // if(end.getTime() < start.getTime()){
-        //   throw new Error("End time before start");
-        // }
-    
     const time_until_start : number = (start.getTime() - (new Date()).getTime()) / 1000 / 60 / 60; //ms -> hours
-    if(time_until_start < 0){
-        return NaN
-    }
+    if(time_until_start < 0) return NaN;
     score += time_until_start * TIME_MULTIPLICATIVE_WEIGHT
     const split_title : Array<string> = event.title.trim().split(" ")
     for(let a = 0; a < split_title.length; a++){
         split_title[a] = split_title[a].trim().toLowerCase();
     }
     const EXAM_KEYWORDS : Set<string> = new Set<string>(["final", "midterm", "exam", "test", "project"])
+    if(event.description === undefined) return NaN;
+
     for(const word of split_title){
-        if(EXAM_KEYWORDS.has(word)){
-            score -= NOT_EXAM_ADDITIVE_WEIGHT
+        if(EXAM_KEYWORDS.has(word) || event.description.includes("EXAM")){
+            score = Math.max(0, score - EXAM_SUBTRACTIVE_WEIGHT);
             break;
         }
     }
@@ -84,40 +85,31 @@ export function schedule_sessions(events : CalendarEvent[]){
         -events: list of objects conforming to CalendarEvent interface
     out:
         -study_sessions: list of objects conforming to StudySession interface in decreasing order of priority
-    
-    behavior:
-        -filter out events that don't need study sessions
-        -creates study sessions for each event, one sessions for each event, then two, etc until desired num reached or available time is all occupied (in that case, higher priority study sessions will be preserved over lower priority ones)
-        -study session durations will be streched/squashed to min/max to fit in other sessions. If all events reach compress limit, lower priority events will be purged
     */
+
     const HIGH_PRIORITY_THRESHOLD = 480;//~2 days
     const MEDIUM_PRIORITY_THRESHOLD = 1680;//~ 1 week
-
-    const MAX_STUDY_SESSION_DURATION = 0;
-    const MIN_STUDY_SESSION_DURATION = 0;
-
-    const DESIRED_NUM_STUDY_SESSIONS = 0;
-
-    const ASSUMED_LECTURE_DURATION = 0;
-    const ASSUMED_SECTION_DURATION = 0;
-    const ASSUMED_MISC_DURATION = 0;
 
     const studySessions : StudySession[] = [];
     for(let a=0; a<events.length; a++){
         const event = events[a];
+        if(event.description != "ASSIGNMENT" && event.description != "EXAM") continue;
         const score = priority_score(event);
-        if(score >= 0 && !Number.isNaN(score) ){
-        studySessions.push(
-            {
-            id: String(a),
-            assignment: event.title,
-            course: 'course', 
-            suggestedTime: 'time', 
-            duration: 'duration', 
-            date: Number.isNaN(score) ? 'none' : event.start,
-            score: score,
-            priority: 'high'
-            }
+        if(Number.isNaN(score)) continue;
+        if(score < 0) continue; //events in past
+        if(score >= 0){
+            const start_date : Date = new Date(event.start);
+            studySessions.push(
+                {
+                    id: String(a),
+                    assignment: event.title,
+                    course: (event.class === undefined) ? "No Course" : event.class, 
+                    suggestedTime: `${start_date.getHours()}:${(start_date.getMinutes() < 10) ? "0" + String(start_date.getMinutes()) : start_date.getMinutes()}`, 
+                    duration: 'duration', 
+                    date: Number.isNaN(score) ? 'none' : `${start_date.getMonth() + 1}/${start_date.getDate()}/${start_date.getFullYear()}`,
+                    score: score,
+                    priority: 'high' //gets re-assigned later
+                }
         );
         }
     }
@@ -139,6 +131,4 @@ export function schedule_sessions(events : CalendarEvent[]){
         studySession.priority = 'low';
     }
     return studySessions;
-
-    //todo take the master list of events, filter out stuff that will not need study session, priority score the rest, then create study sessions for them in places that don't
 }
