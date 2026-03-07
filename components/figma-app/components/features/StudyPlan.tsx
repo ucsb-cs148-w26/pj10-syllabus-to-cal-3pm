@@ -5,10 +5,10 @@ import { useState } from 'react';
 import type { StudySession } from '@/lib/studySessionScheduling'
 import type { CalendarEvent } from '@/lib/googleCalendar';
 import { get_events } from "@/components/figma-app/components/features/Uploads";
-import {compare_study_sessions, } from "@/lib/studySessionScheduling"
+import {schedule_sessions } from "@/lib/studySessionScheduling"
 
 export function StudyPlan() {
-  
+  //todo: check if deletion/editing is still reflected in this list
   const events = get_events();
   
   const studySessions : StudySession[] = schedule_sessions(events);
