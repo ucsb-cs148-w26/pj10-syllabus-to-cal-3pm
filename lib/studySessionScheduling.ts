@@ -92,7 +92,6 @@ export function schedule_sessions(events : CalendarEvent[]){
         if(score < 0) continue; //events in past
         if(score >= 0){
             const start_date : Date = new Date(event.start);
-            console.log(`${event.title}      ${score}`)
             studySessions.push(
                 {
                     id: String(a),
