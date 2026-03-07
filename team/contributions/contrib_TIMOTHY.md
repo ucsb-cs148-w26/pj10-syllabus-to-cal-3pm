@@ -41,6 +41,10 @@ Centered text in MVP
 - issue: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/issues/112#issue-3879872248
 - pr: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/157
 
+## General
+### Filling class field in CalendarEvent, bug fixing for PR (worked with Nataly)
+- https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/218/changes/45f0d7720ec3decf7799156b3e4e184914beb135
+  
 ## Study Planner
 ### Priority Score Calculation for Events:
 - issue: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/issues/159#issue-3959586040
