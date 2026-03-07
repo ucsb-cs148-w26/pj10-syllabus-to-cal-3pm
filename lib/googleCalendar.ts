@@ -7,6 +7,7 @@ export interface CalendarEvent {
   allDay: boolean;
   description?: string;
   location?: string;
+  class?: string; // course/class name from CSV
   /** Recurrence rules, e.g. ['RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR'] */
   recurrence?: string[];
 }
