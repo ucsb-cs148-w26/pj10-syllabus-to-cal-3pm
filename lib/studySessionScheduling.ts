@@ -1,5 +1,4 @@
 import type { CalendarEvent } from '@/lib/googleCalendar';
-import { SpanTracker } from './spanTracker';
 import { convertServerPatchToFullTree } from 'next/dist/client/components/segment-cache/navigation';
 
 export interface StudySession {
