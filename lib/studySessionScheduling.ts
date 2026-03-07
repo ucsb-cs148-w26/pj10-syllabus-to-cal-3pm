@@ -13,7 +13,7 @@ export interface StudySession {
 }
 
 //funct ion to help compare study sessions for sort
-export function compare_study_sessions(a : StudySession, b : StudySession){
+function compare_study_sessions(a : StudySession, b : StudySession){
     if(Number.isNaN(a.score) && Number.isNaN(b.score)) return 0;
     if(Number.isNaN(a.score)) return 1;
     if(Number.isNaN(b.score)) return -1;
@@ -24,7 +24,7 @@ export function compare_study_sessions(a : StudySession, b : StudySession){
     return 0;
 }
 
-export function priority_score(event : CalendarEvent){
+function priority_score(event : CalendarEvent){
     /*
     in:
         -event: object conforming to CalendarEvent interface
@@ -78,7 +78,7 @@ export function priority_score(event : CalendarEvent){
     return score;
 }
 
-function schedule_sessions(events : CalendarEvent[]){
+export function schedule_sessions(events : CalendarEvent[]){
     /*
     in:
         -events: list of objects conforming to CalendarEvent interface
@@ -106,7 +106,7 @@ function schedule_sessions(events : CalendarEvent[]){
     for(let a=0; a<events.length; a++){
         const event = events[a];
         const score = priority_score(event);
-        if(score >= 0 && !Number.isNaN(score)){
+        if(score >= 0 && !Number.isNaN(score) ){
         studySessions.push(
             {
             id: String(a),
@@ -125,16 +125,16 @@ function schedule_sessions(events : CalendarEvent[]){
 
     for(const studySession of studySessions){
         if(Number.isNaN(studySession.score) || studySession.score < 0){
-        studySession.priority = 'low';
-        continue;
+            studySession.priority = 'low';
+            continue;
         }
         if(studySession.score < HIGH_PRIORITY_THRESHOLD){
-        studySession.priority = 'high';
-        continue;
+            studySession.priority = 'high';
+            continue;
         }
         if(studySession.score < MEDIUM_PRIORITY_THRESHOLD){
-        studySession.priority = 'medium';
-        continue;
+            studySession.priority = 'medium';
+            continue;
         }
         studySession.priority = 'low';
     }
