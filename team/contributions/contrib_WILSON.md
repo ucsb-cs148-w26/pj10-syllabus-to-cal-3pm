@@ -1,1 +1,5 @@
-
+-Connected the Google Calendar API so the app can send syllabus info directly to a user's calendar.
+-Built the calendar view where users can see their schedule, switch between week/month views, and check their events without leaving the site.
+-Added edit and delete tools so users can fix mistakes or remove events before they get sent to their calendar.
+-Created the "Enrolled Classes" page that lets users manage their courses and sync specific class events to Google.
+-Set up the CSV download, including the buttons and logic to turn parsed syllabus data into a file.
