@@ -80,7 +80,7 @@ function resolveColumnIndexes(firstRow: string[]): ColumnIndexes {
   const allDay = normalized.indexOf('allday');
   const description = normalized.indexOf('description');
   const location = normalized.indexOf('location');
-  const course = normalized.indexOf('course');
+  const course = normalized.indexOf('class');
 
   const hasHeader = title !== -1 && start !== -1;
   return {
