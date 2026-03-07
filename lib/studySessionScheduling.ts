@@ -67,15 +67,8 @@ function priority_score(event : CalendarEvent){
     for(let a = 0; a < split_title.length; a++){
         split_title[a] = split_title[a].trim().toLowerCase();
     }
-    const EXAM_KEYWORDS : Set<string> = new Set<string>(["final", "midterm", "exam", "test", "project"])
     if(event.description === undefined) return NaN;
-
-    for(const word of split_title){
-        if(EXAM_KEYWORDS.has(word) || event.description.includes("EXAM")){
-            score = Math.max(0, score - EXAM_SUBTRACTIVE_WEIGHT);
-            break;
-        }
-    }
+    if(event.description == "EXAM") return Math.max(0, score - EXAM_SUBTRACTIVE_WEIGHT);
     return score;
 }
 
@@ -99,6 +92,7 @@ export function schedule_sessions(events : CalendarEvent[]){
         if(score < 0) continue; //events in past
         if(score >= 0){
             const start_date : Date = new Date(event.start);
+            console.log(`${event.title}      ${score}`)
             studySessions.push(
                 {
                     id: String(a),
