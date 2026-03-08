@@ -860,9 +860,9 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
       {/* Header */}
       <div className="mb-2 shrink-0">
-        <h2 className="text-xl font-semibold text-gray-900 mb-0.5">Calendar Upload</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-0.5">Upload</h2>
         <p className="text-xs text-gray-600">
-          Upload your syllabus, review your generated calendar, then add it to Google Calendar.
+          Upload your syllabus, review your generated calendar, then export it to Google Calendar.
         </p>
         <StepRail
           step={step}

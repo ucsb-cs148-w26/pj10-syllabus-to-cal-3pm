@@ -10,7 +10,7 @@ export interface StudySession {
     date: string;
     score: number;
     priority: 'high' | 'medium' | 'low';
-
+    type: 'assignment' | 'exam';
 }
 
 //funct ion to help compare study sessions for sort
@@ -105,9 +105,10 @@ export function schedule_sessions(events : CalendarEvent[]){
                     course: (event.class === undefined) ? "No Course" : event.class, 
                     suggestedTime: `${start_date.getHours()}:${(start_date.getMinutes() < 10) ? "0" + String(start_date.getMinutes()) : start_date.getMinutes()}`, 
                     duration: 'duration', 
-                    date: Number.isNaN(score) ? 'none' : `${start_date.getMonth() + 1}/${start_date.getDate()}/${start_date.getFullYear()}`,
+                    date: Number.isNaN(score) ? 'none' : `${start_date.getFullYear()}-${String(start_date.getMonth() + 1).padStart(2, '0')}-${String(start_date.getDate()).padStart(2, '0')}`,
                     score: score,
-                    priority: 'high' //gets re-assigned later
+                    priority: 'high', //gets re-assigned later
+                    type: event.description === 'EXAM' ? 'exam' : 'assignment',
                 }
         );
         }

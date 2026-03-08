@@ -8,16 +8,14 @@ export function LogoutButton({ children, ...props }: ButtonProps) {
 
   const logout = async () => {
     try {
-      const res = await fetch("/auth/logout", { method: "POST" });
-      if (!res.ok) {
-        throw new Error("Logout failed");
-      }
-    } catch {
       const { createClient } = await import("@/lib/supabase/client");
       const supabase = createClient();
       await supabase.auth.signOut();
+      await fetch("/auth/logout", { method: "POST" }).catch(() => {});
+    } catch {
+      // ignore
     } finally {
-      router.push("/");
+      window.location.href = "/";
     }
   };
 

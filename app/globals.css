@@ -4,6 +4,7 @@
 
 html {
   scrollbar-gutter: stable;
+  color-scheme: light;
 }
 
 @keyframes letterBounce {
@@ -89,4 +90,41 @@ html {
 @keyframes scaleInSoft {
   0% { transform: scale(0.7); opacity: 0; }
   100% { transform: scale(1); opacity: 1; }
+}
+
+/* Study Plan animations */
+@keyframes plannerSlideRight {
+  0% { opacity: 0; transform: translateX(20px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes plannerSlideLeft {
+  0% { opacity: 0; transform: translateX(-20px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes cardEvtSlideRight {
+  0% { opacity: 0; transform: translateX(12px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes cardEvtSlideLeft {
+  0% { opacity: 0; transform: translateX(-12px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
+.animate-planner-slide-right {
+  animation: plannerSlideRight 0.28s ease-out;
+}
+
+.animate-planner-slide-left {
+  animation: plannerSlideLeft 0.28s ease-out;
+}
+
+.animate-card-evt-slide-right {
+  animation: cardEvtSlideRight 0.22s ease-out both;
+}
+
+.animate-card-evt-slide-left {
+  animation: cardEvtSlideLeft 0.22s ease-out both;
 }

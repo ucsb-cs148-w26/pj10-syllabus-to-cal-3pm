@@ -153,7 +153,7 @@ export default function FigmaApp() {
                       : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
-                  Study Plan
+                  Planner
                 </button>
 
                 <button
@@ -165,7 +165,7 @@ export default function FigmaApp() {
                       : "text-gray-700 hover:bg-gray-100"
                   }`}
                 >
-                  Profile
+                  Settings
                 </button>
               </div>
 
@@ -204,7 +204,12 @@ export default function FigmaApp() {
             onGoToUploads={() => setCurrentView("uploads")}
           />
         )}
-        {currentView === "study-plan" && <StudyPlan />}
+        {currentView === "study-plan" && (
+          <StudyPlan
+            accessToken={accessToken}
+            onGoToUploads={() => setCurrentView("uploads")}
+          />
+        )}
         {currentView === "profile" && (
           <Profile
             accessToken={accessToken}
