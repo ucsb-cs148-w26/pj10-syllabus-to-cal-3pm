@@ -129,7 +129,8 @@ export function parseCsvToCalendarEvents(csvText: string): CalendarEvent[] {
       allDay: ['true', '1', 'yes', 'y'].includes(allDayRaw),
       description,
       location,
-      class: course
+      class: course,
+      type: description === 'EXAM' ? 'exam' : description === 'ASSIGNMENT' ? 'assignment' : description === 'LECTURE' ? 'class' : undefined,
     });
   }
 

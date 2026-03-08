@@ -8,6 +8,8 @@ export interface CalendarEvent {
   description?: string;
   location?: string;
   class?: string; // course/class name from CSV
+  /** Semantic event type — separate from description so edits don't override it */
+  type?: 'assignment' | 'exam' | 'class';
   /** Recurrence rules, e.g. ['RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR'] */
   recurrence?: string[];
 }
