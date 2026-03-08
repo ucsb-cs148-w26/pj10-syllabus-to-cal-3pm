@@ -82,9 +82,11 @@ function buildRecurrence(
 }
 
 function getRelativeDate(dateStr: string): string {
+  if (!dateStr) return 'No date';
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const date = new Date(dateStr + 'T00:00:00');
+  if (isNaN(date.getTime())) return 'Invalid date';
   const diffDays = Math.round((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
   if (diffDays === 0) return 'Today';
   if (diffDays === 1) return 'Tomorrow';
@@ -187,7 +189,7 @@ export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
       course: string;
       dateStr: string;
       time?: string;
-      type: 'assignment' | 'event';
+      type: 'assignment' | 'exam' | 'event';
       priority?: 'high' | 'medium' | 'low';
     }> = [];
 
@@ -198,7 +200,7 @@ export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
         course: s.course,
         dateStr: s.date,
         time: s.suggestedTime,
-        type: 'assignment',
+        type: s.type,
         priority: s.priority,
       });
     });
@@ -337,7 +339,8 @@ export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
 
   const getTypeBadge = (type: string) => {
     switch (type) {
-      case 'assignment': return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+      case 'assignment': return 'bg-blue-50 text-blue-600 border-blue-200';
+      case 'exam': return 'bg-rose-50 text-rose-600 border-rose-200';
       case 'event': return 'bg-violet-50 text-violet-700 border-violet-200';
       default: return 'bg-gray-50 text-gray-700 border-gray-200';
     }
@@ -414,10 +417,10 @@ export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">
                               {item.priority && (
-                                <span className={`px-2 py-0.5 rounded-md text-xs font-medium ${
-                                  item.priority === 'high' ? 'bg-red-50 text-red-600' :
-                                  item.priority === 'medium' ? 'bg-amber-50 text-amber-600' :
-                                  'bg-emerald-50 text-emerald-600'
+                                <span className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border ${
+                                  item.priority === 'high' ? 'bg-red-50 text-red-600 border-red-200' :
+                                  item.priority === 'medium' ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                                  'bg-emerald-50 text-emerald-600 border-emerald-200'
                                 }`}>
                                   {item.priority}
                                 </span>
