@@ -563,7 +563,11 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     }
   }
 
-  async function processPendingText() {
+  async function processPendingText(options?: {
+    lectures: boolean;
+    assignments: boolean;
+    exams: boolean;
+  }) {
     if (!pendingText) return;
     setHasSynced(false);
     setStep('processing');
@@ -784,6 +788,9 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   const isSyncComplete = hasSynced && calendarStatus === 'ok';
 
   const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+  const [regenLectures, setRegenLectures] = useState(true);
+  const [regenAssignments, setRegenAssignments] = useState(true);
+  const [regenExams, setRegenExams] = useState(true);
 
   const [reviewEditEvent, setReviewEditEvent] = useState<CalendarEvent | null>(null);
   const [revTitle, setRevTitle] = useState('');
@@ -1592,17 +1599,32 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
             <div className="space-y-3 mb-6">
               <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input type="checkbox" className="rounded border-gray-300" />
+                <input
+                  type="checkbox"
+                  checked={regenLectures}
+                  onChange={(e) => setRegenLectures(e.target.checked)}
+                  className="rounded border-gray-300"
+                />
                 Lectures
               </label>
 
               <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input type="checkbox" className="rounded border-gray-300" />
+                <input
+                  type="checkbox"
+                  checked={regenAssignments}
+                  onChange={(e) => setRegenAssignments(e.target.checked)}
+                  className="rounded border-gray-300"
+                />
                 Assignments
               </label>
 
               <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input type="checkbox" className="rounded border-gray-300" />
+                <input
+                  type="checkbox"
+                  checked={regenExams}
+                  onChange={(e) => setRegenExams(e.target.checked)}
+                  className="rounded border-gray-300"
+                />
                 Exams
               </label>
             </div>
@@ -1618,7 +1640,11 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                 type="button"
                 onClick={() => {
                   setShowRegenerateModal(false);
-                  void processPendingText();
+                  void processPendingText({
+                    lectures: regenLectures,
+                    assignments: regenAssignments,
+                    exams: regenExams,
+                  });
                 }}
                 className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
               >
