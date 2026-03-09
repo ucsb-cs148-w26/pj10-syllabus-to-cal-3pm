@@ -9,6 +9,11 @@
   - issue: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/issues/119#issue-3883763518
   - pr: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/118
 
+
+
+
+
+
 ## MVP UI changes 
   #### Changing background color: 
   Bg color to white
@@ -28,6 +33,11 @@
   - https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/commit/800cd508691626b832caa37e4e697027dcd3f485
   <img width="2818" height="1476" alt="image" src="https://github.com/user-attachments/assets/0e25e4b6-fc68-493b-b7df-6b3a3f10ecbe" />
 
+
+
+
+
+
 ## NER Training
   ### Script to manually create data: 
   - issue: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/issues/111#issue-3879862143
@@ -40,6 +50,11 @@
   ### Trivial Training Sets Creation:
   - issue: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/issues/112#issue-3879872248
   - pr: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/157
+
+
+
+
+
 
 ## Planner
   ### Priority Score Calculation for Events:
@@ -54,6 +69,11 @@
 
   ### Planner Tuning Priority score calculation and thresholds to conform to desired behavior
   - pr: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/232
+
+
+
+
+
   
 ## Debugging
   ### Filling class field in CalendarEvent, bug fixing for PR (worked with Nataly)
