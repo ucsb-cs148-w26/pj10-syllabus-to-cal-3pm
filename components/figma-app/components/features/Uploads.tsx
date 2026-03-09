@@ -1045,6 +1045,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
             if (categoryFilter === 'LECTURE') return e.type === 'class';
             if (categoryFilter === 'ASSIGNMENT') return e.type === 'assignment';
             if (categoryFilter === 'EXAM') return e.type === 'exam';
+            if (categoryFilter === 'OTHER') return e.type === undefined;
             return false;
           }),
       [events, categoryFilter],
@@ -1338,12 +1339,14 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                     { key: 'LECTURE', label: 'Lectures' },
                     { key: 'ASSIGNMENT', label: 'Assignments' },
                     { key: 'EXAM', label: 'Exams' },
+                    { key: 'OTHER', label: 'Other' },
                   ] as { key: CategoryFilter; label: string }[]
                 ).map(({ key, label }) => {
                   const count = key === 'ALL' ? events.length : events.filter((e) =>
                     key === 'LECTURE' ? e.type === 'class' :
                     key === 'ASSIGNMENT' ? e.type === 'assignment' :
-                    key === 'EXAM' ? e.type === 'exam' : false
+                    key === 'EXAM' ? e.type === 'exam' :
+                    key === 'OTHER' ? e.type === undefined : false
                   ).length;
                   return (
                     <button
@@ -1433,6 +1436,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                               (label === 'LECTURE' ? 'bg-blue-50 text-blue-600' :
                               label === 'ASSIGNMENT' ? 'bg-amber-50 text-amber-600' :
                               label === 'EXAM' ? 'bg-rose-50 text-rose-600' :
+                              label === 'OTHER' ? 'bg-gray-50 text-gray-600' :
                               'bg-gray-100 text-gray-500')
                             }
                           >{label}</button>
@@ -1823,7 +1827,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                     <span className="inline-flex items-center gap-2">
                       {plannerUploadStatus === 'done' ? (
                         <>
-                        
+
                         <BookOpen className="h-4 w-4 animate-pulse" />
                         Exported
                         </>
