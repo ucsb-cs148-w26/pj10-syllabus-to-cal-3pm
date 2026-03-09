@@ -13,6 +13,12 @@ import {
   Check as CheckIcon,
   Undo2,
 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '../ui/dropdown-menu';
 import { Card, CardContent } from '../ui/card';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -97,6 +103,33 @@ export function StudyPlan({ accessToken, isAuthenticated }: StudyPlanProps) {
   const [cardEventPage, setCardEventPage] = useState<Record<string, number>>({});
   const [cardSlideDir, setCardSlideDir] = useState<Record<string, 'left' | 'right'>>({});
   const [cardAnimKey, setCardAnimKey] = useState<Record<string, number>>({});
+
+  //Class prority (0-5) 
+  const CLASS_PRIORITY_MULTIPLIER: Record<number, number> = {
+    1: 0.8,
+    2: 0.9,
+    3: 1.0,
+    4: 1.1,
+    5: 1.2,
+  };
+  
+  const CLASS_PRIORITY_LABEL: Record<number, string> = {
+    1: 'Low Priority',
+    2: 'Below Average',
+    3: 'Average',
+    4: 'Above Average',
+    5: 'High Priority',
+  };
+
+  const CLASS_PRIORITY_COLORS: Record<number, string> = {
+    1: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    2: 'bg-lime-50 text-lime-700 border-lime-200',
+    3: 'bg-amber-50 text-amber-700 border-amber-200',
+    4: 'bg-orange-50 text-orange-700 border-orange-200',
+    5: 'bg-rose-50 text-rose-700 border-rose-200',
+  };
+
+
 
   // Track planner page direction for slide animation
   const [plannerDirection, setPlannerDirection] = useState<'left' | 'right'>('right');
@@ -193,6 +226,27 @@ export function StudyPlan({ accessToken, isAuthenticated }: StudyPlanProps) {
     return counts;
   }, [courses, assignments]);
 
+  //adding handler for class prority
+
+  const handleSaveClassPriority = useCallback(async (courseId: string, nextPriority: number) => {
+    const safe = Math.max(1, Math.min(5, nextPriority));
+
+    setCourses((curr) =>
+      curr.map((c) => (c.id === courseId ? { ...c, class_priority: safe } : c))
+    );
+
+    try { 
+      await updateCourse(supabase, courseId, { class_priority: safe });
+    } catch (err) {
+      console.error('Failed to update class priority:', err);
+      // Don't roll back manually—fetchData() will restore the truth from the server
+      // This prevents clobbering concurrent edits to other courses
+      fetchData();
+    }
+  }, [supabase, fetchData]);
+
+
+
   // Map course ID → { bg: tailwind class, idx: number }
   const courseColorMap = useMemo(() => {
     const map: Record<string, { bg: string; idx: number }> = {};
@@ -215,6 +269,7 @@ export function StudyPlan({ accessToken, isAuthenticated }: StudyPlanProps) {
       priority?: 'high' | 'medium' | 'low';
       dbAssignmentId?: string;
       courseId?: string;
+      score: number; // Store for sorting items with same due date by priority
     }> = [];
 
     for (const a of assignments) {
@@ -222,9 +277,14 @@ export function StudyPlan({ accessToken, isAuthenticated }: StudyPlanProps) {
       const courseName = courses.find((c) => c.id === a.course_id)?.class_name ?? 'No Course';
 
       // Compute priority from days until due
-      const due = new Date(a.due_date + 'T00:00:00');
-      const score = priority_score(due, due, a.type);
-      if (isNaN(score)) continue;
+       const due = new Date(a.due_date + 'T00:00:00');
+      const baseScore = priority_score(due, due, a.type);
+      if (isNaN(baseScore)) continue;
+
+      const classPriority = courses.find((c) => c.id === a.course_id)?.class_priority ?? 3;
+      const multiplier = CLASS_PRIORITY_MULTIPLIER[classPriority] ?? 1;
+      const score = baseScore / multiplier;
+      
       let priority: 'high' | 'medium' | 'low' = 'low';
       if (score < 480) priority = 'high';
       else if (score < 1680) priority = 'medium';
@@ -239,10 +299,16 @@ export function StudyPlan({ accessToken, isAuthenticated }: StudyPlanProps) {
         priority,
         dbAssignmentId: a.id,
         courseId: a.course_id,
+        score, // Include for secondary sort
       });
     }
 
-    items.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
+    // Sort by due date first, then by score (ascending = lower score = higher priority)
+    items.sort((a, b) => {
+      const dateCompare = a.dateStr.localeCompare(b.dateStr);
+      if (dateCompare !== 0) return dateCompare; // Different dates: sort by date
+      return a.score - b.score; // Same date: sort by score (lower = higher priority)
+    });
 
     if (priorityFilter !== 'all') {
       return items.filter((i) => i.priority === priorityFilter || !i.priority);
@@ -807,6 +873,32 @@ export function StudyPlan({ accessToken, isAuthenticated }: StudyPlanProps) {
                           onClick={() => setEditingField({ courseId: course.id, field: 'academic_term', value: course.academic_term ?? '' })}
                         >{course.academic_term || <span className="italic">Term</span>}</p>
                       )}
+
+                      {/* 📌 CLASS PRIORITY DROPDOWN */}
+                      <div className="mt-4 mb-3 flex items-center justify-between">
+                        <label className="text-xs font-medium text-slate-600">Class Priority</label>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              className={`px-2.5 py-1 rounded-lg text-xs font-bold border cursor-pointer hover:opacity-80 transition-opacity ${CLASS_PRIORITY_COLORS[course.class_priority ?? 3]}`}
+                              title="Click to change priority"
+                            >
+                              {course.class_priority ?? 3}
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {[1, 2, 3, 4, 5].map((level) => (
+                              <DropdownMenuItem
+                                key={level}
+                                onSelect={() => handleSaveClassPriority(course.id, level)}
+                              >
+                                {CLASS_PRIORITY_LABEL[level]}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
                   </div>
                   <button
