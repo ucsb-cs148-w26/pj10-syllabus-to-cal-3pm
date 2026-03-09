@@ -8,7 +8,12 @@ import {
   Trash2,
   User,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Check,
+  Pencil,
+  BookOpen,
+  X,
 } from 'lucide-react';
 import PdfUpload from '@/components/PdfUpload';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -16,29 +21,59 @@ import { CreateCalendarDialog } from './CreateCalendarDialog';
 import type { CalendarEvent } from '@/lib/googleCalendar';
 import { parseFilterDays, getDayOfWeek } from '@/lib/promptUtils';
 import { parseCsvToCalendarEvents } from '@/lib/csvEvents';
+import { createClient } from '@/lib/supabase/client';
+import { getCourses, createCourse, createAssignments, type DbCourse } from '@/lib/supabase/database';
 
-/** Sample events so users can open Review/Sync without uploading first (e.g. after "New upload"). Same titles as the original Calendar mock events on main. */
-function getSampleEvents(): CalendarEvent[] {
-  const today = new Date();
-  const y = today.getFullYear();
-  const m = today.getMonth();
-  const lastDay = new Date(y, m + 1, 0).getDate();
-  const day = (d: number) => Math.min(d, lastDay);
-  const dStr = (d: number) => `${y}-${String(m + 1).padStart(2, '0')}-${String(day(d)).padStart(2, '0')}`;
-  return [
-    { title: 'CS 101 Lecture', start: dStr(22) + 'T10:00:00', allDay: false },
-    { title: 'Calculus II Lecture', start: dStr(22) + 'T14:00:00', allDay: false },
-    { title: 'Programming Assignment 1', start: dStr(25), allDay: true },
-    { title: 'Calculus Midterm', start: dStr(29), allDay: true },
-    { title: 'English Essay Due', start: dStr(26), allDay: true },
-    { title: 'CS 101 Lecture', start: dStr(24) + 'T10:00:00', allDay: false },
-    { title: 'Lab Report Due', start: dStr(30), allDay: true },
-  ];
+
+const WEEKLY_REPEAT_DAY_LABELS = ['Sun', 'M', 'Tue', 'W', 'Th', 'F', 'Sat'] as const;
+const RRULE_DAY_MAP = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'] as const;
+
+function getTimeFromISO(iso: string): string {
+  if (!iso.includes('T')) return '09:00';
+  const d = new Date(iso);
+  const h = d.getHours();
+  const m = d.getMinutes();
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+function buildRecurrence(
+  repeat: 'none' | 'daily' | 'weekdays' | 'weekly',
+  weeklyDays: boolean[],
+  endType: 'never' | 'date' | 'count',
+  endDate: string,
+  endCount: number
+): string[] {
+  if (repeat === 'none') return [];
+  const parts: string[] = [];
+  if (repeat === 'daily') parts.push('FREQ=DAILY');
+  else if (repeat === 'weekdays') parts.push('FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR');
+  else if (repeat === 'weekly') {
+    const days = weeklyDays.map((on, i) => (on ? RRULE_DAY_MAP[i] : null)).filter(Boolean);
+    if (days.length === 0) return [];
+    parts.push('FREQ=WEEKLY;BYDAY=' + (days as string[]).join(','));
+  } else return [];
+  if (endType === 'date' && endDate) {
+    const d = new Date(endDate + 'T23:59:59');
+    parts.push('UNTIL=' + d.toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z');
+  } else if (endType === 'count' && endCount > 0) {
+    parts.push('COUNT=' + endCount);
+  }
+  return ['RRULE:' + parts.join(';')];
+}
+
+function parseRecurrenceToRepeat(rrules: string[] | undefined): 'none' | 'daily' | 'weekdays' | 'weekly' {
+  if (!rrules || rrules.length === 0) return 'none';
+  const r = rrules[0].replace(/^RRULE:/i, '');
+  if (r.includes('FREQ=DAILY')) return 'daily';
+  if (r.includes('BYDAY=MO,TU,WE,TH,FR') && !r.includes('SA') && !r.includes('SU')) return 'weekdays';
+  if (r.includes('FREQ=WEEKLY')) return 'weekly';
+  return 'none';
 }
 
 interface UploadsProps {
   initialAccessToken: string | null;
   onAccessTokenChange: (token: string | null) => void;
+  isAuthenticated?: boolean;
 }
 
 type UploadStep = 1 | 2 | 3 | 'processing';
@@ -312,7 +347,131 @@ export function get_events(){
   }
   return uploaded_events;
 }
-export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProps) {
+
+// Matches PROGRESS_COLORS in StudyPlan.tsx (blue-500, emerald-500, violet-500, orange-500, rose-500, teal-500, amber-500, cyan-500)
+const COURSE_COLORS = ['#3b82f6', '#10b981', '#8b5cf6', '#f97316', '#f43f5e', '#14b8a6', '#f59e0b', '#06b6d4'];
+
+function getCourseColor(courseId: string, idx: number): string {
+  try {
+    const saved: Record<string, number> = JSON.parse(localStorage.getItem('course-colors') ?? '{}');
+    const colorIdx = saved[courseId] ?? idx;
+    return COURSE_COLORS[colorIdx % COURSE_COLORS.length];
+  } catch {
+    return COURSE_COLORS[idx % COURSE_COLORS.length];
+  }
+}
+
+function CoursePicker({ courses, selectedId, onSelect }: {
+  courses: DbCourse[];
+  selectedId: string;
+  onSelect: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [focusedIdx, setFocusedIdx] = useState(-1);
+  const ref = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const totalItems = courses.length + 1;
+
+  useEffect(() => {
+    if (!open) return;
+    function handler(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) { setFocusedIdx(-1); return; }
+    const idx = selectedId === 'new' ? courses.length : courses.findIndex((c) => c.id === selectedId);
+    setFocusedIdx(idx >= 0 ? idx : 0);
+  }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!open || focusedIdx < 0 || !listRef.current) return;
+    const item = listRef.current.children[focusedIdx] as HTMLElement;
+    item?.scrollIntoView({ block: 'nearest' });
+  }, [focusedIdx, open]);
+
+  function selectAt(idx: number) {
+    onSelect(idx < courses.length ? courses[idx].id : 'new');
+    setOpen(false);
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (!open) {
+      if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(true); }
+      return;
+    }
+    if (e.key === 'ArrowDown') { e.preventDefault(); setFocusedIdx((i) => (i + 1) % totalItems); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); setFocusedIdx((i) => (i - 1 + totalItems) % totalItems); }
+    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (focusedIdx >= 0) selectAt(focusedIdx); }
+    else if (e.key === 'Escape') { e.preventDefault(); setOpen(false); }
+  }
+
+  const selectedName = selectedId === 'new'
+    ? '+ Create new course'
+    : courses.find((c) => c.id === selectedId)?.class_name ?? 'Select course…';
+  const selectedCourseIdx = courses.findIndex((c) => c.id === selectedId);
+  const selectedColor = selectedCourseIdx >= 0 ? getCourseColor(courses[selectedCourseIdx].id, selectedCourseIdx) : null;
+
+  return (
+    <div ref={ref} className="relative" onKeyDown={handleKeyDown}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={
+          'inline-flex w-full items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ' +
+          (open
+            ? 'border-indigo-300 bg-indigo-50 text-indigo-800 shadow-sm'
+            : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300')
+        }
+        aria-haspopup="listbox"
+        aria-expanded={open}
+      >
+        {selectedColor !== null && <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: selectedColor }} />}
+        <span className="flex-1 truncate text-left">{selectedName}</span>
+        <ChevronDown className={'h-3.5 w-3.5 shrink-0 text-gray-400 transition-transform duration-200 ' + (open ? 'rotate-180' : '')} />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 top-full z-[60] mt-1.5 w-full min-w-[180px] rounded-xl border border-gray-200 bg-white shadow-lg ring-1 ring-black/5 animate-[fadeInUp_150ms_ease-out]">
+          <ul ref={listRef} role="listbox" className="max-h-48 overflow-y-auto py-1">
+            {courses.map((c, idx) => {
+              const isSel = c.id === selectedId;
+              const isFocused = idx === focusedIdx;
+              return (
+                <li
+                  key={c.id}
+                  role="option"
+                  aria-selected={isSel}
+                  onClick={() => { onSelect(c.id); setOpen(false); }}
+                  onMouseEnter={() => setFocusedIdx(idx)}
+                  className={'flex cursor-pointer items-center gap-2 px-3 py-2.5 text-xs transition-colors ' + (isSel || isFocused ? 'bg-indigo-50 text-indigo-900' : 'text-gray-700 hover:bg-gray-50')}
+                >
+                  <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: getCourseColor(c.id, idx) }} />
+                  <span className="flex-1 truncate font-medium">{c.class_name}</span>
+                  {isSel && <Check className="h-3.5 w-3.5 shrink-0 text-indigo-600" />}
+                </li>
+              );
+            })}
+            <li
+              role="option"
+              aria-selected={selectedId === 'new'}
+              onClick={() => { onSelect('new'); setOpen(false); }}
+              onMouseEnter={() => setFocusedIdx(courses.length)}
+              className={'cursor-pointer flex items-center px-3 py-2.5 text-xs text-slate-700 border-t border-gray-500 ' + (selectedId === 'new' || focusedIdx === courses.length ? 'bg-indigo-50 font-medium' : 'hover:bg-indigo-50')}
+            >
+              + Create new course
+            </li>
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticated }: UploadsProps) {
+  const supabase = useMemo(() => createClient(), []);
   const [step, setStep] = useState<UploadStep>(1);
   const [showDocuments, setShowDocuments] = useState(false);
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -365,6 +524,16 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   });
   const [calendarRefetchTrigger, setCalendarRefetchTrigger] = useState(0);
 
+  // --- Upload to Planner state ---
+  const [plannerUploadStatus, setPlannerUploadStatus] = useState<'idle' | 'mapping' | 'uploading' | 'done' | 'error'>('idle');
+  const [plannerUploadMsg, setPlannerUploadMsg] = useState('');
+  const [showPlannerDropdown, setShowPlannerDropdown] = useState(false);
+  const [classMappings, setClassMappings] = useState<Array<{ className: string; selectedCourseId: string | 'new'; newCourseName: string }>>([]);
+  const [existingCourses, setExistingCourses] = useState<DbCourse[]>([]);
+  const plannerDropdownRef = useRef<HTMLDivElement>(null);
+  const PLANNER_MAPPINGS_PER_PAGE = 3;
+  const [plannerMappingPage, setPlannerMappingPage] = useState(0);
+
   const accessToken = initialAccessToken;
   const hasEvents = events.length > 0;
   const isGoogleConnected = !!accessToken;
@@ -387,6 +556,18 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     }
   }, [accessToken]);
 
+  const [isLoggedIn, setIsLoggedIn] = useState(!!isAuthenticated);
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => setIsLoggedIn(!!data?.session?.user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session?.user);
+    });
+    return () => subscription.unsubscribe();
+  }, [supabase]);
+  useEffect(() => {
+    if (isAuthenticated) setIsLoggedIn(true);
+  }, [isAuthenticated]);
+
   const canJumpToReviewFromUpload = hasEvents && step === 1;
   const canProcessFromUpload = !!pendingText && calendarStatus !== 'loading' && step === 1;
 
@@ -396,12 +577,12 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) setEvents(parsed);
-        else setEvents(getSampleEvents());
+        else setEvents([]);
       } catch {
-        setEvents(getSampleEvents());
+        setEvents([]);
       }
     } else {
-      setEvents(getSampleEvents());
+      setEvents([]);
     }
   }, []);
 
@@ -475,6 +656,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     setHasSynced(false);
     setSyncBurst(false);
     setLastProcessOk(false);
+    setShowPlannerDropdown(false);
     setUploadPulse(true);
     window.setTimeout(() => setUploadPulse(false), 650);
     setCalendarStatus('idle');
@@ -558,6 +740,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
       setCalendarStatus('ok');
       setLastProcessOk(true);
       setCalendarMessage('');
+      setShowPlannerDropdown(false);
       setTimeout(() => setStep(2), 450);
     } catch (err) {
       console.error(err);
@@ -668,7 +851,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
         String(e.allDay),
         esc(e.description),
         esc(e.location ?? ''),
-        esc((e as any).class ?? '')
+        esc(e.class ?? '')
       ].join(',');
     });
     const csv = [header, ...rows].join('\n');
@@ -685,7 +868,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
   function resetFlow() {
     setStep(1);
-    setEvents(getSampleEvents());
+    setEvents([]);
     setPendingText(null);
     setShowDocuments(false);
     setCalendarStatus('idle');
@@ -697,6 +880,134 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
     setSelectedCalendarId('primary');
     setSelectedCalendarSummary('Default calendar');
     localStorage.removeItem('calendarEvents');
+    setPlannerUploadStatus('idle');
+    setPlannerUploadMsg('');
+  }
+
+  // --- Upload to Planner handlers ---
+  const assignmentExamEvents = useMemo(() => {
+    return events.filter((e) => {
+      return e.type === 'assignment' || e.type === 'exam';
+    });
+  }, [events]);
+
+  async function handleOpenPlannerUpload() {
+    if (!isLoggedIn) {
+      setPlannerUploadStatus('error');
+      setPlannerUploadMsg('Please log in to upload to planner.');
+      return;
+    }
+    if (assignmentExamEvents.length === 0) {
+      setPlannerUploadStatus('error');
+      setPlannerUploadMsg('No assignments or exams to upload.');
+      return;
+    }
+
+    setPlannerUploadStatus('mapping');
+    try {
+      const courses = await getCourses(supabase);
+      setExistingCourses(courses);
+
+      // Extract unique class names from events
+      const classNames = new Set<string>();
+      for (const e of assignmentExamEvents) {
+        classNames.add(e.class?.trim() || 'Uncategorized');
+      }
+
+      const mappings = Array.from(classNames).map((className) => {
+        const match = courses.find((c) => c.class_name.toLowerCase() === className.toLowerCase());
+        return {
+          className,
+          selectedCourseId: match?.id ?? 'new',
+          newCourseName: className,
+        };
+      });
+
+      setClassMappings(mappings);
+      setPlannerMappingPage(0);
+      setShowPlannerDropdown(true);
+    } catch (err) {
+      const msg = (err as { message?: string })?.message ?? JSON.stringify(err);
+      console.error('Failed to open planner upload:', msg, err);
+      setPlannerUploadStatus('error');
+      setPlannerUploadMsg('Failed to load courses. Please try again.');
+    }
+  }
+
+  async function handleConfirmPlannerUpload() {
+    // Count unique new courses that would be created
+    const newCourseNames = new Set<string>();
+    for (const m of classMappings) {
+      if (m.selectedCourseId === 'new') {
+        newCourseNames.add((m.newCourseName || m.className).trim());
+      }
+    }
+    if (existingCourses.length + newCourseNames.size > 10) {
+      setPlannerUploadStatus('error');
+      setPlannerUploadMsg(
+        `This would create ${newCourseNames.size} new course${newCourseNames.size !== 1 ? 's' : ''}, exceeding the 10 course limit. Map work to existing courses or remove some to create new ones.`
+      );
+      return;
+    }
+
+    setPlannerUploadStatus('uploading');
+    setShowPlannerDropdown(false);
+
+    try {
+      // Step 1: Create missing courses (deduplicate by newCourseName)
+      const courseIdMap: Record<string, string> = {};
+      const newCourseCache: Record<string, string> = {};
+      for (const m of classMappings) {
+        if (m.selectedCourseId !== 'new') {
+          courseIdMap[m.className] = m.selectedCourseId;
+        } else {
+          const name = (m.newCourseName || m.className).trim();
+          if (newCourseCache[name]) {
+            courseIdMap[m.className] = newCourseCache[name];
+          } else {
+            const created = await createCourse(supabase, { class_name: name });
+            newCourseCache[name] = created.id;
+            courseIdMap[m.className] = created.id;
+          }
+        }
+      }
+
+      // Step 2: Build assignment rows
+      const rows = assignmentExamEvents.map((e) => {
+        const className = e.class?.trim() || 'Uncategorized';
+        const courseId = courseIdMap[className];
+        const eventType = e.type === 'exam' ? 'exam' : 'assignment';
+
+        // Extract HH:MM time from timed events
+        let eventTime: string | null = null;
+        if (!e.allDay && e.start.includes('T')) {
+          const d = new Date(e.start);
+          const h = d.getHours();
+          const m = d.getMinutes();
+          if (h !== 0 || m !== 0) {
+            eventTime = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+          }
+        }
+
+        return {
+          course_id: courseId,
+          event_name: e.title,
+          due_date: e.start.slice(0, 10),
+          time: eventTime,
+          type: eventType as 'assignment' | 'exam',
+        };
+      });
+
+      // Step 3: Bulk upsert (skips duplicates via unique constraint)
+      const created = await createAssignments(supabase, rows);
+
+      setPlannerUploadStatus('done');
+      setPlannerUploadMsg(`Uploaded ${created.length} item${created.length !== 1 ? 's' : ''} to planner.`);
+    } catch (err) {
+      console.error('Failed to upload to planner:', err);
+      setPlannerUploadStatus('error');
+      setPlannerUploadMsg('Failed to upload assignments. Please try again.');
+    }
   }
 
   function goToPreviousStep() {
@@ -731,22 +1042,114 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
   const filteredEvents = useMemo(() =>
       categoryFilter === 'ALL'
         ? events
-        : events.filter((e) => e.description === categoryFilter),
+        : events.filter((e) => {
+            if (categoryFilter === 'LECTURE') return e.type === 'class';
+            if (categoryFilter === 'ASSIGNMENT') return e.type === 'assignment';
+            if (categoryFilter === 'EXAM') return e.type === 'exam';
+            return false;
+          }),
       [events, categoryFilter],
   );
 
   const isSyncComplete = hasSynced && calendarStatus === 'ok';
 
+  // Maps CalendarEvent type field to display label and back
+  const TYPE_TO_LABEL = { assignment: 'ASSIGNMENT', exam: 'EXAM', class: 'LECTURE', undefined: 'OTHER' } as const;
+  const LABEL_TO_TYPE: Record<string, 'assignment' | 'exam' | 'class' | undefined> = {
+    ASSIGNMENT: 'assignment', EXAM: 'exam', LECTURE: 'class', OTHER: undefined,
+  };
+  const REVIEW_TYPE_CYCLE = ['ASSIGNMENT', 'EXAM', 'LECTURE', 'OTHER'] as const;
+
+  function handleCycleReviewType(evt: CalendarEvent) {
+    const currentLabel = TYPE_TO_LABEL[(evt.type ?? 'undefined') as keyof typeof TYPE_TO_LABEL] ?? 'OTHER';
+    const idx = REVIEW_TYPE_CYCLE.indexOf(currentLabel as typeof REVIEW_TYPE_CYCLE[number]);
+    const next = REVIEW_TYPE_CYCLE[(idx + 1) % REVIEW_TYPE_CYCLE.length];
+    const updated: CalendarEvent = { ...evt, type: LABEL_TO_TYPE[next] };
+    const nextEvents = events.map((e) => (e === evt ? updated : e));
+    setEvents(nextEvents);
+    try { localStorage.setItem('calendarEvents', JSON.stringify(nextEvents)); } catch { /* ignore */ }
+  }
+
   const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+
+  const [reviewEditEvent, setReviewEditEvent] = useState<CalendarEvent | null>(null);
+  const [revTitle, setRevTitle] = useState('');
+  const [revDate, setRevDate] = useState('');
+  const [revAllDay, setRevAllDay] = useState(true);
+  const [revStartTime, setRevStartTime] = useState('09:00');
+  const [revEndTime, setRevEndTime] = useState('10:00');
+  const [revDescription, setRevDescription] = useState('');
+  const [revRepeat, setRevRepeat] = useState<'none' | 'daily' | 'weekdays' | 'weekly'>('none');
+  const [revWeeklyDays, setRevWeeklyDays] = useState([false, false, true, true, true, true, false]);
+  const [revEndType, setRevEndType] = useState<'never' | 'date' | 'count'>('never');
+  const [revEndDate, setRevEndDate] = useState('');
+  const [revEndCount, setRevEndCount] = useState(5);
+  const [reviewDeleteConfirm, setReviewDeleteConfirm] = useState(false);
+
+  function openReviewEdit(e: CalendarEvent) {
+    setReviewEditEvent(e);
+    setRevTitle(e.title);
+    const d = e.start.includes('T') ? e.start.slice(0, 10) : e.start.slice(0, 10);
+    setRevDate(d);
+    setRevAllDay(!!e.allDay);
+    setRevStartTime(getTimeFromISO(e.start));
+    setRevEndTime(getTimeFromISO(e.end ?? e.start));
+    setRevDescription(e.description ?? '');
+    setRevRepeat(parseRecurrenceToRepeat(e.recurrence));
+    setRevWeeklyDays([false, false, true, true, true, true, false]);
+    setRevEndType('never');
+    setRevEndDate('');
+    setRevEndCount(5);
+    setReviewDeleteConfirm(false);
+  }
+
+  function closeReviewEdit() {
+    setReviewEditEvent(null);
+    setReviewDeleteConfirm(false);
+  }
+
+  function handleReviewEditSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (!reviewEditEvent || !revTitle.trim()) return;
+    const start = revAllDay ? revDate + 'T00:00:00' : revDate + 'T' + revStartTime + ':00';
+    const end = revAllDay ? revDate + 'T00:00:00' : revDate + 'T' + revEndTime + ':00';
+    const recurrence = buildRecurrence(revRepeat, revWeeklyDays, revEndType, revEndDate, revEndCount);
+    const updated: CalendarEvent = {
+      ...reviewEditEvent,
+      title: revTitle.trim(),
+      start,
+      end: revAllDay ? undefined : end,
+      allDay: revAllDay,
+      description: revDescription.trim() || undefined,
+      recurrence: recurrence.length ? recurrence : undefined,
+    };
+    const nextEvents = events.map((ev) => (ev === reviewEditEvent ? updated : ev));
+    setEvents(nextEvents);
+    try {
+      localStorage.setItem('calendarEvents', JSON.stringify(nextEvents));
+    } catch { /* ignore */ }
+    closeReviewEdit();
+  }
+
+  function handleReviewEditDelete() {
+    if (!reviewEditEvent) return;
+    const next = events.filter((ev) => ev !== reviewEditEvent);
+    setEvents(next);
+    try {
+      localStorage.setItem('calendarEvents', JSON.stringify(next));
+    } catch { /* ignore */ }
+    closeReviewEdit();
+  }
+
   return (
     <div className="relative max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 py-2">
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_5%,theme(colors.indigo.100),transparent_55%),radial-gradient(1000px_circle_at_80%_35%,theme(colors.violet.100),transparent_60%),linear-gradient(to_bottom,theme(colors.white),theme(colors.slate.50))] transition-all duration-700" />
 
       {/* Header */}
       <div className="mb-2 shrink-0">
-        <h2 className="text-xl font-semibold text-gray-900 mb-0.5">Calendar Upload</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-0.5">Upload</h2>
         <p className="text-xs text-gray-600">
-          Upload your syllabus, review your generated calendar, then add it to Google Calendar.
+          Upload your syllabus, review your generated calendar, then export it to Google Calendar.
         </p>
         <StepRail
           step={step}
@@ -905,7 +1308,11 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                   { key: 'EXAM', label: 'Exams' },
                 ] as { key: CategoryFilter; label: string }[]
               ).map(({ key, label }) => {
-                const count = key === 'ALL' ? events.length : events.filter((e) => e.description === key).length;
+                const count = key === 'ALL' ? events.length : events.filter((e) =>
+                  key === 'LECTURE' ? e.type === 'class' :
+                  key === 'ASSIGNMENT' ? e.type === 'assignment' :
+                  key === 'EXAM' ? e.type === 'exam' : false
+                ).length;
                 return (
                   <button
                     key={key}
@@ -947,23 +1354,42 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                 {filteredEvents.slice(0, 50).map((e, idx) => (
                   <div
                     key={idx}
-                    className="flex items-start justify-between border-b border-gray-100 last:border-0 py-2"
+                    className="flex items-start justify-between border-b border-gray-100 last:border-0 py-2 gap-2"
                   >
-                    <div className="pr-4">
-                      <p className="font-medium text-gray-900 line-clamp-2">{e.title}</p>
-                      {e.description && (
-                        <span className={
-                          'mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ' +
-                          (e.description === 'LECTURE' ? 'bg-blue-50 text-blue-600' :
-                          e.description === 'ASSIGNMENT' ? 'bg-amber-50 text-amber-600' :
-                          e.description === 'EXAM' ? 'bg-rose-50 text-rose-600' :
-                          'bg-gray-100 text-gray-500')
-                        }>
-                          {e.description}
-                        </span>
-                      )}
+                    <div className="flex items-start gap-2 min-w-0 flex-1">
+                      <button
+                        type="button"
+                        onClick={() => openReviewEdit(e)}
+                        className="flex-shrink-0 p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-colors"
+                        title="Edit event"
+                        aria-label="Edit event"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <div className="pr-4 min-w-0">
+                        <p className="font-medium text-gray-900 line-clamp-2">{e.title}</p>
+                        {(() => {
+                          const label = TYPE_TO_LABEL[(e.type ?? 'undefined') as keyof typeof TYPE_TO_LABEL] ?? 'OTHER';
+                          return (
+                            <button
+                              type="button"
+                              onClick={() => handleCycleReviewType(e)}
+                              title="Click to change type"
+                              className={
+                                'mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide cursor-pointer hover:opacity-75 transition-opacity ' +
+                                (label === 'LECTURE' ? 'bg-blue-50 text-blue-600' :
+                                label === 'ASSIGNMENT' ? 'bg-amber-50 text-amber-600' :
+                                label === 'EXAM' ? 'bg-rose-50 text-rose-600' :
+                                'bg-gray-100 text-gray-500')
+                              }
+                            >
+                              {label}
+                            </button>
+                          );
+                        })()}
+                      </div>
                     </div>
-                    <div className="text-right text-xs text-gray-500 whitespace-nowrap pr-4">
+                    <div className="text-right text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
                       <p>{new Date(e.start).toLocaleString()}</p>
                       <p>{e.allDay ? 'All day' : 'Timed'}</p>
                     </div>
@@ -1033,7 +1459,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                   {events
                     .map(
                       (e) =>
-                        `${e.title},${e.start},${String(e.allDay)},${e.description ?? ''},${e.location ?? ''},${(e as any).class ?? ''}`,
+                        `${e.title},${e.start},${String(e.allDay)},${e.description ?? ''},${e.location ?? ''},${e.class ?? ''}`,
                     )
                     .join('\n')}
                 </pre>
@@ -1045,7 +1471,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
 
       {/* ── Step 3: Export ── */}
       {step === 3 && (
-        <div className="flex flex-col gap-6 transition-all duration-500 ease-out animate-[fadeInUp_260ms_ease-out]">
+        <div className={`flex flex-col gap-6 transition-all duration-500 ease-out animate-[fadeInUp_260ms_ease-out]${showPlannerDropdown ? ' pb-40' : ''}`}>
           <div className="bg-white/90 backdrop-blur rounded-2xl shadow-sm border border-gray-200 p-6">
             <div>
               <h3 className="text-lg font-semibold text-gray-900">Export to Google Calendar</h3>
@@ -1164,8 +1590,12 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-gray-900">Export to Calendar</p>
                     <p className="text-xs text-gray-500">
-                      {hasEvents ? `${events.length} event(s) ready to export.` : 'No events yet.'}
-                      {!isGoogleConnected ? ' Connect your Google account to export.' : ''}
+                      {isSyncComplete
+                        ? calendarMessage || `Exported to ${selectedCalendarId === 'primary' ? 'your default calendar' : `"${selectedCalendarSummary}"`}`
+                        : hasEvents
+                          ? `${events.length} event${events.length !== 1 ? 's' : ''} ready to export to your Google Calendar.`
+                          : 'No events yet.'}
+                      {!isSyncComplete && !isGoogleConnected ? ' Connect your Google account to continue.' : ''}
                     </p>
                   </div>
                   <button
@@ -1196,44 +1626,167 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
                 </div>
               </div>
 
-              {/* ── Status banner ── */}
-              {hasSynced && (calendarMessage || calendarStatus !== 'idle') && (
-                <div
-                  className={
-                    'rounded-xl border px-4 py-3 text-sm transition-colors duration-500 ease-out ' +
-                    (calendarStatus === 'error'
-                      ? 'border-rose-200 bg-rose-50 text-rose-800'
-                      : calendarStatus === 'ok'
-                        ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
-                        : 'border-gray-200 bg-white text-gray-700')
-                  }
-                >
+              {/* ── Error banner (error only) ── */}
+              {calendarStatus === 'error' && calendarMessage && (
+                <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
                   <div className="flex items-start gap-2">
-                    {calendarStatus === 'ok' ? (
-                      <span
-                        className={
-                          'mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-500 ' +
-                          (syncBurst ? 'animate-pulse' : '')
-                        }
-                      />
-                    ) : calendarStatus === 'error' ? (
-                      <Trash2 className="mt-0.5 h-4 w-4 text-rose-700" />
-                    ) : (
-                      <span className="mt-1.5 h-2 w-2 rounded-full bg-indigo-500" />
-                    )}
-                    <div className="min-w-0">
-                      <p className="font-medium">
-                        {calendarStatus === 'ok'
-                          ? 'Export Complete'
-                          : calendarStatus === 'error'
-                            ? 'Something went wrong'
-                            : 'Adding Events...'}
-                      </p>
-                      {calendarMessage ? <p className="text-xs opacity-80 mt-1">{calendarMessage}</p> : null}
-                    </div>
+                    <Trash2 className="mt-0.5 h-4 w-4 shrink-0 text-rose-700" />
+                    <p>{calendarMessage}</p>
                   </div>
                 </div>
               )}
+
+              {/* ── Upload to Planner row (expands inline) ── */}
+              <div
+                className={'rounded-xl border bg-white px-4 py-3 transition-[border-color] duration-300 border-gray-200 border-gray-200'}
+                ref={plannerDropdownRef}
+              >
+                {/* Header — always visible */}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-gray-900">Export to Planner</p>
+                    <p className={`text-xs ${plannerUploadStatus === 'error' ? 'text-gray-500' : 'text-gray-500'}`}>
+                      {plannerUploadStatus === 'done'
+                        ? plannerUploadMsg
+                        : plannerUploadStatus === 'error'
+                          ? plannerUploadMsg
+                          : !isLoggedIn
+                            ? 'Sign in to upload to your planner.'
+                            : assignmentExamEvents.length > 0
+                              ? `${assignmentExamEvents.length} assignment${assignmentExamEvents.length !== 1 ? 's' : ''} and exam${assignmentExamEvents.length !== 1 ? 's' : ''} ready to export to your planner.`
+                              : 'No assignments or exams found.'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => void handleOpenPlannerUpload()}
+                    disabled={!isLoggedIn || !hasEvents || assignmentExamEvents.length === 0 || plannerUploadStatus === 'uploading'}
+                    className={
+                      syncButtonClassName +
+                      (!isLoggedIn || !hasEvents || assignmentExamEvents.length === 0 || plannerUploadStatus === 'uploading'
+                        ? primaryPurpleDisabled
+                        : plannerUploadStatus === 'done'
+                          ? syncedWhite
+                          : primaryPurple) +
+                      (isLoggedIn && plannerUploadStatus !== 'done' && assignmentExamEvents.length > 0 && plannerUploadStatus !== 'uploading'
+                        ? ' hover:-translate-y-[1px]'
+                        : '')
+                    }
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      {plannerUploadStatus === 'done' ? (
+                        <>
+                        
+                        <BookOpen className="h-4 w-4 animate-pulse" />
+                        Exported
+                        </>
+                      ) : plannerUploadStatus === 'uploading' ? (
+                        <>
+                          <BookOpen className="h-4 w-4 animate-pulse" />
+                          Exporting...
+                        </>
+                      ) : (
+                        <>
+                          <BookOpen className="h-4 w-4" />
+                          Export
+                        </>
+                      )}
+                    </span>
+                  </button>
+                </div>
+
+                {showPlannerDropdown && (
+                  <div className="pt-4 mt-3 border-t border-gray-100 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold text-slate-700">Map Classes to Courses</p>
+                      </div>
+                      {(() => {
+                        const totalMappingPages = Math.max(1, Math.ceil(classMappings.length / PLANNER_MAPPINGS_PER_PAGE));
+                        const visibleMappings = classMappings.slice(
+                          plannerMappingPage * PLANNER_MAPPINGS_PER_PAGE,
+                          (plannerMappingPage + 1) * PLANNER_MAPPINGS_PER_PAGE
+                        );
+                        return (
+                          <>
+                            <div className="space-y-2">
+                              {visibleMappings.map((mapping) => {
+                                const idx = classMappings.indexOf(mapping);
+                                return (
+                                  <div key={mapping.className} className="space-y-1.5">
+                                    <p className="text-[11px] font-medium text-slate-500 truncate">{mapping.className}</p>
+                                    <CoursePicker
+                                      courses={existingCourses}
+                                      selectedId={mapping.selectedCourseId}
+                                      onSelect={(id) => setClassMappings((prev) => {
+                                        const next = [...prev];
+                                        next[idx] = { ...next[idx], selectedCourseId: id };
+                                        return next;
+                                      })}
+                                    />
+                                    {mapping.selectedCourseId === 'new' && (
+                                      <input
+                                        type="text"
+                                        value={mapping.newCourseName}
+                                        onChange={(e) => setClassMappings((prev) => {
+                                          const next = [...prev];
+                                          next[idx] = { ...next[idx], newCourseName: e.target.value };
+                                          return next;
+                                        })}
+                                        placeholder="New course name"
+                                        className="w-full rounded-lg border border-slate-300 bg-white text-slate-600 px-3 py-2 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+                                      />
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            {totalMappingPages > 1 && (
+                              <div className="flex items-center justify-between pt-1">
+                                <p className="text-[11px] text-slate-400">
+                                  {plannerMappingPage * PLANNER_MAPPINGS_PER_PAGE + 1}–{Math.min((plannerMappingPage + 1) * PLANNER_MAPPINGS_PER_PAGE, classMappings.length)} of {classMappings.length}
+                                </p>
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => setPlannerMappingPage((p) => Math.max(0, p - 1))}
+                                    disabled={plannerMappingPage === 0}
+                                    className="w-7 h-7 rounded-lg flex items-center justify-center border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                  >
+                                    <ChevronLeft className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setPlannerMappingPage((p) => Math.min(totalMappingPages - 1, p + 1))}
+                                    disabled={plannerMappingPage >= totalMappingPages - 1}
+                                    className="w-7 h-7 rounded-lg flex items-center justify-center border border-slate-200 text-slate-500 hover:bg-slate-50 disab/led:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                  >
+                                    <ChevronRight className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        );
+                      })()}
+                      <div className="flex justify-end gap-2 pt-2">
+                        <button
+                          type="button"
+                          onClick={() => { setShowPlannerDropdown(false); setPlannerUploadStatus('idle'); }}
+                          className="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 text-xs hover:bg-slate-50 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleConfirmPlannerUpload()}
+                          className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 transition-colors"
+                        >
+                          Confirm Export
+                        </button>
+                      </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* ── Footer actions ── */}
@@ -1254,9 +1807,202 @@ export function Uploads({ initialAccessToken, onAccessTokenChange }: UploadsProp
               >
                 <span className="transition-transform duration-300 group-hover:translate-x-0.5">New Upload →</span>
               </button>
-
-              
             </div>
+          </div>
+        </div>
+      )}
+
+      {reviewEditEvent && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="review-edit-event-title"
+        >
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+            <h2 id="review-edit-event-title" className="text-lg font-semibold text-gray-900 mb-4">
+              Edit event
+            </h2>
+            {reviewDeleteConfirm ? (
+              <div className="space-y-4">
+                <p className="text-sm text-gray-700">
+                  Remove this event from the list? It will not be synced to Google Calendar.
+                </p>
+                <div className="flex gap-2 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setReviewDeleteConfirm(false)}
+                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleReviewEditDelete}
+                    className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700"
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleReviewEditSave} className="space-y-4">
+                <div>
+                  <label htmlFor="rev-title" className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                  <input
+                    id="rev-title"
+                    type="text"
+                    value={revTitle}
+                    onChange={(e) => setRevTitle(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Event title"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="rev-date" className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <input
+                    id="rev-date"
+                    type="date"
+                    value={revDate}
+                    onChange={(e) => setRevDate(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="rev-allday"
+                    type="checkbox"
+                    checked={revAllDay}
+                    onChange={(e) => setRevAllDay(e.target.checked)}
+                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <label htmlFor="rev-allday" className="text-sm text-gray-700">All day</label>
+                </div>
+                {!revAllDay && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label htmlFor="rev-start-time" className="block text-sm font-medium text-gray-700 mb-1">Start time</label>
+                      <input
+                        id="rev-start-time"
+                        type="time"
+                        value={revStartTime}
+                        onChange={(e) => setRevStartTime(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="rev-end-time" className="block text-sm font-medium text-gray-700 mb-1">End time</label>
+                      <input
+                        id="rev-end-time"
+                        type="time"
+                        value={revEndTime}
+                        onChange={(e) => setRevEndTime(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      />
+                    </div>
+                  </div>
+                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Repeat</label>
+                  <select
+                    value={revRepeat}
+                    onChange={(e) => setRevRepeat(e.target.value as 'none' | 'daily' | 'weekdays' | 'weekly')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    <option value="none">Does not repeat</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekdays">Weekdays (M–F)</option>
+                    <option value="weekly">Weekly — pick which days below</option>
+                  </select>
+                  {revRepeat === 'weekly' && (
+                    <div className="mt-2">
+                      <p className="text-xs text-gray-600 mb-1.5">Repeat on these days:</p>
+                      <div className="grid grid-cols-7 gap-1">
+                        {WEEKLY_REPEAT_DAY_LABELS.map((label, i) => (
+                          <label key={label} className="inline-flex items-center justify-center gap-1 px-1 py-1 rounded border border-gray-300 bg-white text-gray-900 text-xs cursor-pointer hover:bg-gray-50 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-100">
+                            <input
+                              type="checkbox"
+                              checked={revWeeklyDays[i]}
+                              onChange={(e) => {
+                                const next = [...revWeeklyDays];
+                                next[i] = e.target.checked;
+                                setRevWeeklyDays(next);
+                              }}
+                              className="rounded border-gray-300 text-indigo-600"
+                            />
+                            <span className="font-medium shrink-0">{label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {(revRepeat === 'daily' || revRepeat === 'weekdays' || revRepeat === 'weekly') && (
+                    <div className="mt-2 space-y-2">
+                      <label className="block text-xs text-gray-600">Ends</label>
+                      <select
+                        value={revEndType}
+                        onChange={(e) => setRevEndType(e.target.value as 'never' | 'date' | 'count')}
+                        className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg"
+                      >
+                        <option value="never">Never</option>
+                        <option value="date">On a specific date</option>
+                        <option value="count">After a number of occurrences</option>
+                      </select>
+                      {revEndType === 'date' && (
+                        <input
+                          type="date"
+                          value={revEndDate}
+                          onChange={(e) => setRevEndDate(e.target.value)}
+                          className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg"
+                        />
+                      )}
+                      {revEndType === 'count' && (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            min={1}
+                            value={revEndCount}
+                            onChange={(e) => setRevEndCount(parseInt(e.target.value, 10) || 5)}
+                            className="w-20 px-3 py-1.5 text-sm border border-gray-300 rounded-lg"
+                          />
+                          <span className="text-sm text-gray-600">occurrences</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label htmlFor="rev-desc" className="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
+                  <textarea
+                    id="rev-desc"
+                    value={revDescription}
+                    onChange={(e) => setRevDescription(e.target.value)}
+                    rows={2}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Description"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2 justify-between pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setReviewDeleteConfirm(true)}
+                    className="px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 border border-red-200"
+                  >
+                    Delete event
+                  </button>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={closeReviewEdit} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
+                      Cancel
+                    </button>
+                    <button type="submit" className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700">
+                      Save
+                    </button>
+                  </div>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

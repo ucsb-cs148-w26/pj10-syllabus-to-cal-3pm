@@ -731,9 +731,9 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_5%,theme(colors.indigo.100),transparent_55%),radial-gradient(1000px_circle_at_80%_35%,theme(colors.violet.100),transparent_60%),linear-gradient(to_bottom,theme(colors.white),theme(colors.slate.50))] transition-all duration-700" />
 
       <div className="mb-2 shrink-0">
-        <h2 className="text-xl font-semibold text-gray-900 mb-0.5">Your Schedule</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-0.5">Calendar</h2>
         <p className="text-xs text-gray-600">
-          View and manage your calendar events.
+          View and manage your Google Calendar events.
         </p>
       </div>
 
