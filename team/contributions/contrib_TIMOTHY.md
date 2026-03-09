@@ -1,4 +1,4 @@
-## Pdf Text Extraction
+# Pdf Text Extraction
   ### Pdf to Text Function:
   Function to take a pdf file and extract all text into single string
   - issue: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/issues/63
@@ -14,7 +14,7 @@
 
 
 
-## MVP UI changes 
+# MVP UI changes 
   #### Changing background color: 
   Bg color to white
   - https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/commit/3afeb138dd67173e8d035da75b65bc8d836710ac
@@ -38,7 +38,7 @@
 
 
 
-## NER Training
+# NER Training
   ### Script to manually create data: 
   - issue: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/issues/111#issue-3879862143
   - pr: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/132
@@ -56,7 +56,7 @@
 
 
 
-## Planner
+# Planner
   ### Priority Score Calculation for Events:
   - issue: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/issues/159#issue-3959586040
   - pr: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/166
@@ -75,10 +75,10 @@
 
 
   
-## Debugging
+# Debugging
   ### Filling class field in CalendarEvent, bug fixing for PR (worked with Nataly)
   - https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/218/changes/45f0d7720ec3decf7799156b3e4e184914beb135
   ### Fixed accessToken missing error in calendar creation feature
   - pr: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/234
-## Note: 
+# Note: 
 Most of time spent on manually creating datasets. Realized that model could not be trained from scratch in time, as model was at 20% performance score by the halfway mark of the quarter; pivoted to Gemini. 
