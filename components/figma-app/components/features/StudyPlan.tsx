@@ -33,6 +33,8 @@ export interface StudyPlanProps {
   isAuthenticated?: boolean;
 }
 
+import { priority_score} from '../../../../code/priorityscore';
+
 const PROGRESS_COLORS = [
   'bg-blue-500',
   'bg-emerald-500',
@@ -220,12 +222,12 @@ export function StudyPlan({ accessToken, isAuthenticated }: StudyPlanProps) {
       const courseName = courses.find((c) => c.id === a.course_id)?.class_name ?? 'No Course';
 
       // Compute priority from days until due
-      const now = new Date();
       const due = new Date(a.due_date + 'T00:00:00');
-      const hoursUntil = (due.getTime() - now.getTime()) / 1000 / 60 / 60;
+      const score = priority_score(due, due, a.type);
+      if (isNaN(score)) continue;
       let priority: 'high' | 'medium' | 'low' = 'low';
-      if (hoursUntil < 480) priority = 'high';
-      else if (hoursUntil < 1680) priority = 'medium';
+      if (score < 480) priority = 'high';
+      else if (score < 1680) priority = 'medium';
 
       items.push({
         id: `db-${a.id}`,
@@ -535,7 +537,7 @@ export function StudyPlan({ accessToken, isAuthenticated }: StudyPlanProps) {
                 <CalendarIcon className="w-7 h-7 text-slate-300" />
               </div>
               <p className="text-sm text-slate-500 mb-1">No Remaining Events</p>
-              <p className="text-xs text-slate-400">Add events inside courses here manually or through upload.</p>
+              <p className="text-xs text-slate-400">Add events here inside courses or through upload.</p>
             </div>
           ) : (
             <>
@@ -696,7 +698,7 @@ export function StudyPlan({ accessToken, isAuthenticated }: StudyPlanProps) {
               </div>
               <h3 className="text-sm text-slate-500 mb-1">No Courses</h3>
               <p className="text-xs text-slate-400">
-                Add the classes you&apos;re taking this quarter here manually or through upload.
+                Add the classes you&apos;re taking this quarter here or through upload.
               </p>
             </div>
           </CardContent>
