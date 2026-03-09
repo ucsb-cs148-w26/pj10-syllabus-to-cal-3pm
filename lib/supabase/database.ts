@@ -9,6 +9,7 @@ export interface DbCourse {
   teacher: string;
   academic_term: string | null;
   created_at: string;
+  class_priority: number;
 }
 
 export interface DbAssignment {
@@ -36,7 +37,7 @@ export async function getCourses(supabase: SupabaseClient): Promise<DbCourse[]> 
 
 export async function createCourse(
   supabase: SupabaseClient,
-  course: { class_name: string; teacher?: string; academic_term?: string }
+  course: { class_name: string; teacher?: string; academic_term?: string; class_priority?: number }
 ): Promise<DbCourse> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('Not authenticated');
@@ -53,7 +54,7 @@ export async function createCourse(
 export async function updateCourse(
   supabase: SupabaseClient,
   id: string,
-  updates: Partial<Pick<DbCourse, 'class_name' | 'teacher' | 'academic_term'>>
+  updates: Partial<Pick<DbCourse, 'class_name' | 'teacher' | 'academic_term' | 'class_priority'>>
 ): Promise<DbCourse> {
   const { data, error } = await supabase
     .from('courses')
