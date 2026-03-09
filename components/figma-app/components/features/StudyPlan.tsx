@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Calendar as CalendarIcon,
   Plus,
@@ -10,40 +10,30 @@ import {
   ChevronDown,
   Filter,
   BookOpen,
+  Check as CheckIcon,
+  Undo2,
 } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
-import type { StudySession } from '@/lib/studySessionScheduling';
-import { get_events } from '@/components/figma-app/components/features/Uploads';
-import { schedule_sessions } from '@/lib/studySessionScheduling';
+import { createClient } from '@/lib/supabase/client';
+import {
+  getCourses,
+  createCourse,
+  updateCourse,
+  deleteCourse as dbDeleteCourse,
+  getAllAssignments,
+  markAssignmentComplete,
+  deleteAssignment,
+  type DbCourse,
+  type DbAssignment,
+} from '@/lib/supabase/database';
 
 export interface StudyPlanProps {
   accessToken: string | null;
   onGoToUploads?: () => void;
+  isAuthenticated?: boolean;
 }
 
-interface Course {
-  id: string;
-  name: string;
-  quarterStart: string;
-  quarterEnd: string;
-  teacher: string;
-  completed: number;
-  remaining: number;
-  grade?: string;
-}
-
-interface CourseEvent {
-  id: string;
-  title: string;
-  date: string;
-  googleEventId?: string;
-}
-
-const COURSES_STORAGE_KEY = 'syllabus_profile_courses_v1';
-const COURSE_EVENTS_STORAGE_KEY = 'syllabus_profile_course_events_v1';
-
-const WEEKLY_REPEAT_DAY_LABELS = ['Sun', 'M', 'Tue', 'W', 'Th', 'F', 'Sat'] as const;
-const RRULE_DAY_MAP = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'] as const;
+import { priority_score} from '../../../../code/priorityscore';
 
 const PROGRESS_COLORS = [
   'bg-blue-500',
@@ -56,132 +46,164 @@ const PROGRESS_COLORS = [
   'bg-cyan-500',
 ];
 
-function buildRecurrence(
-  repeat: 'none' | 'daily' | 'weekdays' | 'weekly',
-  weeklyDays: boolean[],
-  endType: 'never' | 'date' | 'count',
-  endDate: string,
-  endCount: number
-): string[] {
-  if (repeat === 'none') return [];
-  const parts: string[] = [];
-  if (repeat === 'daily') parts.push('FREQ=DAILY');
-  else if (repeat === 'weekdays') parts.push('FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR');
-  else if (repeat === 'weekly') {
-    const days = weeklyDays.map((on, i) => (on ? RRULE_DAY_MAP[i] : null)).filter(Boolean);
-    if (days.length === 0) return [];
-    parts.push('FREQ=WEEKLY;BYDAY=' + (days as string[]).join(','));
-  } else return [];
-  if (endType === 'date' && endDate) {
-    const d = new Date(endDate + 'T23:59:59');
-    parts.push('UNTIL=' + d.toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z');
-  } else if (endType === 'count' && endCount > 0) {
-    parts.push('COUNT=' + endCount);
-  }
-  return ['RRULE:' + parts.join(';')];
+function formatTime12h(time: string): string {
+  const [h, m] = time.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  const hour = h % 12 || 12;
+  return `${hour}:${String(m).padStart(2, '0')} ${period}`;
 }
 
 function getRelativeDate(dateStr: string): string {
-  if (!dateStr) return 'No date';
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const date = new Date(dateStr + 'T00:00:00');
-  if (isNaN(date.getTime())) return 'Invalid date';
-  const diffDays = Math.round((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Tomorrow';
-  if (diffDays === -1) return 'Yesterday';
-  if (diffDays > 0 && diffDays <= 7) {
-    return ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getDay()];
+  const target = new Date(dateStr + 'T00:00:00');
+  const diffDays = Math.round((target.getTime() - today.getTime()) / 86400000);
+
+  // Compute Sun–Sat boundaries for the current week
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - today.getDay());
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+
+  if (target >= weekStart && target <= weekEnd) {
+    if (diffDays === 0) return 'Today';
+    return target.toLocaleDateString('en-US', { weekday: 'long' });
   }
-  if (diffDays > 7 && diffDays <= 14) return 'Next Week';
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  // Outside current week → MM/DD/YY
+  return target.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' });
 }
 
 const ITEMS_PER_PAGE = 5;
+const EVENTS_PER_CARD = 3;
 
-export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
+// Inline input style: underline only, no box
+const inlineInputBase =
+  'bg-transparent outline-none border-0 border-b-2 border-b-slate-300 focus:border-b-indigo-500 transition-colors w-full';
+
+export function StudyPlan({ accessToken, isAuthenticated }: StudyPlanProps) {
+  const supabase = useMemo(() => createClient(), []);
+
   // --- Planner pagination ---
   const [plannerPage, setPlannerPage] = useState(0);
   const [priorityFilter, setPriorityFilter] = useState<'all' | 'high' | 'medium' | 'low'>('all');
 
-  // --- Courses state ---
-  const [courses, setCourses] = useState<Course[]>(() => {
-    if (typeof window === 'undefined') return [];
-    try {
-      const raw = window.localStorage.getItem(COURSES_STORAGE_KEY);
-      if (!raw) return [];
-      const parsed = JSON.parse(raw);
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
-  });
-
-  const [courseEvents, setCourseEvents] = useState<Record<string, CourseEvent[]>>(() => {
-    if (typeof window === 'undefined') return {};
-    try {
-      const raw = window.localStorage.getItem(COURSE_EVENTS_STORAGE_KEY);
-      if (!raw) return {};
-      const parsed = JSON.parse(raw);
-      return parsed && typeof parsed === 'object' ? parsed : {};
-    } catch {
-      return {};
-    }
-  });
+  // --- Courses & assignments state (Supabase-backed) ---
+  const [courses, setCourses] = useState<DbCourse[]>([]);
+  const [assignments, setAssignments] = useState<DbAssignment[]>([]);
+  const [dbLoading, setDbLoading] = useState(true);
 
   // Per-card details dropdown & pagination
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [cardEventPage, setCardEventPage] = useState<Record<string, number>>({});
   const [cardSlideDir, setCardSlideDir] = useState<Record<string, 'left' | 'right'>>({});
   const [cardAnimKey, setCardAnimKey] = useState<Record<string, number>>({});
-  const EVENTS_PER_CARD = 3;
 
   // Track planner page direction for slide animation
   const [plannerDirection, setPlannerDirection] = useState<'left' | 'right'>('right');
   const [plannerAnimKey, setPlannerAnimKey] = useState(0);
   const plannerListRef = useRef<HTMLDivElement>(null);
 
-  // Add course modal
-  const [addOpen, setAddOpen] = useState(false);
-  const [newName, setNewName] = useState('');
-  const [newTeacher, setNewTeacher] = useState('');
-  const [newQuarterStart, setNewQuarterStart] = useState('');
-  const [newQuarterEnd, setNewQuarterEnd] = useState('');
+  // Prevent onBlur save when Escape was used to cancel inline editing
+  const escapeInlineRef = useRef(false);
+  const escapeEventRef = useRef(false);
 
-  // Add event modal
-  const [eventCourseId, setEventCourseId] = useState<string | null>(null);
-  const [eventOpen, setEventOpen] = useState(false);
-  const [eventTitle, setEventTitle] = useState('');
-  const [eventDate, setEventDate] = useState('');
-  const [eventAllDay, setEventAllDay] = useState(true);
-  const [eventStartTime, setEventStartTime] = useState('09:00');
-  const [eventEndTime, setEventEndTime] = useState('10:00');
-  const [eventRepeat, setEventRepeat] = useState<'none' | 'daily' | 'weekdays' | 'weekly'>('none');
-  const [eventWeeklyDays, setEventWeeklyDays] = useState<boolean[]>([false, false, true, true, true, true, false]);
-  const [eventEndType, setEventEndType] = useState<'never' | 'date' | 'count'>('never');
-  const [eventEndDate, setEventEndDate] = useState('');
-  const [eventEndCount, setEventEndCount] = useState(5);
-  const [eventDescription, setEventDescription] = useState('');
-  const [eventSubmitting, setEventSubmitting] = useState(false);
-  const [eventError, setEventError] = useState('');
+  // Inline field editing state (for existing course fields)
+  const [editingField, setEditingField] = useState<{
+    courseId: string;
+    field: 'class_name' | 'teacher' | 'academic_term';
+    value: string;
+  } | null>(null);
 
-  // Study sessions from uploaded syllabi
-  const events = get_events();
-  const studySessions: StudySession[] = schedule_sessions(events);
+  // Inline event field editing state
+  const [editingEvent, setEditingEvent] = useState<{
+    id: string;
+    field: 'event_name' | 'due_date' | 'time';
+    value: string;
+  } | null>(null);
 
-  // Persist
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try { window.localStorage.setItem(COURSES_STORAGE_KEY, JSON.stringify(courses)); } catch {}
-  }, [courses]);
+  // Draft course (inline add — no modal)
+  const [draftCourse, setDraftCourse] = useState<{
+    class_name: string;
+    teacher: string;
+    academic_term: string;
+  } | null>(null);
+  const [draftVisible, setDraftVisible] = useState(false); // controls fade-in/out
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try { window.localStorage.setItem(COURSE_EVENTS_STORAGE_KEY, JSON.stringify(courseEvents)); } catch {}
-  }, [courseEvents]);
+  // Draft event (inline add inside Details — no modal)
+  const [draftEvent, setDraftEvent] = useState<{
+    courseId: string;
+    event_name: string;
+    due_date: string;
+    time: string;
+    type: 'assignment' | 'exam';
+  } | null>(null);
+  const draftEventBlurRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // --- Planner items ---
+  // Course color customization (localStorage-backed)
+  const [courseColors, setCourseColors] = useState<Record<string, number>>(() => {
+    if (typeof window === 'undefined') return {};
+    try { return JSON.parse(localStorage.getItem('course-colors') ?? '{}'); } catch { return {}; }
+  });
+  const handleCycleColor = useCallback((courseId: string, currentIdx: number) => {
+    const next = (currentIdx + 1) % PROGRESS_COLORS.length;
+    setCourseColors((prev) => {
+      const updated = { ...prev, [courseId]: next };
+      localStorage.setItem('course-colors', JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
+
+  // Undo completion
+  const [lastCompleted, setLastCompleted] = useState<{ id: string; title: string } | null>(null);
+  const undoTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // --- Fetch data from Supabase on mount ---
+  const fetchData = useCallback(async () => {
+    if (!isAuthenticated) {
+      setDbLoading(false);
+      return;
+    }
+    try {
+      const [c, a] = await Promise.all([getCourses(supabase), getAllAssignments(supabase)]);
+      setCourses(c);
+      setAssignments(a);
+    } catch (err) {
+      console.error('Failed to load planner data:', err);
+    } finally {
+      setDbLoading(false);
+    }
+  }, [supabase, isAuthenticated]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  // --- Helper: compute counts for a course ---
+  const courseCounts = useMemo(() => {
+    const counts: Record<string, { completed: number; remaining: number }> = {};
+    for (const c of courses) {
+      counts[c.id] = { completed: 0, remaining: 0 };
+    }
+    for (const a of assignments) {
+      if (!counts[a.course_id]) continue;
+      if (a.completed) {
+        counts[a.course_id].completed++;
+      } else {
+        counts[a.course_id].remaining++;
+      }
+    }
+    return counts;
+  }, [courses, assignments]);
+
+  // Map course ID → { bg: tailwind class, idx: number }
+  const courseColorMap = useMemo(() => {
+    const map: Record<string, { bg: string; idx: number }> = {};
+    courses.forEach((c, idx) => {
+      const colorIdx = courseColors[c.id] ?? idx % PROGRESS_COLORS.length;
+      map[c.id] = { bg: PROGRESS_COLORS[colorIdx], idx: colorIdx };
+    });
+    return map;
+  }, [courses, courseColors]);
+
+  // --- Planner items (DB assignments — include past, exclude completed) ---
   const plannerItems = useMemo(() => {
     const items: Array<{
       id: string;
@@ -191,19 +213,34 @@ export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
       time?: string;
       type: 'assignment' | 'exam' | 'event';
       priority?: 'high' | 'medium' | 'low';
+      dbAssignmentId?: string;
+      courseId?: string;
     }> = [];
 
-    studySessions.forEach((s) => {
+    for (const a of assignments) {
+      if (a.completed) continue;
+      const courseName = courses.find((c) => c.id === a.course_id)?.class_name ?? 'No Course';
+
+      // Compute priority from days until due
+      const due = new Date(a.due_date + 'T00:00:00');
+      const score = priority_score(due, due, a.type);
+      if (isNaN(score)) continue;
+      let priority: 'high' | 'medium' | 'low' = 'low';
+      if (score < 480) priority = 'high';
+      else if (score < 1680) priority = 'medium';
+
       items.push({
-        id: s.id,
-        title: s.assignment,
-        course: s.course,
-        dateStr: s.date,
-        time: s.suggestedTime,
-        type: s.type,
-        priority: s.priority,
+        id: `db-${a.id}`,
+        title: a.event_name,
+        course: courseName,
+        dateStr: a.due_date,
+        time: a.time ?? undefined,
+        type: a.type as 'assignment' | 'exam',
+        priority,
+        dbAssignmentId: a.id,
+        courseId: a.course_id,
       });
-    });
+    }
 
     items.sort((a, b) => a.dateStr.localeCompare(b.dateStr));
 
@@ -211,7 +248,7 @@ export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
       return items.filter((i) => i.priority === priorityFilter || !i.priority);
     }
     return items;
-  }, [studySessions, priorityFilter]);
+  }, [priorityFilter, assignments, courses]);
 
   const totalPlannerPages = Math.max(1, Math.ceil(plannerItems.length / ITEMS_PER_PAGE));
   const currentPlannerItems = plannerItems.slice(
@@ -222,132 +259,252 @@ export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
   // Reset page when filter changes
   useEffect(() => { setPlannerPage(0); }, [priorityFilter]);
 
-  // --- Handlers ---
-  const handleAddCourse = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newName.trim()) return;
-    const id = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    setCourses((prev) => [
-      ...prev,
-      {
-        id,
-        name: newName.trim(),
-        quarterStart: newQuarterStart,
-        quarterEnd: newQuarterEnd,
-        teacher: newTeacher.trim(),
-        completed: 0,
-        remaining: 0,
-      },
-    ]);
-    setAddOpen(false);
-    setNewName('');
-    setNewTeacher('');
-    setNewQuarterStart('');
-    setNewQuarterEnd('');
+  // --- Draft course handlers ---
+  const handleOpenDraftCourse = () => {
+    if (courses.length >= 10) return;
+    setDraftCourse({ class_name: '', teacher: '', academic_term: '' });
+    setDraftVisible(true);
   };
 
-  const handleDeleteCourse = (id: string) => {
-    setCourses((prev) => prev.filter((c) => c.id !== id));
-    setCourseEvents((prev) => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
-  };
-
-  const handleOpenAddEvent = (courseId: string) => {
-    setEventCourseId(courseId);
-    setEventTitle('');
-    const today = new Date();
-    setEventDate(
-      `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-    );
-    setEventAllDay(true);
-    setEventStartTime('09:00');
-    setEventEndTime('10:00');
-    setEventRepeat('none');
-    setEventWeeklyDays([false, false, true, true, true, true, false]);
-    setEventEndType('never');
-    setEventEndDate('');
-    setEventEndCount(5);
-    setEventDescription('');
-    setEventError('');
-    setEventOpen(true);
-  };
-
-  const eventCourse = useMemo(
-    () => courses.find((c) => c.id === eventCourseId) ?? null,
-    [courses, eventCourseId]
-  );
-
-  const handleSubmitEvent = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!eventCourseId || !eventCourse) return;
-    if (!eventTitle.trim() || !eventDate) return;
-
-    if (!accessToken) {
-      setEventError('Connect your Google account on Uploads to sync this event.');
+  const handleDraftCourseBlur = useCallback(async () => {
+    if (!draftCourse) return;
+    if (!draftCourse.class_name.trim()) {
+      // Fade out and remove
+      setDraftVisible(false);
+      setTimeout(() => setDraftCourse(null), 200);
       return;
     }
-
-    setEventSubmitting(true);
-    setEventError('');
+    const trimmedName = draftCourse.class_name.trim();
+    const duplicate = courses.find((c) => c.class_name.toLowerCase() === trimmedName.toLowerCase());
+    if (duplicate) {
+      // Course with same name already exists — don't create a duplicate
+      setDraftCourse(null);
+      setDraftVisible(false);
+      return;
+    }
+    // Save
     try {
-      const start = eventAllDay ? `${eventDate}T00:00:00` : `${eventDate}T${eventStartTime}:00`;
-      const end = eventAllDay ? `${eventDate}T00:00:00` : `${eventDate}T${eventEndTime}:00`;
-      const recurrence = buildRecurrence(eventRepeat, eventWeeklyDays, eventEndType, eventEndDate, eventEndCount);
-      const res = await fetch('/api/calendar/events', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          accessToken,
-          events: [
-            {
-              title: `${eventCourse.name}: ${eventTitle.trim()}`,
-              start,
-              end: eventAllDay ? undefined : end,
-              allDay: eventAllDay,
-              description: eventDescription.trim() || undefined,
-              recurrence: recurrence.length ? recurrence : undefined,
-            },
-          ],
-        }),
+      const created = await createCourse(supabase, {
+        class_name: trimmedName,
+        teacher: draftCourse.teacher.trim() || undefined,
+        academic_term: draftCourse.academic_term.trim() || undefined,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to create calendar event');
-
-      const created = Array.isArray(data.events) && data.events.length > 0 ? data.events[0] : null;
-      const googleEventId: string | undefined = created?.id;
-
-      const localEvent: CourseEvent = {
-        id: googleEventId || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        title: eventTitle.trim(),
-        date: eventDate,
-        googleEventId,
-      };
-      setCourseEvents((prev) => ({
-        ...prev,
-        [eventCourseId]: [...(prev[eventCourseId] ?? []), localEvent],
-      }));
-      setEventOpen(false);
+      setCourses((prev) => [...prev, created]);
     } catch (err) {
-      setEventError(err instanceof Error ? err.message : 'Failed to create event');
-    } finally {
-      setEventSubmitting(false);
+      console.error('Failed to add course:', err);
+    }
+    setDraftCourse(null);
+    setDraftVisible(false);
+  }, [supabase, draftCourse]);
+
+  // --- Delete course ---
+  const handleDeleteCourse = async (id: string) => {
+    try {
+      await dbDeleteCourse(supabase, id);
+      setCourses((prev) => prev.filter((c) => c.id !== id));
+      setAssignments((prev) => prev.filter((a) => a.course_id !== id));
+    } catch (err) {
+      console.error('Failed to delete course:', err);
     }
   };
+
+  // --- Draft event handlers ---
+  const todayStr = () => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  };
+
+  const handleOpenDraftEvent = (courseId: string) => {
+    if (draftEventBlurRef.current) clearTimeout(draftEventBlurRef.current);
+    const courseAssignmentCount = assignments.filter((a) => a.course_id === courseId).length;
+    if (courseAssignmentCount >= 50) return;
+    setDraftEvent({ courseId, event_name: '', due_date: todayStr(), time: '', type: 'assignment' });
+    // Ensure Details is expanded
+    setExpandedCards((prev) => new Set([...prev, courseId]));
+  };
+
+  const handleDraftEventNameBlur = useCallback(() => {
+    // Small delay so Tab to next field doesn't prematurely close
+    draftEventBlurRef.current = setTimeout(() => {
+      if (!draftEvent || !draftEvent.event_name.trim()) {
+        setDraftEvent(null);
+      }
+    }, 150);
+  }, [draftEvent]);
+
+  const handleDraftEventFocus = () => {
+    if (draftEventBlurRef.current) clearTimeout(draftEventBlurRef.current);
+  };
+
+  const handleSaveDraftEvent = useCallback(async () => {
+    if (!draftEvent || !draftEvent.event_name.trim() || !draftEvent.due_date) return;
+    if (draftEventBlurRef.current) clearTimeout(draftEventBlurRef.current);
+
+    try {
+      const { data: dbData, error: dbErr } = await supabase
+        .from('assignments')
+        .insert({
+          course_id: draftEvent.courseId,
+          user_id: (await supabase.auth.getUser()).data.user?.id,
+          event_name: draftEvent.event_name.trim(),
+          due_date: draftEvent.due_date,
+          time: draftEvent.time || null,
+          type: draftEvent.type,
+          completed: false,
+        })
+        .select()
+        .single();
+
+      if (!dbErr && dbData) {
+        setAssignments((prev) => {
+          const next = [...prev, dbData].sort((a, b) => a.due_date.localeCompare(b.due_date));
+          // Navigate to the page containing the new event for this course
+          const courseAssigns = next.filter((a) => a.course_id === draftEvent.courseId);
+          const newIdx = courseAssigns.findIndex((a) => a.id === dbData.id);
+          if (newIdx >= 0) {
+            const page = Math.floor(newIdx / EVENTS_PER_CARD);
+            setCardEventPage((prev) => ({ ...prev, [draftEvent.courseId]: page }));
+          }
+          return next;
+        });
+      }
+    } catch (err) {
+      console.error('Failed to save event:', err);
+    }
+    setDraftEvent(null);
+  }, [supabase, draftEvent]);
+
+  // --- Completion toggle ---
+  const handleMarkComplete = useCallback(async (assignmentId: string, title: string) => {
+    setAssignments((prev) => prev.map((a) => a.id === assignmentId ? { ...a, completed: true } : a));
+    setLastCompleted({ id: assignmentId, title });
+
+    if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
+    undoTimeoutRef.current = setTimeout(() => setLastCompleted(null), 5000);
+
+    try {
+      await markAssignmentComplete(supabase, assignmentId, true);
+    } catch (err) {
+      console.error('Failed to mark complete:', err);
+      setAssignments((prev) => prev.map((a) => a.id === assignmentId ? { ...a, completed: false } : a));
+      setLastCompleted(null);
+    }
+  }, [supabase]);
+
+  const handleUndoComplete = useCallback(async () => {
+    if (!lastCompleted) return;
+    const { id } = lastCompleted;
+
+    setAssignments((prev) => prev.map((a) => a.id === id ? { ...a, completed: false } : a));
+    setLastCompleted(null);
+    if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current);
+
+    try {
+      await markAssignmentComplete(supabase, id, false);
+    } catch (err) {
+      console.error('Failed to undo:', err);
+      setAssignments((prev) => prev.map((a) => a.id === id ? { ...a, completed: true } : a));
+    }
+  }, [supabase, lastCompleted]);
+
+  useEffect(() => {
+    return () => { if (undoTimeoutRef.current) clearTimeout(undoTimeoutRef.current); };
+  }, []);
+
+  const handleDeleteAssignment = useCallback(async (id: string) => {
+    setAssignments((prev) => prev.filter((a) => a.id !== id));
+    try {
+      await deleteAssignment(supabase, id);
+    } catch (err) {
+      console.error('Failed to delete assignment:', err);
+      fetchData();
+    }
+  }, [supabase, fetchData]);
+
+  const handleToggleType = useCallback(async (id: string, current: 'assignment' | 'exam') => {
+    const next = current === 'assignment' ? 'exam' : 'assignment';
+    setAssignments((prev) => prev.map((a) => (a.id === id ? { ...a, type: next } : a)));
+    try {
+      await supabase.from('assignments').update({ type: next }).eq('id', id);
+    } catch {
+      setAssignments((prev) => prev.map((a) => (a.id === id ? { ...a, type: current } : a)));
+    }
+  }, [supabase]);
+
+  const handleToggleComplete = useCallback(async (assignmentId: string, title: string, currentCompleted: boolean) => {
+    if (!currentCompleted) {
+      handleMarkComplete(assignmentId, title);
+    } else {
+      setAssignments((prev) => prev.map((a) => a.id === assignmentId ? { ...a, completed: false } : a));
+      try {
+        await markAssignmentComplete(supabase, assignmentId, false);
+      } catch {
+        setAssignments((prev) => prev.map((a) => a.id === assignmentId ? { ...a, completed: true } : a));
+      }
+    }
+  }, [supabase, handleMarkComplete]);
+
+  const handleSaveField = useCallback(async (
+    courseId: string,
+    field: 'class_name' | 'teacher' | 'academic_term',
+    value: string
+  ) => {
+    const trimmed = value.trim();
+    if (!trimmed && field === 'class_name') { setEditingField(null); return; }
+    setCourses((prev) => prev.map((c) => c.id === courseId ? { ...c, [field]: trimmed || null } : c));
+    setEditingField(null);
+    try {
+      await updateCourse(supabase, courseId, { [field]: trimmed || undefined });
+    } catch {
+      fetchData();
+    }
+  }, [supabase, fetchData]);
+
+  const handleSaveEventField = useCallback(async (
+    id: string,
+    field: 'event_name' | 'due_date' | 'time',
+    value: string
+  ) => {
+    const trimmed = value.trim();
+    if (!trimmed && field === 'event_name') { setEditingEvent(null); return; }
+    setAssignments((prev) => prev.map((a) => a.id === id ? { ...a, [field]: trimmed || null } : a));
+    setEditingEvent(null);
+    try {
+      await supabase.from('assignments').update({ [field]: trimmed || null }).eq('id', id);
+    } catch {
+      fetchData();
+    }
+  }, [supabase, fetchData]);
 
   const getTypeBadge = (type: string) => {
     switch (type) {
       case 'assignment': return 'bg-blue-50 text-blue-600 border-blue-200';
       case 'exam': return 'bg-rose-50 text-rose-600 border-rose-200';
-      case 'event': return 'bg-violet-50 text-violet-700 border-violet-200';
       default: return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
 
+  // Helper: open details and jump to last-completed event page
+  const handleToggleDetails = useCallback((courseId: string, courseAssignments: DbAssignment[]) => {
+    setExpandedCards((prev) => {
+      if (prev.has(courseId)) {
+        const next = new Set(prev);
+        next.delete(courseId);
+        return next;
+      }
+      // Find last completed event and start on that page
+      const lastCompletedIdx = courseAssignments
+        .map((a, i) => ({ a, i }))
+        .filter(({ a }) => a.completed)
+        .pop()?.i ?? 0;
+      const startPage = Math.floor(lastCompletedIdx / EVENTS_PER_CARD);
+      setCardEventPage((p) => ({ ...p, [courseId]: startPage }));
+      return new Set([courseId]);
+    });
+  }, []);
+
   return (
-    <div className="relative max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 py-2">
+    <div className="relative max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 py-2 pb-64">
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(1200px_circle_at_20%_5%,theme(colors.indigo.100),transparent_55%),radial-gradient(1000px_circle_at_80%_35%,theme(colors.violet.100),transparent_60%),linear-gradient(to_bottom,theme(colors.white),theme(colors.slate.50))] transition-all duration-700" />
 
       {/* ========== Planner  ========== */}
@@ -379,14 +536,11 @@ export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
               <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
                 <CalendarIcon className="w-7 h-7 text-slate-300" />
               </div>
-              <p className="text-sm text-slate-500 mb-1">No upcoming events</p>
-              <p className="text-xs text-slate-400">
-                Upload a syllabus to see them here.
-              </p>
+              <p className="text-sm text-slate-500 mb-1">No Remaining Events</p>
+              <p className="text-xs text-slate-400">Add events here inside courses or through upload.</p>
             </div>
           ) : (
             <>
-              {/* Fixed-height container: always reserves space for ITEMS_PER_PAGE rows */}
               <div
                 ref={plannerListRef}
                 className="relative"
@@ -406,16 +560,32 @@ export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
                       >
                         {item ? (
                           <>
+                            {item.dbAssignmentId ? (
+                              <button
+                                type="button"
+                                onClick={() => handleMarkComplete(item.dbAssignmentId!, item.title)}
+                                className="w-5 h-5 rounded-md border-2 border-slate-300 hover:border-indigo-500 hover:bg-indigo-50 flex items-center justify-center transition-colors shrink-0"
+                                title="Mark complete"
+                              >
+                                <CheckIcon className="w-3 h-3 text-transparent hover:text-indigo-400" />
+                              </button>
+                            ) : (
+                              <div className="w-5 shrink-0" />
+                            )}
                             <div className="flex-1 min-w-0">
                               <p className="text-xs font-medium text-slate-900 truncate">{item.title}</p>
                               <p className="text-xs text-slate-500 mt-0.5">
-                                {item.course}
                                 {item.time
-                                  ? ` \u00B7 ${getRelativeDate(item.dateStr)} at ${item.time}`
-                                  : ` \u00B7 ${getRelativeDate(item.dateStr)}`}
+                                  ? `${getRelativeDate(item.dateStr)} at ${item.time}`
+                                  : getRelativeDate(item.dateStr)}
                               </p>
                             </div>
                             <div className="flex items-center gap-1.5 shrink-0">
+                              {item.courseId && courseColorMap[item.courseId] && (
+                                <span className={`px-2 py-1 rounded-lg text-[11px] font-medium text-white max-w-[88px] truncate ${courseColorMap[item.courseId].bg}`}>
+                                  {item.course}
+                                </span>
+                              )}
                               {item.priority && (
                                 <span className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border ${
                                   item.priority === 'high' ? 'bg-red-50 text-red-600 border-red-200' :
@@ -425,11 +595,19 @@ export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
                                   {item.priority}
                                 </span>
                               )}
-                              <span
-                                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border ${getTypeBadge(item.type)}`}
-                              >
+                              <span className={`px-2.5 py-1 rounded-lg text-[11px] font-medium border ${getTypeBadge(item.type)}`}>
                                 {item.type}
                               </span>
+                              {item.dbAssignmentId && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteAssignment(item.dbAssignmentId!)}
+                                  className="p-1 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              )}
                             </div>
                           </>
                         ) : (
@@ -441,7 +619,6 @@ export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
                 </div>
               </div>
 
-              {/* Pagination */}
               {totalPlannerPages > 1 && (
                 <div className="flex items-center justify-between pt-4 mt-2 border-t border-slate-100">
                   <p className="text-xs text-slate-400">
@@ -477,6 +654,20 @@ export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
               )}
             </>
           )}
+
+          {lastCompleted && (
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-slate-800 text-white px-4 py-2.5 text-xs animate-in slide-in-from-bottom-2">
+              <span className="truncate">&ldquo;{lastCompleted.title}&rdquo; completed</span>
+              <button
+                type="button"
+                onClick={handleUndoComplete}
+                className="inline-flex items-center gap-1 shrink-0 px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-white text-xs font-medium transition-colors"
+              >
+                <Undo2 className="w-3 h-3" />
+                Undo
+              </button>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -484,68 +675,53 @@ export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
       <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-0.5">Courses</h2>
-          <p className="text-xs text-gray-600">
-            Track or edit course information and progress.
-          </p>
+          <p className="text-xs text-gray-600">Track or edit course information and progress.</p>
         </div>
-        <div className="flex items-center gap-2">
-          {!accessToken && onGoToUploads && (
-            <button
-              type="button"
-              onClick={onGoToUploads}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-600 hover:bg-slate-50 transition-colors"
-            >
-              <CalendarIcon className="w-3.5 h-3.5" />
-              Connect Google Calendar
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => setAddOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 shadow-sm transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Add Course
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={handleOpenDraftCourse}
+          disabled={!!draftCourse || courses.length >= 10}
+          title={courses.length >= 10 ? 'Course limit reached (10 max)' : undefined}
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-indigo-600 text-white text-xs font-medium hover:bg-indigo-700 shadow-sm transition-colors disabled:opacity-50"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          Add Course {courses.length > 0 && <span className="opacity-70">({courses.length}/10)</span>}
+        </button>
       </div>
 
-      {courses.length === 0 ? (
-        <Card className="border-slate-200/80 bg-white shadow-sm">
-          <CardContent className="py-14">
+      {courses.length === 0 && !draftCourse ? (
+        <Card className="border-slate-200/80 bg-white shadow-sm mb-8">
+          <CardContent className="pt-6">
             <div className="text-center">
-              <div className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <BookOpen className="w-8 h-8 text-indigo-400" />
+              <div className="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                <BookOpen className="w-7 h-7 text-slate-300" />
               </div>
-              <h3 className="text-base font-semibold text-slate-900 mb-1.5">No courses yet</h3>
-              <p className="text-sm text-slate-500 mb-5 max-w-xs mx-auto">
-                Add the classes you're taking this quarter to organize work and track progress.
+              <h3 className="text-sm text-slate-500 mb-1">No Courses</h3>
+              <p className="text-xs text-slate-400">
+                Add the classes you&apos;re taking this quarter here or through upload.
               </p>
-              <button
-                type="button"
-                onClick={() => setAddOpen(true)}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 shadow-sm transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Add your first course
-              </button>
             </div>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 items-start">
           {courses.map((course, idx) => {
-            const evts = courseEvents[course.id] ?? [];
-            const total = course.completed + course.remaining || 1;
-            const pct = Math.min(100, Math.round((course.completed / total) * 100));
-            const progressColor = PROGRESS_COLORS[idx % PROGRESS_COLORS.length];
+            // Sort assignments by date for consistent pagination
+            const courseAssignments = assignments
+              .filter((a) => a.course_id === course.id)
+              .sort((a, b) => a.due_date.localeCompare(b.due_date));
+            const counts = courseCounts[course.id] ?? { completed: 0, remaining: 0 };
+            const total = counts.completed + counts.remaining || 1;
+            const pct = Math.min(100, Math.round((counts.completed / total) * 100));
+            const colorData = courseColorMap[course.id] ?? { bg: PROGRESS_COLORS[idx % PROGRESS_COLORS.length], idx: idx % PROGRESS_COLORS.length };
+            const progressColor = colorData.bg;
             const isExpanded = expandedCards.has(course.id);
             const evtPage = cardEventPage[course.id] ?? 0;
-            const totalEvtPages = Math.max(1, Math.ceil(evts.length / EVENTS_PER_CARD));
-            const visibleEvts = evts.slice(evtPage * EVENTS_PER_CARD, (evtPage + 1) * EVENTS_PER_CARD);
-            // Find next upcoming event for preview
+            const totalEvtPages = Math.max(1, Math.ceil(courseAssignments.length / EVENTS_PER_CARD));
+            const visibleEvts = courseAssignments.slice(evtPage * EVENTS_PER_CARD, (evtPage + 1) * EVENTS_PER_CARD);
             const today = new Date().toISOString().slice(0, 10);
-            const nextEvt = [...evts].sort((a, b) => a.date.localeCompare(b.date)).find((e) => e.date >= today) ?? evts[0] ?? null;
+            const nextEvt = courseAssignments.find((e) => e.due_date >= today && !e.completed) ?? null;
+            const showDraftEventRow = draftEvent?.courseId === course.id;
 
             return (
               <div
@@ -554,30 +730,96 @@ export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
               >
                 {/* Card header */}
                 <div className="flex items-start justify-between gap-3 mb-1">
-                  <div className="min-w-0">
-                    <h4 className="font-semibold text-slate-900 text-base truncate">{course.name}</h4>
-                    <p className="text-xs text-slate-500 mt-0.5">
-                      {course.teacher || '\u00A0'}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    {course.grade && (
-                      <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold ${PROGRESS_COLORS[idx % PROGRESS_COLORS.length].replace('bg-', 'bg-') } text-white`}>
-                        {course.grade}
-                      </span>
-                    )}
+                  <div className="flex items-start gap-2 min-w-0">
                     <button
                       type="button"
-                      onClick={() => handleDeleteCourse(course.id)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors"
-                      title="Delete course"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                      title="Change color"
+                      onClick={() => handleCycleColor(course.id, colorData.idx)}
+                      className={`w-3 h-3 mt-1.5 rounded-full shrink-0 ${progressColor} hover:ring-2 hover:ring-offset-1 hover:ring-slate-400 transition-all`}
+                    />
+                    <div className="min-w-0 flex-1">
+                      {/* Inline-editable class_name */}
+                      {editingField?.courseId === course.id && editingField.field === 'class_name' ? (
+                        <input
+                          autoFocus
+                          className={`${inlineInputBase} font-semibold text-slate-900 text-base`}
+                          value={editingField.value}
+                          onChange={(e) => setEditingField({ ...editingField, value: e.target.value })}
+                          onBlur={() => {
+                            if (escapeInlineRef.current) { escapeInlineRef.current = false; return; }
+                            handleSaveField(course.id, 'class_name', editingField.value);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
+                            if (e.key === 'Escape') { escapeInlineRef.current = true; setEditingField(null); }
+                          }}
+                        />
+                      ) : (
+                        <h4
+                          className="font-semibold text-slate-900 text-base truncate cursor-text hover:underline hover:decoration-dotted transition-all"
+                          title="Click to edit"
+                          onClick={() => setEditingField({ courseId: course.id, field: 'class_name', value: course.class_name })}
+                        >{course.class_name}</h4>
+                      )}
+                      {/* Inline-editable teacher */}
+                      {editingField?.courseId === course.id && editingField.field === 'teacher' ? (
+                        <input
+                          autoFocus
+                          className={`${inlineInputBase} text-xs text-slate-500 mt-0.5`}
+                          value={editingField.value}
+                          onChange={(e) => setEditingField({ ...editingField, value: e.target.value })}
+                          onBlur={() => {
+                            if (escapeInlineRef.current) { escapeInlineRef.current = false; return; }
+                            handleSaveField(course.id, 'teacher', editingField.value);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
+                            if (e.key === 'Escape') { escapeInlineRef.current = true; setEditingField(null); }
+                          }}
+                        />
+                      ) : (
+                        <p
+                          className="text-xs text-slate-500 mt-0.5 cursor-text hover:underline hover:decoration-dotted transition-all truncate"
+                          title="Click to edit professor"
+                          onClick={() => setEditingField({ courseId: course.id, field: 'teacher', value: course.teacher ?? '' })}
+                        >{course.teacher || <span className="text-slate-300 italic">Professor</span>}</p>
+                      )}
+                      {/* Inline-editable academic_term */}
+                      {editingField?.courseId === course.id && editingField.field === 'academic_term' ? (
+                        <input
+                          autoFocus
+                          className={`${inlineInputBase} text-xs text-slate-400 mt-0.5`}
+                          value={editingField.value}
+                          onChange={(e) => setEditingField({ ...editingField, value: e.target.value })}
+                          onBlur={() => {
+                            if (escapeInlineRef.current) { escapeInlineRef.current = false; return; }
+                            handleSaveField(course.id, 'academic_term', editingField.value);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
+                            if (e.key === 'Escape') { escapeInlineRef.current = true; setEditingField(null); }
+                          }}
+                        />
+                      ) : (
+                        <p
+                          className="text-xs text-slate-400 mt-0.5 cursor-text hover:underline hover:decoration-dotted transition-all truncate"
+                          title="Click to edit term"
+                          onClick={() => setEditingField({ courseId: course.id, field: 'academic_term', value: course.academic_term ?? '' })}
+                        >{course.academic_term || <span className="italic">Term</span>}</p>
+                      )}
+                    </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteCourse(course.id)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:bg-rose-50 hover:text-rose-500 transition-colors shrink-0"
+                    title="Delete course"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
 
-                {/* Progress bar - fixed width, shows empty portion */}
+                {/* Progress bar */}
                 <div className="mt-3 mb-4">
                   <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
                     <div
@@ -590,23 +832,23 @@ export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
                 {/* Stats */}
                 <div className="flex items-center gap-8 mb-4">
                   <div>
-                    <p className="text-xl font-bold text-slate-900 leading-none">{course.completed}</p>
+                    <p className="text-xl font-bold text-slate-900 leading-none">{counts.completed}</p>
                     <p className="text-[11px] text-slate-500 mt-1">Completed</p>
                   </div>
                   <div>
-                    <p className="text-xl font-bold text-slate-900 leading-none">{course.remaining}</p>
+                    <p className="text-xl font-bold text-slate-900 leading-none">{counts.remaining}</p>
                     <p className="text-[11px] text-slate-500 mt-1">Remaining</p>
                   </div>
                 </div>
 
-                {/* Next event preview + View Details link */}
+                {/* Next event preview + View Details */}
                 <div className="flex items-center justify-between border-t border-slate-100 pt-3">
                   <div className="flex items-center gap-1.5 min-w-0 flex-1">
                     {nextEvt ? (
                       <>
                         <CalendarIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                         <p className="text-xs text-slate-500 truncate">
-                          Next: {nextEvt.title} &ndash; {getRelativeDate(nextEvt.date)}
+                          Next: {nextEvt.event_name} &ndash; {getRelativeDate(nextEvt.due_date)}
                         </p>
                       </>
                     ) : (
@@ -615,33 +857,28 @@ export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
                   </div>
                   <button
                     type="button"
-                    onClick={() =>
-                      setExpandedCards((prev) => {
-                        if (prev.has(course.id)) return new Set();
-                        return new Set([course.id]);
-                      })
-                    }
-                    className="shrink-0 ml-3 text-xs font-semibold text-indigo-600 hover:text-indigo-700 transition-colors flex items-center gap-0.5"
+                    onClick={() => handleToggleDetails(course.id, courseAssignments)}
+                    className="shrink-0 ml-3 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-0.5"
                   >
                     {isExpanded ? 'Hide Details' : 'View Details'}
                     <ChevronDown
-                      className={`w-3.5 h-3.5 transition-transform duration-200 ease-out ${
-                        isExpanded ? 'rotate-180' : ''
-                      }`}
+                      className={`w-3.5 h-3.5 transition-transform duration-200 ease-out ${isExpanded ? 'rotate-180' : ''}`}
                     />
                   </button>
                 </div>
 
-                {/* Expandable event list dropdown */}
+                {/* Expandable event list */}
                 <div
                   className="overflow-hidden transition-all duration-300 ease-out"
                   style={{
-                    maxHeight: isExpanded ? `${Math.max(visibleEvts.length * 52 + 56, 90)}px` : '0px',
+                    maxHeight: isExpanded
+                      ? `${Math.max((visibleEvts.length + (showDraftEventRow ? 1 : 0)) * 52 + 80, 100)}px`
+                      : '0px',
                     opacity: isExpanded ? 1 : 0,
                   }}
                 >
                   <div className="pt-3">
-                    {evts.length === 0 ? (
+                    {courseAssignments.length === 0 && !showDraftEventRow ? (
                       <p className="text-xs text-slate-400 text-center py-3">No events yet</p>
                     ) : (
                       <div
@@ -651,28 +888,187 @@ export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
                         {visibleEvts.map((evt) => (
                           <div
                             key={evt.id}
-                            className="flex items-center gap-3 rounded-lg bg-slate-50/80 px-3 py-2"
+                            className="flex items-center gap-2 rounded-lg bg-slate-50/80 px-3 py-2"
                           >
+                            <button
+                              type="button"
+                              onClick={() => handleToggleComplete(evt.id, evt.event_name, evt.completed)}
+                              title={evt.completed ? 'Mark incomplete' : 'Mark complete'}
+                              className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${
+                                evt.completed
+                                  ? `${progressColor} border-transparent`
+                                  : 'border-slate-300 hover:border-indigo-500'
+                              }`}
+                            >
+                              {evt.completed && <CheckIcon className="w-2.5 h-2.5 text-white" />}
+                            </button>
                             <div className="flex-1 min-w-0">
-                              <p className="text-[13px] font-medium text-slate-800 truncate">{evt.title}</p>
+                              {editingEvent?.id === evt.id && editingEvent.field === 'event_name' ? (
+                                <input
+                                  autoFocus
+                                  className={`${inlineInputBase} text-[13px] font-medium text-slate-800`}
+                                  value={editingEvent.value}
+                                  onChange={(e) => setEditingEvent({ ...editingEvent, value: e.target.value })}
+                                  onBlur={() => {
+                                    if (escapeEventRef.current) { escapeEventRef.current = false; return; }
+                                    handleSaveEventField(evt.id, 'event_name', editingEvent.value);
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
+                                    if (e.key === 'Escape') { escapeEventRef.current = true; setEditingEvent(null); }
+                                  }}
+                                />
+                              ) : (
+                                <p
+                                  className={`text-[13px] font-medium truncate cursor-text hover:underline hover:decoration-dotted transition-all ${evt.completed ? 'text-slate-400 line-through' : 'text-slate-800'}`}
+                                  title="Click to edit"
+                                  onClick={() => setEditingEvent({ id: evt.id, field: 'event_name', value: evt.event_name })}
+                                >{evt.event_name}</p>
+                              )}
                             </div>
-                            <p className="text-[11px] text-slate-400 shrink-0">{getRelativeDate(evt.date)}</p>
-                            {evt.googleEventId && (
-                              <span className="shrink-0 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600">
-                                Synced
-                              </span>
-                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleToggleType(evt.id, evt.type)}
+                              title="Click to toggle type"
+                              className={`shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-medium cursor-pointer hover:opacity-70 transition-opacity ${
+                                evt.type === 'exam' ? 'bg-rose-50 text-rose-600' : 'bg-blue-50 text-blue-600'
+                              }`}
+                            >
+                              {evt.type}
+                            </button>
+                            <div className="flex items-center gap-1 shrink-0">
+                              {editingEvent?.id === evt.id && editingEvent.field === 'due_date' ? (
+                                <input
+                                  autoFocus
+                                  type="date"
+                                  className="text-[11px] text-slate-500 bg-transparent outline-none border-b border-indigo-400 w-28"
+                                  value={editingEvent.value}
+                                  onChange={(e) => setEditingEvent({ ...editingEvent, value: e.target.value })}
+                                  onBlur={() => {
+                                    if (escapeEventRef.current) { escapeEventRef.current = false; return; }
+                                    handleSaveEventField(evt.id, 'due_date', editingEvent.value);
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
+                                    if (e.key === 'Escape') { escapeEventRef.current = true; setEditingEvent(null); }
+                                  }}
+                                />
+                              ) : (
+                                <span
+                                  className="text-[11px] text-slate-400 cursor-text hover:underline hover:decoration-dotted transition-all"
+                                  title="Click to edit date"
+                                  onClick={() => setEditingEvent({ id: evt.id, field: 'due_date', value: evt.due_date })}
+                                >
+                                  {getRelativeDate(evt.due_date)}
+                                </span>
+                              )}
+                              {editingEvent?.id === evt.id && editingEvent.field === 'time' ? (
+                                <input
+                                  autoFocus
+                                  type="time"
+                                  className="text-[11px] text-slate-500 bg-transparent outline-none border-b border-indigo-400 w-20"
+                                  value={editingEvent.value}
+                                  onChange={(e) => setEditingEvent({ ...editingEvent, value: e.target.value })}
+                                  onBlur={() => {
+                                    if (escapeEventRef.current) { escapeEventRef.current = false; return; }
+                                    handleSaveEventField(evt.id, 'time', editingEvent.value);
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
+                                    if (e.key === 'Escape') { escapeEventRef.current = true; setEditingEvent(null); }
+                                  }}
+                                />
+                              ) : (
+                                <span
+                                  className="text-[11px] cursor-text hover:underline hover:decoration-dotted transition-all"
+                                  title="Click to edit time"
+                                  onClick={() => setEditingEvent({ id: evt.id, field: 'time', value: evt.time ?? '' })}
+                                >
+                                  {evt.time
+                                    ? <span className="text-slate-400">{formatTime12h(evt.time)}</span>
+                                    : <span className="text-slate-300 italic">+ time</span>
+                                  }
+                                </span>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteAssignment(evt.id)}
+                              title="Delete"
+                              className="p-0.5 rounded text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-colors shrink-0"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
                           </div>
                         ))}
+
+                        {/* Draft event row */}
+                        {showDraftEventRow && draftEvent && (
+                          <div className="flex items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2 animate-in fade-in duration-150">
+                            <div className="w-4 h-4 rounded border-2 border-slate-200 shrink-0" />
+                            <input
+                              autoFocus
+                              placeholder="Event name"
+                              value={draftEvent.event_name}
+                              onChange={(e) => setDraftEvent({ ...draftEvent, event_name: e.target.value })}
+                              onBlur={handleDraftEventNameBlur}
+                              onFocus={handleDraftEventFocus}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') { e.preventDefault(); handleSaveDraftEvent(); }
+                                if (e.key === 'Escape') { setDraftEvent(null); }
+                              }}
+                              className="flex-1 min-w-0 text-[13px] bg-transparent outline-none border-b border-slate-300 text-slate-600 focus:border-indigo-400 placeholder-slate-300"
+                            />
+                            <button
+                              type="button"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => setDraftEvent((d) => d ? { ...d, type: d.type === 'assignment' ? 'exam' : 'assignment' } : d)}
+                              className={`shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-medium cursor-pointer hover:opacity-70 transition-opacity ${
+                                draftEvent.type === 'exam' ? 'bg-rose-50 text-rose-600' : 'bg-blue-50 text-blue-600'
+                              }`}
+                            >
+                              {draftEvent.type}
+                            </button>
+                            <input
+                              type="date"
+                              value={draftEvent.due_date}
+                              onChange={(e) => setDraftEvent({ ...draftEvent, due_date: e.target.value })}
+                              onFocus={handleDraftEventFocus}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') { e.preventDefault(); handleSaveDraftEvent(); }
+                              }}
+                              className="text-[11px] text-slate-500 bg-transparent outline-none border-b border-slate-300 focus:border-indigo-400 w-28 shrink-0"
+                            />
+                            <input
+                              type="time"
+                              value={draftEvent.time}
+                              onChange={(e) => setDraftEvent({ ...draftEvent, time: e.target.value })}
+                              onFocus={handleDraftEventFocus}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') { e.preventDefault(); handleSaveDraftEvent(); }
+                              }}
+                              className="text-[11px] text-slate-500 bg-transparent outline-none border-b border-slate-300 focus:border-indigo-400 w-20 shrink-0"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setDraftEvent(null)}
+                              className="p-0.5 rounded text-slate-300 hover:text-rose-400 transition-colors shrink-0"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
 
-                    {/* Controls row: Add Event + pagination arrows + page numbers */}
+                    {/* Controls row */}
                     <div className="flex items-center justify-between pt-2.5">
                       <button
                         type="button"
-                        onClick={() => handleOpenAddEvent(course.id)}
-                        className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 transition-colors"
+                        onClick={() => handleOpenDraftEvent(course.id)}
+                        disabled={!!draftEvent || courseAssignments.length >= 50}
+                        title={courseAssignments.length >= 50 ? 'Assignment limit reached (50 max)' : undefined}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 transition-colors disabled:opacity-40"
                       >
                         <Plus className="w-3.5 h-3.5" />
                         Add Event
@@ -680,17 +1076,14 @@ export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
                       {totalEvtPages > 1 && (
                         <div className="flex items-center gap-1.5">
                           <p className="text-[11px] text-slate-400 mr-0.5">
-                            {evtPage * EVENTS_PER_CARD + 1}&ndash;{Math.min((evtPage + 1) * EVENTS_PER_CARD, evts.length)} of {evts.length}
+                            {evtPage * EVENTS_PER_CARD + 1}&ndash;{Math.min((evtPage + 1) * EVENTS_PER_CARD, courseAssignments.length)} of {courseAssignments.length}
                           </p>
                           <button
                             type="button"
                             onClick={() => {
                               setCardSlideDir((prev) => ({ ...prev, [course.id]: 'left' }));
                               setCardAnimKey((prev) => ({ ...prev, [course.id]: (prev[course.id] ?? 0) + 1 }));
-                              setCardEventPage((prev) => ({
-                                ...prev,
-                                [course.id]: Math.max(0, (prev[course.id] ?? 0) - 1),
-                              }));
+                              setCardEventPage((prev) => ({ ...prev, [course.id]: Math.max(0, (prev[course.id] ?? 0) - 1) }));
                             }}
                             disabled={evtPage === 0}
                             className="w-6 h-6 rounded-md flex items-center justify-center border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
@@ -702,10 +1095,7 @@ export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
                             onClick={() => {
                               setCardSlideDir((prev) => ({ ...prev, [course.id]: 'right' }));
                               setCardAnimKey((prev) => ({ ...prev, [course.id]: (prev[course.id] ?? 0) + 1 }));
-                              setCardEventPage((prev) => ({
-                                ...prev,
-                                [course.id]: Math.min(totalEvtPages - 1, (prev[course.id] ?? 0) + 1),
-                              }));
+                              setCardEventPage((prev) => ({ ...prev, [course.id]: Math.min(totalEvtPages - 1, (prev[course.id] ?? 0) + 1) }));
                             }}
                             disabled={evtPage >= totalEvtPages - 1}
                             className="w-6 h-6 rounded-md flex items-center justify-center border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-20 disabled:cursor-not-allowed transition-colors"
@@ -720,260 +1110,50 @@ export function StudyPlan({ accessToken, onGoToUploads }: StudyPlanProps) {
               </div>
             );
           })}
-        </div>
-      )}
 
-      {/* ========== ADD COURSE MODAL ========== */}
-      {addOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          onClick={(e) => { if (e.target === e.currentTarget) setAddOpen(false); }}
-        >
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md mx-4 p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">Add Course</h2>
-            <form onSubmit={handleAddCourse} className="space-y-4 text-sm">
-              <div>
-                <label htmlFor="course-name" className="block text-xs font-medium text-slate-700 mb-1.5">
-                  Course name
-                </label>
-                <input
-                  id="course-name"
-                  type="text"
-                  required
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  placeholder="e.g. Data Structures & Algorithms"
-                  autoFocus
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:border-indigo-500"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label htmlFor="quarter-start" className="block text-xs font-medium text-slate-700 mb-1.5">
-                    Quarter start
-                  </label>
+          {/* Draft course card (inline, at bottom of grid) */}
+          {draftCourse && (
+            <div
+              className={`rounded-2xl border-2 border-dashed border-slate-300 bg-white p-5 transition-opacity duration-200 ${draftVisible ? 'opacity-100' : 'opacity-0'}`}
+            >
+              <div className="flex items-start gap-2 mb-4">
+                <div className="w-3 h-3 mt-1.5 rounded-full bg-slate-200 shrink-0" />
+                <div className="flex-1 min-w-0 space-y-1.5">
                   <input
-                    id="quarter-start"
-                    type="date"
-                    value={newQuarterStart}
-                    onChange={(e) => setNewQuarterStart(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:border-indigo-500"
+                    autoFocus
+                    placeholder="Course name"
+                    value={draftCourse.class_name}
+                    onChange={(e) => setDraftCourse({ ...draftCourse, class_name: e.target.value })}
+                    onBlur={handleDraftCourseBlur}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') { e.preventDefault(); handleDraftCourseBlur(); }
+                      if (e.key === 'Escape') { setDraftVisible(false); setTimeout(() => setDraftCourse(null), 200); }
+                    }}
+                    className={`${inlineInputBase} font-semibold text-slate-900 text-base placeholder-slate-300`}
                   />
-                </div>
-                <div>
-                  <label htmlFor="quarter-end" className="block text-xs font-medium text-slate-700 mb-1.5">
-                    Quarter end
-                  </label>
                   <input
-                    id="quarter-end"
-                    type="date"
-                    value={newQuarterEnd}
-                    onChange={(e) => setNewQuarterEnd(e.target.value)}
-                    className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:border-indigo-500"
+                    placeholder="Professor (optional)"
+                    value={draftCourse.teacher}
+                    onChange={(e) => setDraftCourse({ ...draftCourse, teacher: e.target.value })}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') { e.preventDefault(); handleDraftCourseBlur(); }
+                    }}
+                    className={`${inlineInputBase} text-xs text-slate-500 placeholder-slate-300`}
+                  />
+                  <input
+                    placeholder="Term (optional)"
+                    value={draftCourse.academic_term}
+                    onChange={(e) => setDraftCourse({ ...draftCourse, academic_term: e.target.value })}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') { e.preventDefault(); handleDraftCourseBlur(); }
+                    }}
+                    className={`${inlineInputBase} text-xs text-slate-400 placeholder-slate-300`}
                   />
                 </div>
               </div>
-              <div>
-                <label htmlFor="course-teacher" className="block text-xs font-medium text-slate-700 mb-1.5">
-                  Instructor (optional)
-                </label>
-                <input
-                  id="course-teacher"
-                  type="text"
-                  value={newTeacher}
-                  onChange={(e) => setNewTeacher(e.target.value)}
-                  placeholder="e.g. Dr. Smith"
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:border-indigo-500"
-                />
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setAddOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-sm hover:bg-slate-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors"
-                >
-                  Add Course
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* ========== ADD EVENT MODAL ========== */}
-      {eventOpen && eventCourse && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          onClick={(e) => { if (e.target === e.currentTarget) setEventOpen(false); }}
-        >
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-200 w-full max-w-md mx-4 p-6 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">
-              Add event for {eventCourse.name}
-            </h2>
-            <form onSubmit={handleSubmitEvent} className="space-y-4 text-sm">
-              <div>
-                <label htmlFor="event-title" className="block text-xs font-medium text-slate-700 mb-1.5">
-                  Event name
-                </label>
-                <input
-                  id="event-title"
-                  type="text"
-                  required
-                  value={eventTitle}
-                  onChange={(e) => setEventTitle(e.target.value)}
-                  placeholder="e.g. Midterm Exam"
-                  autoFocus
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:border-indigo-500"
-                />
-              </div>
-              <div>
-                <label htmlFor="event-date" className="block text-xs font-medium text-slate-700 mb-1.5">
-                  Date
-                </label>
-                <input
-                  id="event-date"
-                  type="date"
-                  required
-                  value={eventDate}
-                  onChange={(e) => setEventDate(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:border-indigo-500"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  id="event-allday"
-                  type="checkbox"
-                  checked={eventAllDay}
-                  onChange={(e) => setEventAllDay(e.target.checked)}
-                  className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                />
-                <label htmlFor="event-allday" className="text-sm text-gray-700">All day</label>
-              </div>
-              {!eventAllDay && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label htmlFor="event-start-time" className="block text-xs font-medium text-slate-700 mb-1.5">Start time</label>
-                    <input id="event-start-time" type="time" value={eventStartTime} onChange={(e) => setEventStartTime(e.target.value)} className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:border-indigo-500" />
-                  </div>
-                  <div>
-                    <label htmlFor="event-end-time" className="block text-xs font-medium text-slate-700 mb-1.5">End time</label>
-                    <input id="event-end-time" type="time" value={eventEndTime} onChange={(e) => setEventEndTime(e.target.value)} className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:border-indigo-500" />
-                  </div>
-                </div>
-              )}
-              <div>
-                <label className="block text-xs font-medium text-slate-700 mb-1.5">Repeat</label>
-                <select
-                  value={eventRepeat}
-                  onChange={(e) => setEventRepeat(e.target.value as typeof eventRepeat)}
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm bg-white text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:border-indigo-500"
-                >
-                  <option value="none">Does not repeat</option>
-                  <option value="daily">Daily</option>
-                  <option value="weekdays">Weekdays (M-F)</option>
-                  <option value="weekly">Weekly - pick days below</option>
-                </select>
-                {eventRepeat === 'weekly' && (
-                  <div className="mt-2">
-                    <p className="text-xs text-gray-600 mb-1.5">Repeat on:</p>
-                    <div className="grid grid-cols-7 gap-1">
-                      {WEEKLY_REPEAT_DAY_LABELS.map((label, i) => (
-                        <label
-                          key={label}
-                          className="inline-flex items-center justify-center gap-1 px-1 py-1 rounded-lg border border-gray-300 bg-white text-xs cursor-pointer hover:bg-gray-50 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-100"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={eventWeeklyDays[i]}
-                            onChange={(e) => {
-                              const next = [...eventWeeklyDays];
-                              next[i] = e.target.checked;
-                              setEventWeeklyDays(next);
-                            }}
-                            className="rounded border-gray-300 text-indigo-600"
-                          />
-                          <span className="font-medium text-gray-900 shrink-0">{label}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {eventRepeat !== 'none' && (
-                  <div className="mt-2 space-y-2">
-                    <label className="block text-xs text-gray-600">Ends</label>
-                    <select
-                      value={eventEndType}
-                      onChange={(e) => setEventEndType(e.target.value as typeof eventEndType)}
-                      className="w-full px-3.5 py-2 text-sm border border-gray-300 rounded-xl"
-                    >
-                      <option value="never">Never</option>
-                      <option value="date">On a specific date</option>
-                      <option value="count">After a number of occurrences</option>
-                    </select>
-                    {eventEndType === 'date' && (
-                      <input type="date" value={eventEndDate} onChange={(e) => setEventEndDate(e.target.value)} className="w-full px-3.5 py-2 text-sm border border-gray-300 rounded-xl" />
-                    )}
-                    {eventEndType === 'count' && (
-                      <div className="flex items-center gap-2">
-                        <input type="number" min={1} value={eventEndCount} onChange={(e) => setEventEndCount(parseInt(e.target.value, 10) || 5)} className="w-20 px-3 py-2 text-sm border border-gray-300 rounded-xl" />
-                        <span className="text-sm text-gray-600">occurrences</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-              <div>
-                <label htmlFor="event-description" className="block text-xs font-medium text-slate-700 mb-1.5">Description (optional)</label>
-                <textarea
-                  id="event-description"
-                  rows={2}
-                  value={eventDescription}
-                  onChange={(e) => setEventDescription(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:border-indigo-500"
-                  placeholder="Add a description..."
-                />
-              </div>
-              {eventError && (
-                <p className="text-xs text-rose-600">
-                  {eventError}
-                  {!accessToken && onGoToUploads && (
-                    <>
-                      {' '}
-                      <button type="button" onClick={onGoToUploads} className="underline font-medium hover:no-underline">
-                        Connect account
-                      </button>.
-                    </>
-                  )}
-                </p>
-              )}
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setEventOpen(false)}
-                  className="px-4 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-sm hover:bg-slate-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={eventSubmitting}
-                  className="px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-                >
-                  {eventSubmitting ? 'Adding...' : 'Add Event'}
-                </button>
-              </div>
-            </form>
-          </div>
+              <p className="text-[11px] text-slate-400">Press Enter to save</p>
+            </div>
+          )}
         </div>
       )}
     </div>

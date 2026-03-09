@@ -146,7 +146,10 @@ export default function FigmaApp() {
 
                 <button
                   data-active={currentView === "study-plan"}
-                  onClick={() => setCurrentView("study-plan")}
+                  onClick={() => {
+                    if (!isAuthenticated) { router.push("/auth/login"); return; }
+                    setCurrentView("study-plan");
+                  }}
                   className={`relative z-10 px-5 py-2 text-sm rounded-lg font-medium transition-colors duration-200 ${
                     currentView === "study-plan"
                       ? "text-white"
@@ -195,6 +198,7 @@ export default function FigmaApp() {
           <Uploads
             initialAccessToken={accessToken}
             onAccessTokenChange={setAccessToken}
+            isAuthenticated={isAuthenticated}
           />
         )}
         {currentView === "calendar" && (
@@ -208,6 +212,7 @@ export default function FigmaApp() {
           <StudyPlan
             accessToken={accessToken}
             onGoToUploads={() => setCurrentView("uploads")}
+            isAuthenticated={isAuthenticated}
           />
         )}
         {currentView === "profile" && (

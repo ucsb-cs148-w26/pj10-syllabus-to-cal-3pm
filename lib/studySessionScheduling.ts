@@ -92,7 +92,8 @@ export function schedule_sessions(events : CalendarEvent[]){
     const studySessions : StudySession[] = [];
     for(let a=0; a<events.length; a++){
         const event = events[a];
-        if(event.description != "ASSIGNMENT" && event.description != "EXAM") continue;
+        const eventType = event.type || (event.description === 'EXAM' ? 'exam' : event.description === 'ASSIGNMENT' ? 'assignment' : undefined);
+        if(eventType !== 'assignment' && eventType !== 'exam') continue;
         const score = priority_score(event);
         if(Number.isNaN(score)) continue;
         if(score < 0) continue; //events in past
@@ -108,7 +109,7 @@ export function schedule_sessions(events : CalendarEvent[]){
                     date: Number.isNaN(score) ? 'none' : `${start_date.getFullYear()}-${String(start_date.getMonth() + 1).padStart(2, '0')}-${String(start_date.getDate()).padStart(2, '0')}`,
                     score: score,
                     priority: 'high', //gets re-assigned later
-                    type: event.description === 'EXAM' ? 'exam' : 'assignment',
+                    type: eventType as 'assignment' | 'exam',
                 }
         );
         }
