@@ -127,15 +127,24 @@ export function parseCsvToCalendarEvents(csvText: string): CalendarEvent[] {
 
     if (!title && !start) continue;
 
-    const type = rawDescription === 'EXAM' ? 'exam' : rawDescription === 'ASSIGNMENT' ? 'assignment' : rawDescription === 'LECTURE' ? 'class' : undefined;
-    const typeLabel = rawDescription === 'EXAM' ? 'Exam' : rawDescription === 'ASSIGNMENT' ? 'Assignment' : rawDescription === 'LECTURE' ? 'Lecture' : rawDescription;
-    const description = course ? `${course} – ${typeLabel}` : typeLabel;
+    const [typeKeyword, ...notesParts] = rawDescription.split('|');
+    const typeKey = typeKeyword.trim();
+    const notes = notesParts.join('|').trim();
+    const type = typeKey === 'EXAM' ? 'exam' : typeKey === 'ASSIGNMENT' ? 'assignment' : typeKey === 'LECTURE' ? 'class' : undefined;
+    const typeLabel = typeKey === 'EXAM' ? 'Exam' : typeKey === 'ASSIGNMENT' ? 'Assignment' : typeKey === 'LECTURE' ? 'Lecture' : typeKey;
+    const baseDescription = course ? `${course} – ${typeLabel}` : typeLabel;
+    const description = notes ? `${baseDescription}\n${notes}` : baseDescription;
+
+    // Assignments are zero-duration timed events (start == end), never all-day
+    const isAssignment = type === 'assignment';
+    const allDay = isAssignment ? false : ['true', '1', 'yes', 'y'].includes(allDayRaw);
+    const resolvedEnd = end || (isAssignment ? start : undefined);
 
     events.push({
       title,
       start,
-      end: end || undefined,
-      allDay: ['true', '1', 'yes', 'y'].includes(allDayRaw),
+      end: resolvedEnd || undefined,
+      allDay,
       description,
       location,
       class: course,

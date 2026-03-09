@@ -1433,7 +1433,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                         </>
                       ) : (
                         <>
-                          <p>{new Date(e.start).toLocaleString()}{e.end ? ` – ${new Date(e.end).toLocaleTimeString()}` : ''}</p>
+                          <p>{new Date(e.start).toLocaleString()}{e.end && e.end !== e.start ? ` – ${new Date(e.end).toLocaleTimeString()}` : ''}</p>
                           <p className="whitespace-nowrap">Timed</p>
                         </>
                       )}
@@ -1500,11 +1500,11 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                 <p className="text-gray-500">No events to display. Upload a syllabus first.</p>
               ) : (
                 <pre className="whitespace-pre-wrap break-words text-xs">
-                  title,start,allDay,description,location,class{"\n"}
+                  title,start,allDay,description,location,class,end{"\n"}
                   {events
                     .map(
                       (e) =>
-                        `${e.title},${e.start},${String(e.allDay)},${e.description ?? ''},${e.location ?? ''},${e.class ?? ''}`,
+                        `${e.title},${e.start},${String(e.allDay)},${e.description ?? ''},${e.location ?? ''},${e.class ?? ''},${e.end ?? ''}`,
                     )
                     .join('\n')}
                 </pre>

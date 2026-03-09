@@ -133,7 +133,7 @@ RULE C — ADDING ONE-TIME EVENTS: If the instruction mentions a specific date a
   - Set description to LECTURE.
   - Leave class empty unless the user specifies a course.
   - Example: user says "I have a meeting at 2026/03/06 at 7:00 pm"
-    → Meeting,2026-03-06T19:00:00,false,LECTURE,,,2026-03-06T20:00:00
+    → Meeting,2026-03-06T19:00:00,false,LECTURE,,
 
 Output ONLY valid CSV rows in the established format. No markdown, no explanations.
 `
@@ -147,7 +147,7 @@ No markdown. No explanations.
 Only include: ${eventTypesStr}
 
 RULES:
-- Ignore holidays, office hours, breaks, readings, or optional items.
+- Ignore holidays, office hours, breaks, assignments release dates, or optional items. 
 
 OUTPUT FORMAT (STRICT):
 Output EXACTLY 7 columns in this EXACT order:
@@ -170,11 +170,12 @@ start:
 
 allDay:
 - true or false (lowercase)
-- LECTURE and EXAM events with a known time → false
-- ASSIGNMENT events → always true
 
 description:
-- Use event type (LECTURE / ASSIGNMENT / EXAM)
+- Start with the event type keyword: LECTURE, ASSIGNMENT, or EXAM
+- If there are readings or important notes associated with this event (e.g. "Read Ch. 8", "HW 3 due", "bring calculator"), append them after a pipe separator: LECTURE | Ch. 8 Reading Due
+- Keep notes brief (under 10 words). No commas. Only include notes explicitly tied to this specific event.
+- If no notes, use just the keyword: LECTURE
 
 location:
 - Specify Location if mentioned in the files, else ALWAYS leave empty
@@ -194,8 +195,8 @@ end:
 EXAMPLE:
 
 title,start,allDay,description,location,class,end
-Lecture,2025-03-31T08:00:00,false,LECTURE,,WRIT 105CW,2025-03-31T09:15:00
-Midterm Exam,2025-04-15T10:00:00,false,EXAM,,WRIT 105CW,2025-04-15T12:00:00
+Lecture,2025-03-31T08:00:00,false,LECTURE | Ch. 8 Reading Due,,WRIT 105CW,2025-03-31T09:15:00
+Midterm Exam,2025-04-15T10:00:00,false,EXAM | bring blue book,,WRIT 105CW,2025-04-15T12:00:00
 Service Pledge Due,2025-04-23,true,ASSIGNMENT,,WRIT 105CW,
 
 ${userInstructionsSection}
