@@ -11,9 +11,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Check,
-  Pencil,
   BookOpen,
-  X,
+  Plus,
 } from 'lucide-react';
 import PdfUpload from '@/components/PdfUpload';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -25,9 +24,6 @@ import { createClient } from '@/lib/supabase/client';
 import { getCourses, createCourse, createAssignments, type DbCourse } from '@/lib/supabase/database';
 
 
-const WEEKLY_REPEAT_DAY_LABELS = ['Sun', 'M', 'Tue', 'W', 'Th', 'F', 'Sat'] as const;
-const RRULE_DAY_MAP = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'] as const;
-
 function getTimeFromISO(iso: string): string {
   if (!iso.includes('T')) return '09:00';
   const d = new Date(iso);
@@ -36,39 +32,6 @@ function getTimeFromISO(iso: string): string {
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
 }
 
-function buildRecurrence(
-  repeat: 'none' | 'daily' | 'weekdays' | 'weekly',
-  weeklyDays: boolean[],
-  endType: 'never' | 'date' | 'count',
-  endDate: string,
-  endCount: number
-): string[] {
-  if (repeat === 'none') return [];
-  const parts: string[] = [];
-  if (repeat === 'daily') parts.push('FREQ=DAILY');
-  else if (repeat === 'weekdays') parts.push('FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR');
-  else if (repeat === 'weekly') {
-    const days = weeklyDays.map((on, i) => (on ? RRULE_DAY_MAP[i] : null)).filter(Boolean);
-    if (days.length === 0) return [];
-    parts.push('FREQ=WEEKLY;BYDAY=' + (days as string[]).join(','));
-  } else return [];
-  if (endType === 'date' && endDate) {
-    const d = new Date(endDate + 'T23:59:59');
-    parts.push('UNTIL=' + d.toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z');
-  } else if (endType === 'count' && endCount > 0) {
-    parts.push('COUNT=' + endCount);
-  }
-  return ['RRULE:' + parts.join(';')];
-}
-
-function parseRecurrenceToRepeat(rrules: string[] | undefined): 'none' | 'daily' | 'weekdays' | 'weekly' {
-  if (!rrules || rrules.length === 0) return 'none';
-  const r = rrules[0].replace(/^RRULE:/i, '');
-  if (r.includes('FREQ=DAILY')) return 'daily';
-  if (r.includes('BYDAY=MO,TU,WE,TH,FR') && !r.includes('SA') && !r.includes('SU')) return 'weekdays';
-  if (r.includes('FREQ=WEEKLY')) return 'weekly';
-  return 'none';
-}
 
 interface UploadsProps {
   initialAccessToken: string | null;
@@ -1100,7 +1063,12 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
     const currentLabel = TYPE_TO_LABEL[(evt.type ?? 'undefined') as keyof typeof TYPE_TO_LABEL] ?? 'OTHER';
     const idx = REVIEW_TYPE_CYCLE.indexOf(currentLabel as typeof REVIEW_TYPE_CYCLE[number]);
     const next = REVIEW_TYPE_CYCLE[(idx + 1) % REVIEW_TYPE_CYCLE.length];
-    const updated: CalendarEvent = { ...evt, type: LABEL_TO_TYPE[next] };
+    const nextType = LABEL_TO_TYPE[next];
+    let updated: CalendarEvent = { ...evt, type: nextType };
+    // Assignments show a single time; collapse end to match start
+    if (nextType === 'assignment') {
+      updated = { ...updated, allDay: false, end: updated.start };
+    }
     const nextEvents = events.map((e) => (e === evt ? updated : e));
     setEvents(nextEvents);
     try { localStorage.setItem('calendarEvents', JSON.stringify(nextEvents)); } catch { /* ignore */ }
@@ -1108,73 +1076,100 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
 
   const [showRegenerateModal, setShowRegenerateModal] = useState(false);
 
-  const [reviewEditEvent, setReviewEditEvent] = useState<CalendarEvent | null>(null);
-  const [revTitle, setRevTitle] = useState('');
-  const [revDate, setRevDate] = useState('');
-  const [revAllDay, setRevAllDay] = useState(true);
-  const [revStartTime, setRevStartTime] = useState('09:00');
-  const [revEndTime, setRevEndTime] = useState('10:00');
-  const [revDescription, setRevDescription] = useState('');
-  const [revRepeat, setRevRepeat] = useState<'none' | 'daily' | 'weekdays' | 'weekly'>('none');
-  const [revWeeklyDays, setRevWeeklyDays] = useState([false, false, true, true, true, true, false]);
-  const [revEndType, setRevEndType] = useState<'never' | 'date' | 'count'>('never');
-  const [revEndDate, setRevEndDate] = useState('');
-  const [revEndCount, setRevEndCount] = useState(5);
-  const [reviewDeleteConfirm, setReviewDeleteConfirm] = useState(false);
+  const [inlineEdit, setInlineEdit] = useState<{
+    event: CalendarEvent;
+    field: 'title' | 'date' | 'startTime' | 'endTime' | 'description';
+    value: string;
+  } | null>(null);
+  const escapeInlineRef = useRef(false);
+  const eventsListRef = useRef<HTMLDivElement>(null);
+  const pendingEventRef = useRef<CalendarEvent | null>(null);
+  const [fadingEvents, setFadingEvents] = useState<Set<CalendarEvent>>(new Set());
 
-  function openReviewEdit(e: CalendarEvent) {
-    setReviewEditEvent(e);
-    setRevTitle(e.title);
-    const d = e.start.includes('T') ? e.start.slice(0, 10) : e.start.slice(0, 10);
-    setRevDate(d);
-    setRevAllDay(!!e.allDay);
-    setRevStartTime(getTimeFromISO(e.start));
-    setRevEndTime(getTimeFromISO(e.end ?? e.start));
-    setRevDescription(e.description ?? '');
-    setRevRepeat(parseRecurrenceToRepeat(e.recurrence));
-    setRevWeeklyDays([false, false, true, true, true, true, false]);
-    setRevEndType('never');
-    setRevEndDate('');
-    setRevEndCount(5);
-    setReviewDeleteConfirm(false);
+  function handleDeleteEvent(evt: CalendarEvent) {
+    if (inlineEdit?.event === evt) setInlineEdit(null);
+    if (pendingEventRef.current === evt) pendingEventRef.current = null;
+    setFadingEvents((prev) => new Set([...prev, evt]));
+    setTimeout(() => {
+      setEvents((prev) => {
+        const next = prev.filter((e) => e !== evt);
+        try { localStorage.setItem('calendarEvents', JSON.stringify(next)); } catch { /* ignore */ }
+        return next;
+      });
+      setFadingEvents((prev) => { const n = new Set(prev); n.delete(evt); return n; });
+    }, 200);
   }
 
-  function closeReviewEdit() {
-    setReviewEditEvent(null);
-    setReviewDeleteConfirm(false);
-  }
-
-  function handleReviewEditSave(e: React.FormEvent) {
-    e.preventDefault();
-    if (!reviewEditEvent || !revTitle.trim()) return;
-    const start = revAllDay ? revDate + 'T00:00:00' : revDate + 'T' + revStartTime + ':00';
-    const end = revAllDay ? revDate + 'T00:00:00' : revDate + 'T' + revEndTime + ':00';
-    const recurrence = buildRecurrence(revRepeat, revWeeklyDays, revEndType, revEndDate, revEndCount);
-    const updated: CalendarEvent = {
-      ...reviewEditEvent,
-      title: revTitle.trim(),
-      start,
-      end: revAllDay ? undefined : end,
-      allDay: revAllDay,
-      description: revDescription.trim() || undefined,
-      recurrence: recurrence.length ? recurrence : undefined,
-    };
-    const nextEvents = events.map((ev) => (ev === reviewEditEvent ? updated : ev));
+  function handleInlineSave(evt: CalendarEvent, field: string, value: string) {
+    const isPending = pendingEventRef.current === evt;
+    if (escapeInlineRef.current) {
+      escapeInlineRef.current = false;
+      if (isPending) handleDeleteEvent(evt);
+      return;
+    }
+    const trimmed = value.trim();
+    if (field === 'title' && !trimmed) { handleDeleteEvent(evt); return; }
+    let updated: CalendarEvent = { ...evt };
+    if (field === 'title') {
+      updated = { ...updated, title: trimmed };
+      pendingEventRef.current = null;
+    } else if (field === 'date') {
+      if (!trimmed) { setInlineEdit(null); return; }
+      const timePart = evt.start.includes('T') ? evt.start.slice(10) : 'T00:00:00';
+      updated = { ...updated, start: trimmed + timePart };
+      if (evt.end) {
+        const endTimePart = evt.end.includes('T') ? evt.end.slice(10) : 'T00:00:00';
+        updated = { ...updated, end: trimmed + endTimePart };
+      }
+    } else if (field === 'startTime') {
+      if (!trimmed) { setInlineEdit(null); return; }
+      const date = evt.start.slice(0, 10);
+      const newStart = date + 'T' + trimmed + ':00';
+      if (evt.type === 'assignment') {
+        updated = { ...updated, start: newStart, end: newStart, allDay: false };
+      } else if (evt.end && newStart > evt.end) {
+        // swap: new start is after existing end
+        updated = { ...updated, start: evt.end, end: newStart, allDay: false };
+      } else {
+        updated = { ...updated, start: newStart, allDay: false };
+      }
+    } else if (field === 'endTime') {
+      if (!trimmed) { setInlineEdit(null); return; }
+      const date = (evt.end ?? evt.start).slice(0, 10);
+      const newEnd = date + 'T' + trimmed + ':00';
+      if (newEnd < evt.start) {
+        // swap: new end is before existing start
+        updated = { ...updated, start: newEnd, end: evt.start, allDay: false };
+      } else {
+        updated = { ...updated, end: newEnd, allDay: false };
+      }
+    } else if (field === 'description') {
+      updated = { ...updated, description: trimmed || undefined };
+    }
+    const nextEvents = events.map((e) => e === evt ? updated : e);
     setEvents(nextEvents);
-    try {
-      localStorage.setItem('calendarEvents', JSON.stringify(nextEvents));
-    } catch { /* ignore */ }
-    closeReviewEdit();
+    try { localStorage.setItem('calendarEvents', JSON.stringify(nextEvents)); } catch { /* ignore */ }
+    setInlineEdit(null);
   }
 
-  function handleReviewEditDelete() {
-    if (!reviewEditEvent) return;
-    const next = events.filter((ev) => ev !== reviewEditEvent);
-    setEvents(next);
-    try {
-      localStorage.setItem('calendarEvents', JSON.stringify(next));
-    } catch { /* ignore */ }
-    closeReviewEdit();
+  function handleAddEvent() {
+    const today = new Date().toISOString().slice(0, 10);
+    const newEvt: CalendarEvent = {
+      title: 'New Event',
+      start: today + 'T09:00:00',
+      end: today + 'T10:00:00',
+      allDay: false,
+      type: undefined,
+    };
+    const nextEvents = [...events, newEvt];
+    setEvents(nextEvents);
+    try { localStorage.setItem('calendarEvents', JSON.stringify(nextEvents)); } catch { /* ignore */ }
+    setCategoryFilter('ALL');
+    pendingEventRef.current = newEvt;
+    setInlineEdit({ event: newEvt, field: 'title', value: newEvt.title });
+    setTimeout(() => {
+      eventsListRef.current?.scrollTo({ top: eventsListRef.current.scrollHeight, behavior: 'smooth' });
+    }, 50);
   }
 
   return (
@@ -1334,43 +1329,53 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
               <p className="text-sm text-gray-500">Review and make changes to your generated calendar.</p>
             </div>
 
-            {/* Category filter buttons */}
-            <div className="flex flex-wrap gap-1.5 mb-4">
-              {(
-                [
-                  { key: 'ALL', label: 'All' },
-                  { key: 'LECTURE', label: 'Lectures' },
-                  { key: 'ASSIGNMENT', label: 'Assignments' },
-                  { key: 'EXAM', label: 'Exams' },
-                ] as { key: CategoryFilter; label: string }[]
-              ).map(({ key, label }) => {
-                const count = key === 'ALL' ? events.length : events.filter((e) =>
-                  key === 'LECTURE' ? e.type === 'class' :
-                  key === 'ASSIGNMENT' ? e.type === 'assignment' :
-                  key === 'EXAM' ? e.type === 'exam' : false
-                ).length;
-                return (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setCategoryFilter(key)}
-                    className={
-                      'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ' +
-                      (categoryFilter === key
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200')
-                    }
-                  >
-                    {label}
-                    <span className={
-                      'rounded-full px-1.5 py-0.5 text-[10px] font-semibold ' +
-                      (categoryFilter === key ? 'bg-white/20 text-white' : 'bg-white text-gray-500')
-                    }>
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
+            {/* Category filter buttons + Add Event */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-wrap gap-1.5">
+                {(
+                  [
+                    { key: 'ALL', label: 'All' },
+                    { key: 'LECTURE', label: 'Lectures' },
+                    { key: 'ASSIGNMENT', label: 'Assignments' },
+                    { key: 'EXAM', label: 'Exams' },
+                  ] as { key: CategoryFilter; label: string }[]
+                ).map(({ key, label }) => {
+                  const count = key === 'ALL' ? events.length : events.filter((e) =>
+                    key === 'LECTURE' ? e.type === 'class' :
+                    key === 'ASSIGNMENT' ? e.type === 'assignment' :
+                    key === 'EXAM' ? e.type === 'exam' : false
+                  ).length;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => setCategoryFilter(key)}
+                      className={
+                        'inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors ' +
+                        (categoryFilter === key
+                          ? 'bg-indigo-600 text-white'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200')
+                      }
+                    >
+                      {label}
+                      <span className={
+                        'rounded-full px-1.5 py-0.5 text-[10px] font-semibold ' +
+                        (categoryFilter === key ? 'bg-white/20 text-white' : 'bg-white text-gray-500')
+                      }>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <button
+                type="button"
+                onClick={handleAddEvent}
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm transition-colors"
+              >
+                <Plus className="w-3 h-3" />
+                Add Event
+              </button>
             </div>
 
             {!hasEvents ? (
@@ -1386,60 +1391,157 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                 <p className="text-xs text-gray-400">Try a different filter or re-process your syllabus.</p>
               </div>
             ) : (
-              <div className="space-y-2 max-h-[50vh] overflow-y-auto text-sm">
-                {filteredEvents.slice(0, 50).map((e, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-start justify-between border-b border-gray-100 last:border-0 py-2 gap-2"
-                  >
-                    <div className="flex items-start gap-2 min-w-0 flex-1">
-                      <button
-                        type="button"
-                        onClick={() => openReviewEdit(e)}
-                        className="flex-shrink-0 p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-colors"
-                        title="Edit event"
-                        aria-label="Edit event"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
-                      <div className="pr-4 min-w-0">
-                        <p className="font-medium text-gray-900 line-clamp-2">{e.title}</p>
-                        {(() => {
-                          const label = TYPE_TO_LABEL[(e.type ?? 'undefined') as keyof typeof TYPE_TO_LABEL] ?? 'OTHER';
-                          return (
-                            <button
-                              type="button"
-                              onClick={() => handleCycleReviewType(e)}
-                              title="Click to change type"
-                              className={
-                                'mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide cursor-pointer hover:opacity-75 transition-opacity ' +
-                                (label === 'LECTURE' ? 'bg-blue-50 text-blue-600' :
-                                label === 'ASSIGNMENT' ? 'bg-amber-50 text-amber-600' :
-                                label === 'EXAM' ? 'bg-rose-50 text-rose-600' :
-                                'bg-gray-100 text-gray-500')
-                              }
-                            >
-                              {label}
-                            </button>
-                          );
-                        })()}
+              <div className="space-y-2 max-h-[50vh] pr-5 overflow-y-auto text-sm" ref={eventsListRef}>
+                {filteredEvents.slice(0, 50).map((e, idx) => {
+                  const label = TYPE_TO_LABEL[(e.type ?? 'undefined') as keyof typeof TYPE_TO_LABEL] ?? 'OTHER';
+                  const dateStr = e.start.slice(0, 10);
+                  const startTime = e.allDay ? '' : getTimeFromISO(e.start);
+                  const endTime = e.allDay ? '' : getTimeFromISO(e.end ?? e.start);
+                  return (
+                    <div
+                      key={idx}
+                      className={`flex items-start justify-between border-b border-gray-100 last:border-0 py-2 gap-2 transition-opacity duration-200 ${fadingEvents.has(e) ? 'opacity-0' : 'opacity-100'}`}
+                    >
+                      {/* Left: title + type + description */}
+                      <div className="flex-1 min-w-0">
+                        {inlineEdit?.event === e && inlineEdit.field === 'title' ? (
+                          <input
+                            autoFocus
+                            className="w-full bg-transparent outline-none border-b-2 border-indigo-500 text-sm font-medium text-gray-900 pb-0.5"
+                            value={inlineEdit.value}
+                            onChange={(ev) => setInlineEdit({ ...inlineEdit, value: ev.target.value })}
+                            onBlur={() => handleInlineSave(e, 'title', inlineEdit.value)}
+                            onKeyDown={(ev) => {
+                              if (ev.key === 'Enter') { ev.preventDefault(); ev.currentTarget.blur(); }
+                              if (ev.key === 'Escape') { escapeInlineRef.current = true; setInlineEdit(null); }
+                            }}
+                          />
+                        ) : (
+                          <p
+                            className="font-medium text-gray-900 line-clamp-2 cursor-text hover:underline hover:decoration-dotted transition-all"
+                            title="Click to edit title"
+                            onClick={() => setInlineEdit({ event: e, field: 'title', value: e.title })}
+                          >{e.title}</p>
+                        )}
+                        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => handleCycleReviewType(e)}
+                            title="Click to change type"
+                            className={
+                              'inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide cursor-pointer hover:opacity-75 transition-opacity ' +
+                              (label === 'LECTURE' ? 'bg-blue-50 text-blue-600' :
+                              label === 'ASSIGNMENT' ? 'bg-amber-50 text-amber-600' :
+                              label === 'EXAM' ? 'bg-rose-50 text-rose-600' :
+                              'bg-gray-100 text-gray-500')
+                            }
+                          >{label}</button>
+                          {inlineEdit?.event === e && inlineEdit.field === 'description' ? (
+                            <input
+                              autoFocus
+                              className="flex-1 bg-transparent outline-none border-b border-indigo-500 text-xs text-gray-500 placeholder-gray-300 min-w-0"
+                              value={inlineEdit.value}
+                              placeholder="Add description…"
+                              onChange={(ev) => setInlineEdit({ ...inlineEdit, value: ev.target.value })}
+                              onBlur={() => handleInlineSave(e, 'description', inlineEdit.value)}
+                              onKeyDown={(ev) => {
+                                if (ev.key === 'Enter') { ev.preventDefault(); ev.currentTarget.blur(); }
+                                if (ev.key === 'Escape') { escapeInlineRef.current = true; setInlineEdit(null); }
+                              }}
+                            />
+                          ) : (
+                            <span
+                              className="text-xs text-gray-400 cursor-text hover:underline hover:decoration-dotted truncate max-w-[180px]"
+                              title="Click to edit description"
+                              onClick={() => setInlineEdit({ event: e, field: 'description', value: e.description ?? '' })}
+                            >{e.description || 'Add description…'}</span>
+                          )}
+                        </div>
+                      </div>
+                      {/* Right: date, time, delete */}
+                      <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+                        {inlineEdit?.event === e && inlineEdit.field === 'date' ? (
+                          <input
+                            autoFocus
+                            type="date"
+                            className="text-xs text-gray-500 bg-transparent outline-none border-b border-indigo-400 w-28"
+                            value={inlineEdit.value}
+                            onChange={(ev) => setInlineEdit({ ...inlineEdit, value: ev.target.value })}
+                            onBlur={() => handleInlineSave(e, 'date', inlineEdit.value)}
+                            onKeyDown={(ev) => {
+                              if (ev.key === 'Enter') { ev.preventDefault(); ev.currentTarget.blur(); }
+                              if (ev.key === 'Escape') { escapeInlineRef.current = true; setInlineEdit(null); }
+                            }}
+                          />
+                        ) : (
+                          <span
+                            className="text-xs text-gray-500 cursor-text hover:underline hover:decoration-dotted whitespace-nowrap"
+                            title="Click to edit date"
+                            onClick={() => setInlineEdit({ event: e, field: 'date', value: dateStr })}
+                          >{(() => { const [y,m,d] = dateStr.split('-').map(Number); return `${m}/${d}/${y}`; })()}</span>
+                        )}
+                        {!e.allDay && (
+                          <div className="flex items-center gap-1">
+                            {inlineEdit?.event === e && inlineEdit.field === 'startTime' ? (
+                              <input
+                                autoFocus
+                                type="time"
+                                className="text-xs text-gray-500 bg-transparent outline-none border-b border-indigo-400 w-20"
+                                value={inlineEdit.value}
+                                onChange={(ev) => setInlineEdit({ ...inlineEdit, value: ev.target.value })}
+                                onBlur={() => handleInlineSave(e, 'startTime', inlineEdit.value)}
+                                onKeyDown={(ev) => {
+                                  if (ev.key === 'Enter') { ev.preventDefault(); ev.currentTarget.blur(); }
+                                  if (ev.key === 'Escape') { escapeInlineRef.current = true; setInlineEdit(null); }
+                                }}
+                              />
+                            ) : (
+                              <span
+                                className="text-xs text-gray-500 cursor-text hover:underline hover:decoration-dotted"
+                                title="Click to edit start time"
+                                onClick={() => setInlineEdit({ event: e, field: 'startTime', value: startTime })}
+                              >{startTime}</span>
+                            )}
+                            {e.end && e.type !== 'assignment' && (
+                              <>
+                                <span className="text-xs text-gray-400">–</span>
+                                {inlineEdit?.event === e && inlineEdit.field === 'endTime' ? (
+                                  <input
+                                    autoFocus
+                                    type="time"
+                                    className="text-xs text-gray-500 bg-transparent outline-none border-b border-indigo-400 w-20"
+                                    value={inlineEdit.value}
+                                    onChange={(ev) => setInlineEdit({ ...inlineEdit, value: ev.target.value })}
+                                    onBlur={() => handleInlineSave(e, 'endTime', inlineEdit.value)}
+                                    onKeyDown={(ev) => {
+                                      if (ev.key === 'Enter') { ev.preventDefault(); ev.currentTarget.blur(); }
+                                      if (ev.key === 'Escape') { escapeInlineRef.current = true; setInlineEdit(null); }
+                                    }}
+                                  />
+                                ) : (
+                                  <span
+                                    className="text-xs text-gray-500 cursor-text hover:underline hover:decoration-dotted"
+                                    title="Click to edit end time"
+                                    onClick={() => setInlineEdit({ event: e, field: 'endTime', value: endTime })}
+                                  >{endTime}</span>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        )}
+                        {e.allDay && <span className="text-xs text-gray-400">All day</span>}
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteEvent(e)}
+                          className="p-0.5 rounded text-gray-300 hover:text-rose-400 transition-colors mt-0.5"
+                          title="Delete event"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
                       </div>
                     </div>
-                    <div className="text-right text-xs text-gray-500 flex-shrink-0">
-                      {e.allDay ? (
-                        <>
-                          <p className="whitespace-nowrap">{(() => { const [y,m,d] = e.start.slice(0,10).split('-').map(Number); return `${m}/${d}/${y}`; })()}</p>
-                          <p className="whitespace-nowrap">All day</p>
-                        </>
-                      ) : (
-                        <>
-                          <p>{new Date(e.start).toLocaleString()}{e.end && e.end !== e.start ? ` – ${new Date(e.end).toLocaleTimeString()}` : ''}</p>
-                          <p className="whitespace-nowrap">Timed</p>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {filteredEvents.length > 50 && (
                   <p className="text-xs text-gray-400 mt-1">Showing first 50 of {filteredEvents.length} events.</p>
                 )}
@@ -1853,201 +1955,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                 <span className="transition-transform duration-300 group-hover:translate-x-0.5">New Upload →</span>
               </button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {reviewEditEvent && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="review-edit-event-title"
-        >
-          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
-            <h2 id="review-edit-event-title" className="text-lg font-semibold text-gray-900 mb-4">
-              Edit event
-            </h2>
-            {reviewDeleteConfirm ? (
-              <div className="space-y-4">
-                <p className="text-sm text-gray-700">
-                  Remove this event from the list? It will not be synced to Google Calendar.
-                </p>
-                <div className="flex gap-2 justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setReviewDeleteConfirm(false)}
-                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleReviewEditDelete}
-                    className="px-4 py-2 rounded-lg bg-red-600 text-white font-medium hover:bg-red-700"
-                  >
-                    Confirm
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <form onSubmit={handleReviewEditSave} className="space-y-4">
-                <div>
-                  <label htmlFor="rev-title" className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                  <input
-                    id="rev-title"
-                    type="text"
-                    value={revTitle}
-                    onChange={(e) => setRevTitle(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="Event title"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="rev-date" className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                  <input
-                    id="rev-date"
-                    type="date"
-                    value={revDate}
-                    onChange={(e) => setRevDate(e.target.value)}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    id="rev-allday"
-                    type="checkbox"
-                    checked={revAllDay}
-                    onChange={(e) => setRevAllDay(e.target.checked)}
-                    className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                  />
-                  <label htmlFor="rev-allday" className="text-sm text-gray-700">All day</label>
-                </div>
-                {!revAllDay && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label htmlFor="rev-start-time" className="block text-sm font-medium text-gray-700 mb-1">Start time</label>
-                      <input
-                        id="rev-start-time"
-                        type="time"
-                        value={revStartTime}
-                        onChange={(e) => setRevStartTime(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="rev-end-time" className="block text-sm font-medium text-gray-700 mb-1">End time</label>
-                      <input
-                        id="rev-end-time"
-                        type="time"
-                        value={revEndTime}
-                        onChange={(e) => setRevEndTime(e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      />
-                    </div>
-                  </div>
-                )}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Repeat</label>
-                  <select
-                    value={revRepeat}
-                    onChange={(e) => setRevRepeat(e.target.value as 'none' | 'daily' | 'weekdays' | 'weekly')}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                  >
-                    <option value="none">Does not repeat</option>
-                    <option value="daily">Daily</option>
-                    <option value="weekdays">Weekdays (M–F)</option>
-                    <option value="weekly">Weekly — pick which days below</option>
-                  </select>
-                  {revRepeat === 'weekly' && (
-                    <div className="mt-2">
-                      <p className="text-xs text-gray-600 mb-1.5">Repeat on these days:</p>
-                      <div className="grid grid-cols-7 gap-1">
-                        {WEEKLY_REPEAT_DAY_LABELS.map((label, i) => (
-                          <label key={label} className="inline-flex items-center justify-center gap-1 px-1 py-1 rounded border border-gray-300 bg-white text-gray-900 text-xs cursor-pointer hover:bg-gray-50 has-[:checked]:border-indigo-500 has-[:checked]:bg-indigo-100">
-                            <input
-                              type="checkbox"
-                              checked={revWeeklyDays[i]}
-                              onChange={(e) => {
-                                const next = [...revWeeklyDays];
-                                next[i] = e.target.checked;
-                                setRevWeeklyDays(next);
-                              }}
-                              className="rounded border-gray-300 text-indigo-600"
-                            />
-                            <span className="font-medium shrink-0">{label}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {(revRepeat === 'daily' || revRepeat === 'weekdays' || revRepeat === 'weekly') && (
-                    <div className="mt-2 space-y-2">
-                      <label className="block text-xs text-gray-600">Ends</label>
-                      <select
-                        value={revEndType}
-                        onChange={(e) => setRevEndType(e.target.value as 'never' | 'date' | 'count')}
-                        className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg"
-                      >
-                        <option value="never">Never</option>
-                        <option value="date">On a specific date</option>
-                        <option value="count">After a number of occurrences</option>
-                      </select>
-                      {revEndType === 'date' && (
-                        <input
-                          type="date"
-                          value={revEndDate}
-                          onChange={(e) => setRevEndDate(e.target.value)}
-                          className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg"
-                        />
-                      )}
-                      {revEndType === 'count' && (
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="number"
-                            min={1}
-                            value={revEndCount}
-                            onChange={(e) => setRevEndCount(parseInt(e.target.value, 10) || 5)}
-                            className="w-20 px-3 py-1.5 text-sm border border-gray-300 rounded-lg"
-                          />
-                          <span className="text-sm text-gray-600">occurrences</span>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <label htmlFor="rev-desc" className="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
-                  <textarea
-                    id="rev-desc"
-                    value={revDescription}
-                    onChange={(e) => setRevDescription(e.target.value)}
-                    rows={2}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="Description"
-                  />
-                </div>
-                <div className="flex flex-wrap gap-2 justify-between pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setReviewDeleteConfirm(true)}
-                    className="px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 border border-red-200"
-                  >
-                    Delete event
-                  </button>
-                  <div className="flex gap-2">
-                    <button type="button" onClick={closeReviewEdit} className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50">
-                      Cancel
-                    </button>
-                    <button type="submit" className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700">
-                      Save
-                    </button>
-                  </div>
-                </div>
-              </form>
-            )}
           </div>
         </div>
       )}
