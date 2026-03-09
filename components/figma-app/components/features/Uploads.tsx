@@ -1391,7 +1391,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                 <p className="text-xs text-gray-400">Try a different filter or re-process your syllabus.</p>
               </div>
             ) : (
-              <div className="space-y-2 max-h-[50vh] overflow-y-auto text-sm" ref={eventsListRef}>
+              <div className="space-y-2 max-h-[50vh] pr-5 overflow-y-auto text-sm" ref={eventsListRef}>
                 {filteredEvents.slice(0, 50).map((e, idx) => {
                   const label = TYPE_TO_LABEL[(e.type ?? 'undefined') as keyof typeof TYPE_TO_LABEL] ?? 'OTHER';
                   const dateStr = e.start.slice(0, 10);
