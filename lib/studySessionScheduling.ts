@@ -33,11 +33,7 @@ function priority_score(event : CalendarEvent){
     out:
         -score: score assigned to the input event; higher score = lower priority
     */
-
-    const EXAM_OVER_NON_EXAM_DAYS : number = 6 //if there is an event that is x days away, an exam will be given the same priority as that event even if it is this many days after it.
-    const TIME_MULTIPLICATIVE_WEIGHT : number = 10; //per hour
-    const EXAM_SUBTRACTIVE_WEIGHT : number = TIME_MULTIPLICATIVE_WEIGHT * (EXAM_OVER_NON_EXAM_DAYS + 0.1) * 24; //proritize exam if there's one 7 days after another event
-    let score = 0;
+    let score : number = 0;
 
     //regexp to validate date formatting
     const date_pattern_dashes_year_first : RegExp = new RegExp("[0-9]{4}-[0-9]{2}-[0-9]{2}") //YYYY-..-..
@@ -61,19 +57,9 @@ function priority_score(event : CalendarEvent){
 
     const time_until_start : number = (start.getTime() - (new Date()).getTime()) / 1000 / 60 / 60; //ms -> hours
     if(time_until_start < 0) return NaN;
-    score += time_until_start * TIME_MULTIPLICATIVE_WEIGHT
-    const split_title : Array<string> = event.title.trim().split(" ")
-    for(let a = 0; a < split_title.length; a++){
-        split_title[a] = split_title[a].trim().toLowerCase();
-    }
-    const EXAM_KEYWORDS : Set<string> = new Set<string>(["final", "midterm", "exam", "test", "project"])
-    if(event.description === undefined) return NaN;
-
-    for(const word of split_title){
-        if(EXAM_KEYWORDS.has(word) || event.description.includes("EXAM")){
-            score = Math.max(0, score - EXAM_SUBTRACTIVE_WEIGHT);
-            break;
-        }
+    score = time_until_start;
+    if(event.type != "exam"){
+        score = score * 2 //assume it is assignment. (schedule_sessions() already filters out non-exams and non-assignments prior to doing anything)
     }
     return score;
 }
@@ -86,14 +72,14 @@ export function schedule_sessions(events : CalendarEvent[]){
         -study_sessions: list of objects conforming to StudySession interface in decreasing order of priority
     */
 
-    const HIGH_PRIORITY_THRESHOLD = 480;//~2 days
-    const MEDIUM_PRIORITY_THRESHOLD = 1680;//~ 1 week
+    const HIGH_PRIORITY_THRESHOLD = 24 * 7;//~1 week for exams, ~3 days for assignments
+    const MEDIUM_PRIORITY_THRESHOLD = 24 * 7 * 3;//~3 weeks for exams, 1.5 weeks for assignments
 
     const studySessions : StudySession[] = [];
     for(let a=0; a<events.length; a++){
         const event = events[a];
-        const eventType = event.type || (event.description === 'EXAM' ? 'exam' : event.description === 'ASSIGNMENT' ? 'assignment' : undefined);
-        if(eventType !== 'assignment' && eventType !== 'exam') continue;
+
+        if(event.type === undefined || event.type !== 'assignment' && event.type !== 'exam') continue;
         const score = priority_score(event);
         if(Number.isNaN(score)) continue;
         if(score < 0) continue; //events in past
@@ -109,7 +95,7 @@ export function schedule_sessions(events : CalendarEvent[]){
                     date: Number.isNaN(score) ? 'none' : `${start_date.getFullYear()}-${String(start_date.getMonth() + 1).padStart(2, '0')}-${String(start_date.getDate()).padStart(2, '0')}`,
                     score: score,
                     priority: 'high', //gets re-assigned later
-                    type: eventType as 'assignment' | 'exam',
+                    type: event.type as 'assignment' | 'exam',
                 }
         );
         }
