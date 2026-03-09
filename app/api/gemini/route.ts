@@ -164,9 +164,21 @@ title:
 - Do NOT include course name
 - Do NOT include commas
 
+
 start:
 - If allDay=false → YYYY-MM-DDTHH:MM:SS
 - If allDay=true → YYYY-MM-DD
+
+UNKNOWN DATE RULE:
+
+If an event exists but the syllabus does not specify a date
+(e.g. "3 quizzes during the semester", "final exam TBD"):
+
+- DO NOT discard the event.
+- Generate one row per event.
+- Set start=UNKNOWN
+- Set allDay=true
+- Leave end empty.
 
 allDay:
 - true or false (lowercase)
