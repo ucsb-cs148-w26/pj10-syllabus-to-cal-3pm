@@ -7,6 +7,7 @@ type ColumnIndexes = {
   description: number;
   location: number;
   course: number;
+  end: number;
   hasHeader: boolean;
 };
 
@@ -81,6 +82,7 @@ function resolveColumnIndexes(firstRow: string[]): ColumnIndexes {
   const description = normalized.indexOf('description');
   const location = normalized.indexOf('location');
   const course = normalized.indexOf('class');
+  const end = normalized.indexOf('end');
 
   const hasHeader = title !== -1 && start !== -1;
   return {
@@ -90,6 +92,7 @@ function resolveColumnIndexes(firstRow: string[]): ColumnIndexes {
     description: hasHeader ? description : 3,
     location: hasHeader ? location : 4,
     course: hasHeader ? course : 5,
+    end: hasHeader ? end : 6,
     hasHeader,
   };
 }
@@ -112,9 +115,10 @@ export function parseCsvToCalendarEvents(csvText: string): CalendarEvent[] {
     const title = getCell(row, indexes.title).trim();
     const start = getCell(row, indexes.start).trim();
     const allDayRaw = getCell(row, indexes.allDay).trim().toLowerCase();
-    const description = getCell(row, indexes.description).trim();
+    const rawDescription = getCell(row, indexes.description).trim();
     const location = getCell(row, indexes.location).trim();
     const course = getCell(row, indexes.course).trim();
+    const end = getCell(row, indexes.end).trim();
 
     // Skip repeated headers in the middle of output.
     if (normalizeHeaderCell(title) === 'title' && normalizeHeaderCell(start) === 'start') {
@@ -123,14 +127,28 @@ export function parseCsvToCalendarEvents(csvText: string): CalendarEvent[] {
 
     if (!title && !start) continue;
 
+    const [typeKeyword, ...notesParts] = rawDescription.split('|');
+    const typeKey = typeKeyword.trim();
+    const notes = notesParts.join('|').trim();
+    const type = typeKey === 'EXAM' ? 'exam' : typeKey === 'ASSIGNMENT' ? 'assignment' : typeKey === 'LECTURE' ? 'class' : undefined;
+    const typeLabel = typeKey === 'EXAM' ? 'Exam' : typeKey === 'ASSIGNMENT' ? 'Assignment' : typeKey === 'LECTURE' ? 'Lecture' : typeKey;
+    const baseDescription = course ? `${course} – ${typeLabel}` : typeLabel;
+    const description = notes ? `${baseDescription}\n${notes}` : baseDescription;
+
+    // Assignments are zero-duration timed events (start == end), never all-day
+    const isAssignment = type === 'assignment';
+    const allDay = isAssignment ? false : ['true', '1', 'yes', 'y'].includes(allDayRaw);
+    const resolvedEnd = end || (isAssignment ? start : undefined);
+
     events.push({
       title,
       start,
-      allDay: ['true', '1', 'yes', 'y'].includes(allDayRaw),
+      end: resolvedEnd || undefined,
+      allDay,
       description,
       location,
       class: course,
-      type: description === 'EXAM' ? 'exam' : description === 'ASSIGNMENT' ? 'assignment' : description === 'LECTURE' ? 'class' : undefined,
+      type,
     });
   }
 

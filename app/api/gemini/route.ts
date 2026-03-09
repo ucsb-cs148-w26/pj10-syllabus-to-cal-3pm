@@ -116,12 +116,12 @@ RULE B — ADDING RECURRING EVENTS: If the instruction provides a schedule (e.g.
   - Set description to LECTURE.
   - Example A (time given): user says "My CS148 section meets Fridays 2:00-2:50pm", syllabus spans 2026-01-13 to 2026-03-17
     → one row per Friday at 14:00:00, class=CS 148:
-    Discussion Section,2026-01-16T14:00:00,false,LECTURE,,CS 148
-    Discussion Section,2026-01-23T14:00:00,false,LECTURE,,CS 148
+    Discussion Section,2026-01-16T14:00:00,false,LECTURE,,CS 148,2026-01-16T14:50:00
+    Discussion Section,2026-01-23T14:00:00,false,LECTURE,,CS 148,2026-01-23T14:50:00
   - Example B (no time given): user says "My CS64 section happens every Friday", syllabus spans 2026-01-13 to 2026-03-17
     → one all-day row per Friday, class=CS 64:
-    Discussion Section,2026-01-16,true,LECTURE,,CS 64
-    Discussion Section,2026-01-23,true,LECTURE,,CS 64
+    Discussion Section,2026-01-16,true,LECTURE,,CS 64,
+    Discussion Section,2026-01-23,true,LECTURE,,CS 64,
     ... (one row per occurrence — computed from the calendar, not copied from the syllabus)
 
 RULE C — ADDING ONE-TIME EVENTS: If the instruction mentions a specific date and event
@@ -147,15 +147,15 @@ No markdown. No explanations.
 Only include: ${eventTypesStr}
 
 RULES:
-- Ignore holidays, office hours, breaks, readings, or optional items.
+- Ignore holidays, office hours, breaks, assignments release dates, or optional items. 
 
 OUTPUT FORMAT (STRICT):
-Output EXACTLY 6 columns in this EXACT order:
+Output EXACTLY 7 columns in this EXACT order:
 
-title,start,allDay,description,location,class
+title,start,allDay,description,location,class,end
 
 FIRST LINE MUST BE EXACTLY:
-title,start,allDay,description,location,class
+title,start,allDay,description,location,class,end
 
 COLUMN RULES:
 
@@ -172,7 +172,10 @@ allDay:
 - true or false (lowercase)
 
 description:
-- Use event type (LECTURE / ASSIGNMENT / EXAM)
+- Start with the event type keyword: LECTURE, ASSIGNMENT, or EXAM
+- If there are readings or important notes associated with this event (e.g. "Read Ch. 8", "HW 3 due", "bring calculator"), append them after a pipe separator: LECTURE | Ch. 8 Reading Due
+- Keep notes brief (under 10 words). No commas. Only include notes explicitly tied to this specific event.
+- If no notes, use just the keyword: LECTURE
 
 location:
 - Specify Location if mentioned in the files, else ALWAYS leave empty
@@ -182,11 +185,19 @@ class:
 - Otherwise use full course name
 - MUST be identical for all rows
 
+end:
+- If allDay=false (timed event): YYYY-MM-DDTHH:MM:SS — the end time on the same date
+  - LECTURE: extract the full end time from the syllabus schedule (e.g. "8:00–9:15am" → end=...T09:15:00)
+  - EXAM with known end time: use it; otherwise add 2 hours to start
+  - If end time cannot be determined, add 1 hour to start
+- If allDay=true (ASSIGNMENT): leave empty
+
 EXAMPLE:
 
-title,start,allDay,description,location,class
-Lecture,2025-03-31T08:00:00,false,LECTURE,,WRIT 105CW
-Service Pledge Due,2025-04-23,true,ASSIGNMENT,,WRIT 105CW
+title,start,allDay,description,location,class,end
+Lecture,2025-03-31T08:00:00,false,LECTURE | Ch. 8 Reading Due,,WRIT 105CW,2025-03-31T09:15:00
+Midterm Exam,2025-04-15T10:00:00,false,EXAM | bring blue book,,WRIT 105CW,2025-04-15T12:00:00
+Service Pledge Due,2025-04-23,true,ASSIGNMENT,,WRIT 105CW,
 
 ${userInstructionsSection}
 Now extract events from this syllabus transcript:
