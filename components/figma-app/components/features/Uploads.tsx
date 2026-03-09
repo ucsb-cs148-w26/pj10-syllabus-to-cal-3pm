@@ -842,20 +842,56 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
 
   function handleDownloadCsv() {
     if (events.length === 0) return;
-    const header = 'title,start,allDay,description,location,class';
+
+    // Google Calendar import format
+    const header = 'Subject,Start Date,Start Time,End Date,End Time,All Day Event,Description,Location,Private';
+
+    function toGCalDate(iso: string): string {
+      // YYYY-MM-DD → MM/DD/YYYY
+      const [y, m, d] = iso.slice(0, 10).split('-');
+      return `${m}/${d}/${y}`;
+    }
+
+    function toGCalTime(iso: string): string {
+      // YYYY-MM-DDTHH:MM:SS → HH:MM AM/PM
+      if (!iso.includes('T')) return '';
+      const [, timePart] = iso.split('T');
+      const [hStr, mStr] = timePart.split(':');
+      let h = parseInt(hStr, 10);
+      const suffix = h >= 12 ? 'PM' : 'AM';
+      if (h > 12) h -= 12;
+      if (h === 0) h = 12;
+      return `${String(h).padStart(2, '0')}:${mStr} ${suffix}`;
+    }
+
+    function csvField(v: string): string {
+      if (v.includes(',') || v.includes('"') || v.includes('\n')) {
+        return `"${v.replace(/"/g, '""')}"`;
+      }
+      return v;
+    }
+
     const rows = events.map((e) => {
-      const esc = (v?: string) => JSON.stringify(v ?? '').slice(1, -1);
+      const startDate = toGCalDate(e.start);
+      const startTime = e.allDay ? '' : toGCalTime(e.start);
+      const endIso = e.end ?? e.start;
+      const endDate = toGCalDate(endIso);
+      const endTime = e.allDay ? '' : toGCalTime(endIso);
       return [
-        esc(e.title),
-        e.start,
-        String(e.allDay),
-        esc(e.description),
-        esc(e.location ?? ''),
-        esc(e.class ?? '')
+        csvField(e.title),
+        startDate,
+        startTime,
+        endDate,
+        endTime,
+        e.allDay ? 'True' : 'False',
+        csvField(e.description ?? ''),
+        csvField(e.location ?? ''),
+        'False',
       ].join(',');
     });
+
     const csv = [header, ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -1389,9 +1425,18 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                         })()}
                       </div>
                     </div>
-                    <div className="text-right text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
-                      <p>{new Date(e.start).toLocaleString()}</p>
-                      <p>{e.allDay ? 'All day' : 'Timed'}</p>
+                    <div className="text-right text-xs text-gray-500 flex-shrink-0">
+                      {e.allDay ? (
+                        <>
+                          <p className="whitespace-nowrap">{(() => { const [y,m,d] = e.start.slice(0,10).split('-').map(Number); return `${m}/${d}/${y}`; })()}</p>
+                          <p className="whitespace-nowrap">All day</p>
+                        </>
+                      ) : (
+                        <>
+                          <p>{new Date(e.start).toLocaleString()}{e.end ? ` – ${new Date(e.end).toLocaleTimeString()}` : ''}</p>
+                          <p className="whitespace-nowrap">Timed</p>
+                        </>
+                      )}
                     </div>
                   </div>
                 ))}
