@@ -30,10 +30,14 @@ function isImageExt(ext: string) {
 export default function PdfUpload({ onTextExtracted, uploadedFiles, onDeleteUploadedFile }: UploadProps) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageClassName, setMessageClassName] = useState("text-xs md:text-xs text-gray-600")
   const [isDragOver, setIsDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
+
   const UPLOAD_LIMIT : number = 20;
 
+  const ERROR_MESSAGE_CLASS_NAME = "text-xs md:text-xl text-red-600"
+  const NORMAL_MESSAGE_CLASS_NAME = "text-xs md:text-xs text-gray-600"
   // Recompute transcript when uploaded list changes (e.g., deletions)
   useEffect(() => {
     const files = uploadedFiles ?? [];
@@ -43,6 +47,7 @@ export default function PdfUpload({ onTextExtracted, uploadedFiles, onDeleteUplo
 
     async function recompute() {
       try {
+        setMessageClassName(NORMAL_MESSAGE_CLASS_NAME);
         setMessage("");
         const texts = await extractAllTexts(files);
         if (cancelled) return;
@@ -159,6 +164,7 @@ export default function PdfUpload({ onTextExtracted, uploadedFiles, onDeleteUplo
     for (const f of picked) {
       const v = validateUploadFile(f);
       if (!v.ok) {
+        setMessageClassName(ERROR_MESSAGE_CLASS_NAME);
         setMessage(v.error); // Scenario 2: MP3 -> "not supported"
         continue;
       }
@@ -167,6 +173,7 @@ export default function PdfUpload({ onTextExtracted, uploadedFiles, onDeleteUplo
     if (ok.length === 0) return;
 
     setLoading(true);
+    setMessageClassName(NORMAL_MESSAGE_CLASS_NAME);
     setMessage("");
 
     try {
@@ -185,6 +192,7 @@ export default function PdfUpload({ onTextExtracted, uploadedFiles, onDeleteUplo
       onTextExtracted(transcript, uploaded);
     } catch (err) {
       console.error(err);
+      setMessageClassName(ERROR_MESSAGE_CLASS_NAME);
       setMessage(err instanceof Error ? err.message : "Upload failed.");
     } finally {
       setLoading(false);
@@ -268,7 +276,7 @@ ${loading ? "opacity-80" : ""}`}
         )}
       </div>
 
-      {message && <p className="text-xs md:text-sm text-gray-600">{message}</p>}
+      {message && <p className={messageClassName}>{message}</p>}
 
       {showList && (
         <div className="rounded-2xl border border-gray-200 bg-white/80 backdrop-blur p-4">
