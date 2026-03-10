@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { extractText, getDocumentProxy } from "unpdf";
 import { Upload as UploadIcon, Loader2, Trash2, FileText } from "lucide-react";
 import { FILE_ACCEPT_ATTR, validateUploadFile } from "@/lib/fileValidation";
+import { Uploads } from "@/components/figma-app/components/features/Uploads"
+import { set } from "react-hook-form";
+import { upload } from "@testing-library/user-event/dist/cjs/utility/upload.js";
+import { file } from "googleapis/build/src/apis/file";
 
 type UploadedFileMeta = { filename: string; url: string };
 
@@ -28,6 +32,7 @@ export default function PdfUpload({ onTextExtracted, uploadedFiles, onDeleteUplo
   const [message, setMessage] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const UPLOAD_LIMIT : number = 20;
 
   // Recompute transcript when uploaded list changes (e.g., deletions)
   useEffect(() => {
@@ -122,8 +127,14 @@ export default function PdfUpload({ onTextExtracted, uploadedFiles, onDeleteUplo
 
   async function uploadFiles(files: File[]) {
     const formData = new FormData();
-    for (const f of files) formData.append("file", f);
-
+    const currentUploadedFileCount = uploadedFiles ? uploadedFiles.length : 0; //!assumed undefined uploadedFiles means no files 
+    for (let file_idx=0; file_idx<files.length; file_idx++){
+    // for (const f of files){
+      if(currentUploadedFileCount + file_idx >= UPLOAD_LIMIT){
+        throw new Error(`Cannot upload more files than the limit: ${UPLOAD_LIMIT} files. You tried to upload ${files.length} and you currently have ${currentUploadedFileCount}. Try again with ${UPLOAD_LIMIT - currentUploadedFileCount} files or less.`);
+      }
+      formData.append("file", files[file_idx]);
+    }
     const res = await fetch("/api/upload", { method: "POST", body: formData });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
@@ -132,6 +143,7 @@ export default function PdfUpload({ onTextExtracted, uploadedFiles, onDeleteUplo
     const obj = await res.json();
     return obj.uploadedFiles as UploadedFileMeta[];
   }
+
 
   async function handleFiles(fileList: FileList) {
     const picked = Array.from(fileList ?? []);
