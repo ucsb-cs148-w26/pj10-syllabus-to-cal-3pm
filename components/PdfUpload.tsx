@@ -36,7 +36,7 @@ export default function PdfUpload({ onTextExtracted, uploadedFiles, onDeleteUplo
 
   const UPLOAD_LIMIT : number = 20;
 
-  const ERROR_MESSAGE_CLASS_NAME = "text-xs md:text-xl text-red-600"
+  const ERROR_MESSAGE_CLASS_NAME = "text-xs md:text-base text-red-600 whitespace-pre-wrap"
   const NORMAL_MESSAGE_CLASS_NAME = "text-xs md:text-xs text-gray-600"
   // Recompute transcript when uploaded list changes (e.g., deletions)
   useEffect(() => {
@@ -134,7 +134,7 @@ export default function PdfUpload({ onTextExtracted, uploadedFiles, onDeleteUplo
     const formData = new FormData();
     if((uploadedFiles ? uploadedFiles.length : 0) + files.length > UPLOAD_LIMIT){
       const difference : number = UPLOAD_LIMIT - (uploadedFiles ? uploadedFiles.length : 0);
-      let errorMessage : string = `Cannot upload more files than the limit: ${UPLOAD_LIMIT} files. You tried to upload ${files.length} and you currently have ${uploadedFiles ? uploadedFiles.length: 0}. `;
+      let errorMessage : string = `Cannot upload more files than the limit: ${UPLOAD_LIMIT} files. You tried to upload ${files.length} and you currently have ${uploadedFiles ? uploadedFiles.length: 0}.\n`;
       if(difference == 0){
         errorMessage += `Please remove at least 1 file to upload more.`;
       }
@@ -277,6 +277,7 @@ ${loading ? "opacity-80" : ""}`}
       </div>
 
       {message && <p className={messageClassName}>{message}</p>}
+      <br className="visib  "></br>
 
       {showList && (
         <div className="rounded-2xl border border-gray-200 bg-white/80 backdrop-blur p-4">
