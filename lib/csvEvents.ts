@@ -131,9 +131,7 @@ export function parseCsvToCalendarEvents(csvText: string): CalendarEvent[] {
     const typeKey = typeKeyword.trim();
     const notes = notesParts.join('|').trim();
     const type = typeKey === 'EXAM' ? 'exam' : typeKey === 'ASSIGNMENT' ? 'assignment' : typeKey === 'LECTURE' ? 'class' : undefined;
-    const typeLabel = typeKey === 'EXAM' ? 'Exam' : typeKey === 'ASSIGNMENT' ? 'Assignment' : typeKey === 'LECTURE' ? 'Lecture' : typeKey;
-    const baseDescription = course ? `${course} | ${typeLabel}` : typeLabel;
-    const description = notes ? `${baseDescription} | ${notes}` : baseDescription;
+    const description = course && notes ? `${course} | ${notes}` : course || notes || undefined;
 
     // Assignments are zero-duration timed events (start == end), never all-day
     const isAssignment = type === 'assignment';
