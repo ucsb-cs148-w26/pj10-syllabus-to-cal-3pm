@@ -746,6 +746,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
         body: JSON.stringify({
           events,
           calendarId: selectedCalendarId,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         }),
       });
 
@@ -1089,8 +1090,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
     try { localStorage.setItem('calendarEvents', JSON.stringify(nextEvents)); } catch { /* ignore */ }
   }
 
-  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
-
   const [inlineEdit, setInlineEdit] = useState<{
     event: CalendarEvent;
     field: 'title' | 'date' | 'startTime' | 'endTime' | 'description';
@@ -1361,7 +1360,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
           <div className="bg-white/90 backdrop-blur rounded-2xl shadow-sm border border-gray-200 p-6">
             <div className="mb-4">
               <h3 className="font-semibold text-gray-900 text-lg">Review Calendar</h3>
-              <p className="text-sm text-gray-500">Review and make changes to your generated calendar. View events by type. </p>
+              <p className="text-sm text-gray-500">Review events by categories below and add changes to your generated calendar.  </p>
             </div>
 
             {/* Category filter buttons + Add Event */}
@@ -1725,14 +1724,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                 >
                   Back to Upload
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setShowRegenerateModal(true)}
-                  disabled={!pendingText || calendarStatus === 'loading'}
-                  className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Regenerate
-                </button>
+
                 <button
                   onClick={() => setShowDocuments(!showDocuments)}
                   className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors gap-1.5"
@@ -2131,51 +2123,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
         </div>
       )}
 
-      {showRegenerateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">
-              Regenerate Events
-            </h3>
-
-            <div className="space-y-3 mb-6">
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input type="checkbox" className="rounded border-gray-300" />
-                Lectures
-              </label>
-
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input type="checkbox" className="rounded border-gray-300" />
-                Assignments
-              </label>
-
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input type="checkbox" className="rounded border-gray-300" />
-                Exams
-              </label>
-            </div>
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowRegenerateModal(false)}
-                className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowRegenerateModal(false);
-                  void processPendingText();
-                }}
-                className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
-              >
-                Regenerate
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );

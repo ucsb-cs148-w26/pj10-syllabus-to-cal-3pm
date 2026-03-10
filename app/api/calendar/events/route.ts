@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
   const originError = requireSameOrigin(request);
   if (originError) return originError;
 
-  let body: { events?: CalendarEvent[]; calendarId?: string };
+  let body: { events?: CalendarEvent[]; calendarId?: string; timeZone?: string };
   try {
     body = await request.json();
   } catch {
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const eventIds = await createCalendarEvents(token, body.events, body.calendarId ?? "primary");
+    const eventIds = await createCalendarEvents(token, body.events, body.calendarId ?? "primary", body.timeZone);
     return NextResponse.json({
       success: true,
       message: `Exported ${eventIds.length} event(s) to Google Calendar.`,
