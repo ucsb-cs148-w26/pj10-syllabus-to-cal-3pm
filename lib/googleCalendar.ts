@@ -119,6 +119,7 @@ export interface GoogleCalendarEventItem {
   description?: string;
   location?: string;
   recurrence?: string[];
+  calendarId: string;
 }
 
 /**
@@ -163,6 +164,7 @@ export const listCalendarEvents = async (
           description: e.description ?? undefined,
           location: e.location ?? undefined,
           recurrence: e.recurrence ?? undefined,
+          calendarId,
         });
       }
     } catch (err) {
@@ -187,7 +189,8 @@ export const updateCalendarEvent = async (
     allDay?: boolean;
     description?: string;
     recurrence?: string[];
-  }
+  },
+  calendarId = 'primary'
 ): Promise<void> => {
   const oauth2Client = new google.auth.OAuth2();
   oauth2Client.setCredentials({ access_token: accessToken });
@@ -212,25 +215,26 @@ export const updateCalendarEvent = async (
   }
 
   await calendar.events.patch({
-    calendarId: 'primary',
+    calendarId,
     eventId,
     requestBody: body,
   });
 };
 
 /**
- * Delete an event from the user's primary Google Calendar.
+ * Delete an event from the user's Google Calendar.
  */
 export const deleteCalendarEvent = async (
   accessToken: string,
-  eventId: string
+  eventId: string,
+  calendarId = 'primary'
 ): Promise<void> => {
   const oauth2Client = new google.auth.OAuth2();
   oauth2Client.setCredentials({ access_token: accessToken });
 
   const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
   await calendar.events.delete({
-    calendarId: 'primary',
+    calendarId,
     eventId,
   });
 };

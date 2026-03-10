@@ -128,6 +128,7 @@ interface DisplayEvent {
   description?: string;
   recurrence?: string[];
   type: 'google';
+  calendarId: string;
 }
 
 const MONTH_NAMES = [
@@ -228,6 +229,7 @@ function toDisplayEvents(items: GoogleCalendarEventItem[]): DisplayEvent[] {
       description: e.description,
       recurrence: e.recurrence,
       type: 'google',
+      calendarId: e.calendarId,
     };
   });
 }
@@ -672,6 +674,7 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           eventId: editingEvent.id,
+          calendarId: editingEvent.calendarId,
           title: editTitle.trim(),
           start,
           end,
@@ -695,11 +698,12 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
   const handleDeleteEvent = async (eventId: string) => {
     if (!accessToken) return;
     setDeleteSubmitting(true);
+    const calendarId = events.find((e) => e.id === eventId)?.calendarId ?? 'primary';
     try {
       const res = await fetch('/api/calendar/events', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventId }),
+        body: JSON.stringify({ eventId, calendarId }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to delete event');
