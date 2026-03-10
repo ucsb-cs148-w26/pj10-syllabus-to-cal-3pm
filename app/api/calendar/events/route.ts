@@ -151,6 +151,7 @@ export async function PATCH(request: NextRequest) {
     allDay?: boolean;
     description?: string;
     recurrence?: string[];
+    calendarId?: string;
   };
   try {
     body = await request.json();
@@ -174,7 +175,7 @@ export async function PATCH(request: NextRequest) {
       ...(body.allDay !== undefined && { allDay: body.allDay }),
       ...(body.description !== undefined && { description: body.description }),
       ...(body.recurrence !== undefined && { recurrence: body.recurrence }),
-    });
+    }, body.calendarId ?? 'primary');
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     const parsed = parseError(error);
@@ -195,7 +196,7 @@ export async function DELETE(request: NextRequest) {
   const originError = requireSameOrigin(request);
   if (originError) return originError;
 
-  let body: { eventId?: string };
+  let body: { eventId?: string; calendarId?: string };
   try {
     body = await request.json();
   } catch {
@@ -211,7 +212,7 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    await deleteCalendarEvent(token, body.eventId);
+    await deleteCalendarEvent(token, body.eventId, body.calendarId ?? 'primary');
     return NextResponse.json({ success: true });
   } catch (error: unknown) {
     const parsed = parseError(error);

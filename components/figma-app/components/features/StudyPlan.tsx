@@ -478,8 +478,8 @@ export function StudyPlan({ accessToken, isAuthenticated }: StudyPlanProps) {
 
   const getTypeBadge = (type: string) => {
     switch (type) {
-      case 'assignment': return 'bg-blue-50 text-blue-600 border-blue-200';
-      case 'exam': return 'bg-rose-50 text-rose-600 border-rose-200';
+      case 'assignment': return 'bg-orange-50 text-orange-600 border-orange-200';
+      case 'exam': return 'bg-indigo-50 text-indigo-600 border-indigo-200';
       default: return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
@@ -931,7 +931,7 @@ export function StudyPlan({ accessToken, isAuthenticated }: StudyPlanProps) {
                               onClick={() => handleToggleType(evt.id, evt.type)}
                               title="Click to toggle type"
                               className={`shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-medium cursor-pointer hover:opacity-70 transition-opacity ${
-                                evt.type === 'exam' ? 'bg-rose-50 text-rose-600' : 'bg-blue-50 text-blue-600'
+                                evt.type === 'exam' ? 'bg-indigo-50 text-indigo-600' : 'bg-orange-50 text-orange-600'
                               }`}
                             >
                               {evt.type}
@@ -1024,7 +1024,7 @@ export function StudyPlan({ accessToken, isAuthenticated }: StudyPlanProps) {
                               onMouseDown={(e) => e.preventDefault()}
                               onClick={() => setDraftEvent((d) => d ? { ...d, type: d.type === 'assignment' ? 'exam' : 'assignment' } : d)}
                               className={`shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-medium cursor-pointer hover:opacity-70 transition-opacity ${
-                                draftEvent.type === 'exam' ? 'bg-rose-50 text-rose-600' : 'bg-blue-50 text-blue-600'
+                                draftEvent.type === 'exam' ? 'bg-indigo-50 text-indigo-600' : 'bg-orange-50 text-orange-600'
                               }`}
                             >
                               {draftEvent.type}

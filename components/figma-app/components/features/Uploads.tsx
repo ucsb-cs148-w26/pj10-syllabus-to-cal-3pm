@@ -214,7 +214,7 @@ function CalendarPicker({
         type="button"
         onClick={handleToggle}
         className={
-          'inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition-colors ' +
+          'inline-flex items-center gap-2 rounded-lg border h-10 px-3 text-xs font-medium transition-colors ' +
           (open
             ? 'border-indigo-300 bg-indigo-50 text-indigo-800 shadow-sm'
             : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 hover:border-gray-300')
@@ -1468,9 +1468,9 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                             title="Click to change type"
                             className={
                               'inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide cursor-pointer hover:opacity-75 transition-opacity ' +
-                              (label === 'LECTURE' ? 'bg-blue-50 text-blue-600' :
-                              label === 'ASSIGNMENT' ? 'bg-amber-50 text-amber-600' :
-                              label === 'EXAM' ? 'bg-rose-50 text-rose-600' :
+                              (label === 'LECTURE' ? 'bg-emerald-50 text-emerald-600' :
+                              label === 'ASSIGNMENT' ? 'bg-orange-50 text-orange-600' :
+                              label === 'EXAM' ? 'bg-indigo-50 text-indigo-600' :
                               'bg-gray-100 text-gray-500')
                             }
                           >{label}</button>
@@ -1662,9 +1662,9 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                         setDraftEvent({ ...draftEvent, type: types[(idx + 1) % types.length] });
                       }}
                       className={`shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide cursor-pointer hover:opacity-70 transition-opacity ${
-                        draftEvent.type === 'lecture' ? 'bg-blue-50 text-blue-600' :
-                        draftEvent.type === 'assignment' ? 'bg-amber-50 text-amber-600' :
-                        draftEvent.type === 'exam' ? 'bg-rose-50 text-rose-600' :
+                        draftEvent.type === 'lecture' ? 'bg-emerald-50 text-emerald-600' :
+                        draftEvent.type === 'assignment' ? 'bg-orange-50 text-orange-600' :
+                        draftEvent.type === 'exam' ? 'bg-indigo-50 text-indigo-600' :
                         'bg-gray-100 text-gray-500'
                       }`}
                     >{draftEvent.type}</button>
