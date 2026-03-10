@@ -59,6 +59,7 @@ export const createCalendarEvents = async (
   accessToken: string,
   events: CalendarEvent[],
   calendarId: string = 'primary',
+  timeZone?: string,
 ): Promise<string[]> => {
   const oauth2Client = new google.auth.OAuth2();
   oauth2Client.setCredentials({ access_token: accessToken });
@@ -67,24 +68,29 @@ export const createCalendarEvents = async (
   const eventIds: string[] = [];
 
   for (const event of events) {
-    // Normalize and validate the start time coming from Gemini/CSV
+    // Validate the start time coming from Gemini/CSV
     const parsed = new Date(event.start);
     if (isNaN(parsed.getTime())) {
       console.warn('[googleCalendar] Skipping event with invalid start date:', event);
       continue;
     }
 
-    const iso = parsed.toISOString();
-    const baseDate = iso.split('T')[0];
-    const endParsed = event.end ? new Date(event.end) : null;
-    const endIso = endParsed && !isNaN(endParsed.getTime()) ? endParsed.toISOString() : iso;
+    const baseDate = event.start.slice(0, 10);
+    const endStart = event.end ?? event.start;
+
+    const startField = event.allDay
+      ? { date: baseDate }
+      : { dateTime: event.start, ...(timeZone ? { timeZone } : {}) };
+    const endField = event.allDay
+      ? { date: baseDate }
+      : { dateTime: endStart, ...(timeZone ? { timeZone } : {}) };
 
     const calendarEvent: Record<string, unknown> = {
       summary: event.title,
       description: event.description,
       location: event.location,
-      start: event.allDay ? { date: baseDate } : { dateTime: iso },
-      end: event.allDay ? { date: baseDate } : { dateTime: endIso },
+      start: startField,
+      end: endField,
     };
     if (event.recurrence && event.recurrence.length > 0) {
       calendarEvent.recurrence = event.recurrence;

@@ -25,8 +25,9 @@ import { getCourses, createCourse, createAssignments, type DbCourse } from '@/li
 
 
 function getTimeFromISO(iso: string): string {
-  if (!iso.includes('T')) return '09:00';
+  if (!iso.includes('T')) return '';
   const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
   const h = d.getHours();
   const m = d.getMinutes();
   return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
@@ -433,7 +434,6 @@ function CoursePicker({ courses, selectedId, onSelect }: {
     </div>
   );
 }
-
 export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticated }: UploadsProps) {
   const supabase = useMemo(() => createClient(), []);
   const [step, setStep] = useState<UploadStep>(1);
@@ -614,6 +614,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
   const newUploadNeutral = 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50';
   const newUploadPurple = 'bg-indigo-600 text-white hover:bg-indigo-700';
 
+
   function handleSyllabusText(rawText: string, uploaded?: string[] | UploadedFileMeta[]) {
     setPendingText(rawText);
     setHasSynced(false);
@@ -745,6 +746,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
         body: JSON.stringify({
           events,
           calendarId: selectedCalendarId,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         }),
       });
 
@@ -1038,27 +1040,40 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
     return 'neutral';
   }, [calendarStatus, lastProcessOk]);
 
-  const filteredEvents = useMemo(() =>
-      categoryFilter === 'ALL'
-        ? events
-        : events.filter((e) => {
-            if (categoryFilter === 'LECTURE') return e.type === 'class';
-            if (categoryFilter === 'ASSIGNMENT') return e.type === 'assignment';
-            if (categoryFilter === 'EXAM') return e.type === 'exam';
-            if (categoryFilter === 'OTHER') return e.type === undefined;
-            return false;
-          }),
-      [events, categoryFilter],
-  );
-
-  const isSyncComplete = hasSynced && calendarStatus === 'ok';
-
   // Maps CalendarEvent type field to display label and back
   const TYPE_TO_LABEL = { assignment: 'ASSIGNMENT', exam: 'EXAM', class: 'LECTURE', undefined: 'OTHER' } as const;
   const LABEL_TO_TYPE: Record<string, 'assignment' | 'exam' | 'class' | undefined> = {
     ASSIGNMENT: 'assignment', EXAM: 'exam', LECTURE: 'class', OTHER: undefined,
   };
   const REVIEW_TYPE_CYCLE = ['ASSIGNMENT', 'EXAM', 'LECTURE', 'OTHER'] as const;
+
+  const filteredEvents = useMemo(() =>
+      categoryFilter === 'ALL'
+        ? events
+        : events.filter((e) => e.type === LABEL_TO_TYPE[categoryFilter]),
+      [events, categoryFilter],
+  );
+
+  const categoryCounts = useMemo(() => ({
+    ALL: events.length,
+    LECTURE: events.filter((e) => e.type === 'class').length,
+    ASSIGNMENT: events.filter((e) => e.type === 'assignment').length,
+    EXAM: events.filter((e) => e.type === 'exam').length,
+    OTHER: events.filter((e) => e.type === undefined).length,
+  }), [events]);
+
+  const missingDateCount = useMemo(
+    () => events.filter((e) => !e.start || e.start === 'UNKNOWN').length,
+    [events],
+  );
+  const missingTimeCount = useMemo(
+    () => events.filter((e) => !e.allDay && e.start && e.start !== 'UNKNOWN' && !e.start.includes('T')).length,
+    [events],
+  );
+  const missingDateOrTimeCount = missingDateCount + missingTimeCount;
+  const hasMissingDateOrTime = missingDateOrTimeCount > 0;
+
+  const isSyncComplete = hasSynced && calendarStatus === 'ok';
 
   function handleCycleReviewType(evt: CalendarEvent) {
     const currentLabel = TYPE_TO_LABEL[(evt.type ?? 'undefined') as keyof typeof TYPE_TO_LABEL] ?? 'OTHER';
@@ -1070,26 +1085,30 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
     if (nextType === 'assignment') {
       updated = { ...updated, allDay: false, end: updated.start };
     }
-    const nextEvents = events.map((e) => (e === evt ? updated : e));
+    const nextEvents = events.map((e) => (e === evt ? updated : e)).sort((a, b) => a.start.localeCompare(b.start));
     setEvents(nextEvents);
     try { localStorage.setItem('calendarEvents', JSON.stringify(nextEvents)); } catch { /* ignore */ }
   }
-
-  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
 
   const [inlineEdit, setInlineEdit] = useState<{
     event: CalendarEvent;
     field: 'title' | 'date' | 'startTime' | 'endTime' | 'description';
     value: string;
+    value2?: string;
+  } | null>(null);
+  const [draftEvent, setDraftEvent] = useState<{
+    title: string;
+    date: string;
+    startTime: string;
+    endTime: string;
+    type: 'assignment' | 'lecture' | 'exam' | 'other';
   } | null>(null);
   const escapeInlineRef = useRef(false);
   const eventsListRef = useRef<HTMLDivElement>(null);
-  const pendingEventRef = useRef<CalendarEvent | null>(null);
   const [fadingEvents, setFadingEvents] = useState<Set<CalendarEvent>>(new Set());
 
   function handleDeleteEvent(evt: CalendarEvent) {
     if (inlineEdit?.event === evt) setInlineEdit(null);
-    if (pendingEventRef.current === evt) pendingEventRef.current = null;
     setFadingEvents((prev) => new Set([...prev, evt]));
     setTimeout(() => {
       setEvents((prev) => {
@@ -1101,35 +1120,39 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
     }, 200);
   }
 
-  function handleInlineSave(evt: CalendarEvent, field: string, value: string) {
-    const isPending = pendingEventRef.current === evt;
+  function handleInlineSave(evt: CalendarEvent, field: string, value: string, value2?: string) {
     if (escapeInlineRef.current) {
       escapeInlineRef.current = false;
-      if (isPending) handleDeleteEvent(evt);
       return;
     }
     const trimmed = value.trim();
     if (field === 'title' && !trimmed) { handleDeleteEvent(evt); return; }
+
     let updated: CalendarEvent = { ...evt };
     if (field === 'title') {
       updated = { ...updated, title: trimmed };
-      pendingEventRef.current = null;
     } else if (field === 'date') {
       if (!trimmed) { setInlineEdit(null); return; }
-      const timePart = evt.start.includes('T') ? evt.start.slice(10) : 'T00:00:00';
-      updated = { ...updated, start: trimmed + timePart };
+      const hasTime = evt.start.includes('T');
+      const timePart = hasTime ? evt.start.slice(10) : 'T00:00:00';
+      updated = { ...updated, start: trimmed + timePart, allDay: hasTime ? evt.allDay : false };
       if (evt.end) {
         const endTimePart = evt.end.includes('T') ? evt.end.slice(10) : 'T00:00:00';
         updated = { ...updated, end: trimmed + endTimePart };
+      } else if (!hasTime) {
+        updated = { ...updated, end: trimmed + 'T00:00:00' };
       }
     } else if (field === 'startTime') {
       if (!trimmed) { setInlineEdit(null); return; }
       const date = evt.start.slice(0, 10);
       const newStart = date + 'T' + trimmed + ':00';
-      if (evt.type === 'assignment') {
+      if (value2 !== undefined) {
+        // Setting both start and end together (from unknown-time form)
+        const newEnd = value2.trim() ? date + 'T' + value2.trim() + ':00' : date + 'T00:00:00';
+        updated = { ...updated, start: newStart, end: newEnd, allDay: false };
+      } else if (evt.type === 'assignment') {
         updated = { ...updated, start: newStart, end: newStart, allDay: false };
       } else if (evt.end && newStart > evt.end) {
-        // swap: new start is after existing end
         updated = { ...updated, start: evt.end, end: newStart, allDay: false };
       } else {
         updated = { ...updated, start: newStart, allDay: false };
@@ -1139,7 +1162,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
       const date = (evt.end ?? evt.start).slice(0, 10);
       const newEnd = date + 'T' + trimmed + ':00';
       if (newEnd < evt.start) {
-        // swap: new end is before existing start
         updated = { ...updated, start: newEnd, end: evt.start, allDay: false };
       } else {
         updated = { ...updated, end: newEnd, allDay: false };
@@ -1147,30 +1169,41 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
     } else if (field === 'description') {
       updated = { ...updated, description: trimmed || undefined };
     }
-    const nextEvents = events.map((e) => e === evt ? updated : e);
+
+    const nextEvents = events.map((e) => e === evt ? updated : e).sort((a, b) => a.start.localeCompare(b.start));
     setEvents(nextEvents);
     try { localStorage.setItem('calendarEvents', JSON.stringify(nextEvents)); } catch { /* ignore */ }
     setInlineEdit(null);
   }
 
   function handleAddEvent() {
-    const today = new Date().toISOString().slice(0, 10);
-    const newEvt: CalendarEvent = {
-      title: 'New Event',
-      start: today + 'T09:00:00',
-      end: today + 'T10:00:00',
-      allDay: false,
-      type: undefined,
-    };
-    const nextEvents = [...events, newEvt];
-    setEvents(nextEvents);
-    try { localStorage.setItem('calendarEvents', JSON.stringify(nextEvents)); } catch { /* ignore */ }
+    setDraftEvent({ title: '', date: '', startTime: '', endTime: '', type: 'other' });
     setCategoryFilter('ALL');
-    pendingEventRef.current = newEvt;
-    setInlineEdit({ event: newEvt, field: 'title', value: newEvt.title });
     setTimeout(() => {
       eventsListRef.current?.scrollTo({ top: eventsListRef.current.scrollHeight, behavior: 'smooth' });
     }, 50);
+  }
+
+  function handleSaveDraftEvent() {
+    if (!draftEvent || !draftEvent.title.trim() || !draftEvent.date.trim() || !draftEvent.startTime) {
+      setDraftEvent(null);
+      return;
+    }
+    const start = draftEvent.date + 'T' + draftEvent.startTime + ':00';
+    const end = draftEvent.type === 'assignment'
+      ? start
+      : (draftEvent.endTime ? draftEvent.date + 'T' + draftEvent.endTime + ':00' : start);
+    const newEvt: CalendarEvent = {
+      title: draftEvent.title.trim(),
+      start,
+      end,
+      allDay: false,
+      type: draftEvent.type === 'lecture' ? 'class' : draftEvent.type === 'other' ? undefined : draftEvent.type,
+    };
+    const nextEvents = [...events, newEvt].sort((a, b) => a.start.localeCompare(b.start));
+    setEvents(nextEvents);
+    try { localStorage.setItem('calendarEvents', JSON.stringify(nextEvents)); } catch { /* ignore */ }
+    setDraftEvent(null);
   }
 
   return (
@@ -1327,7 +1360,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
           <div className="bg-white/90 backdrop-blur rounded-2xl shadow-sm border border-gray-200 p-6">
             <div className="mb-4">
               <h3 className="font-semibold text-gray-900 text-lg">Review Calendar</h3>
-              <p className="text-sm text-gray-500">Review and make changes to your generated calendar.</p>
+              <p className="text-sm text-gray-500">Review events by categories below and add changes to your generated calendar.  </p>
             </div>
 
             {/* Category filter buttons + Add Event */}
@@ -1397,9 +1430,11 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
               <div className="space-y-2 max-h-[50vh] pr-5 overflow-y-auto text-sm" ref={eventsListRef}>
                 {filteredEvents.slice(0, 50).map((e, idx) => {
                   const label = TYPE_TO_LABEL[(e.type ?? 'undefined') as keyof typeof TYPE_TO_LABEL] ?? 'OTHER';
-                  const dateStr = e.start.slice(0, 10);
-                  const startTime = e.allDay ? '' : getTimeFromISO(e.start);
-                  const endTime = e.allDay ? '' : getTimeFromISO(e.end ?? e.start);
+                  const hasUnknownDate = !e.start || e.start === 'UNKNOWN';
+                  const hasUnknownTime = !hasUnknownDate && !e.allDay && !e.start.includes('T');
+                  const dateStr = hasUnknownDate ? '' : e.start.slice(0, 10);
+                  const startTime = e.allDay || hasUnknownDate || hasUnknownTime ? '' : getTimeFromISO(e.start);
+                  const endTime = e.allDay || hasUnknownDate || hasUnknownTime ? '' : getTimeFromISO(e.end ?? e.start);
                   return (
                     <div
                       key={idx}
@@ -1436,7 +1471,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                               (label === 'LECTURE' ? 'bg-blue-50 text-blue-600' :
                               label === 'ASSIGNMENT' ? 'bg-amber-50 text-amber-600' :
                               label === 'EXAM' ? 'bg-rose-50 text-rose-600' :
-                              label === 'OTHER' ? 'bg-gray-50 text-gray-600' :
                               'bg-gray-100 text-gray-500')
                             }
                           >{label}</button>
@@ -1477,14 +1511,71 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                               if (ev.key === 'Escape') { escapeInlineRef.current = true; setInlineEdit(null); }
                             }}
                           />
+                        ) : hasUnknownDate ? (
+                          <span
+                            className="text-xs text-red-500 font-medium cursor-text hover:underline hover:decoration-dotted whitespace-nowrap"
+                            title="Click to set date"
+                            onClick={() => setInlineEdit({ event: e, field: 'date', value: '' })}
+                          >Date</span>
                         ) : (
                           <span
                             className="text-xs text-gray-500 cursor-text hover:underline hover:decoration-dotted whitespace-nowrap"
                             title="Click to edit date"
                             onClick={() => setInlineEdit({ event: e, field: 'date', value: dateStr })}
-                          >{(() => { const [y,m,d] = dateStr.split('-').map(Number); return `${m}/${d}/${y}`; })()}</span>
+                          >{(() => { const [y,m,d] = dateStr.split('-').map(Number); if (!y || isNaN(y) || isNaN(m) || isNaN(d)) return dateStr; return `${m}/${d}/${y}`; })()}</span>
                         )}
-                        {!e.allDay && (
+                        {!e.allDay && (hasUnknownDate || hasUnknownTime) && (
+                          inlineEdit?.event === e && inlineEdit.field === 'startTime' && hasUnknownTime ? (
+                            <div data-time-range-form="" className="flex items-center gap-1">
+                              <input
+                                autoFocus
+                                type="time"
+                                value={inlineEdit.value}
+                                onChange={(ev) => setInlineEdit({ ...inlineEdit, value: ev.target.value })}
+                                onBlur={(ev) => {
+                                  if ((ev.relatedTarget as Element | null)?.closest('[data-time-range-form]')) return;
+                                  handleInlineSave(e, 'startTime', inlineEdit.value, inlineEdit.value2);
+                                }}
+                                onKeyDown={(ev) => {
+                                  if (ev.key === 'Enter') { ev.preventDefault(); handleInlineSave(e, 'startTime', inlineEdit.value, inlineEdit.value2); }
+                                  if (ev.key === 'Escape') { escapeInlineRef.current = true; setInlineEdit(null); }
+                                }}
+                                className="text-xs text-gray-500 bg-transparent outline-none border-b border-indigo-400 w-20"
+                              />
+                              {e.type !== 'assignment' && inlineEdit.value2 !== undefined && (
+                                <>
+                                  <span className="text-xs text-gray-400">–</span>
+                                  <input
+                                    type="time"
+                                    value={inlineEdit.value2}
+                                    onChange={(ev) => setInlineEdit({ ...inlineEdit, value2: ev.target.value })}
+                                    onBlur={(ev) => {
+                                      if ((ev.relatedTarget as Element | null)?.closest('[data-time-range-form]')) return;
+                                      handleInlineSave(e, 'startTime', inlineEdit.value, inlineEdit.value2);
+                                    }}
+                                    onKeyDown={(ev) => {
+                                      if (ev.key === 'Enter') { ev.preventDefault(); handleInlineSave(e, 'startTime', inlineEdit.value, inlineEdit.value2); }
+                                      if (ev.key === 'Escape') { escapeInlineRef.current = true; setInlineEdit(null); }
+                                    }}
+                                    className="text-xs text-gray-500 bg-transparent outline-none border-b border-indigo-400 w-20"
+                                  />
+                                </>
+                              )}
+                            </div>
+                          ) : (
+                            <span
+                              className="text-xs text-red-500 font-medium cursor-text hover:underline hover:decoration-dotted whitespace-nowrap"
+                              title="Click to set time"
+                              onClick={() => !hasUnknownDate && setInlineEdit({
+                                event: e,
+                                field: 'startTime',
+                                value: '00:00',
+                                value2: e.type !== 'assignment' ? '00:00' : undefined,
+                              })}
+                            >Time</span>
+                          )
+                        )}
+                        {!e.allDay && !hasUnknownDate && !hasUnknownTime && (
                           <div className="flex items-center gap-1">
                             {inlineEdit?.event === e && inlineEdit.field === 'startTime' ? (
                               <input
@@ -1533,7 +1624,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                             )}
                           </div>
                         )}
-                        {e.allDay && <span className="text-xs text-gray-400">All day</span>}
+                        {e.allDay && !hasUnknownDate && <span className="text-xs text-gray-400">All day</span>}
                         <button
                           type="button"
                           onClick={() => handleDeleteEvent(e)}
@@ -1549,6 +1640,78 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                 {filteredEvents.length > 50 && (
                   <p className="text-xs text-gray-400 mt-1">Showing first 50 of {filteredEvents.length} events.</p>
                 )}
+                {draftEvent && (
+                  <div className="flex items-center gap-2 rounded-lg border border-dashed border-slate-300 bg-slate-50/60 px-3 py-2 mt-1 animate-in fade-in duration-150">
+                    <input
+                      autoFocus
+                      placeholder="Event name"
+                      value={draftEvent.title}
+                      onChange={(ev) => setDraftEvent({ ...draftEvent, title: ev.target.value })}
+                      onKeyDown={(ev) => {
+                        if (ev.key === 'Enter') { ev.preventDefault(); handleSaveDraftEvent(); }
+                        if (ev.key === 'Escape') { setDraftEvent(null); }
+                      }}
+                      className="flex-1 min-w-0 text-sm bg-transparent outline-none border-b border-slate-300 text-slate-700 focus:border-indigo-400 placeholder-slate-300"
+                    />
+                    <button
+                      type="button"
+                      onMouseDown={(ev) => ev.preventDefault()}
+                      onClick={() => {
+                        const types = ['assignment', 'lecture', 'exam', 'other'] as const;
+                        const idx = types.indexOf(draftEvent.type);
+                        setDraftEvent({ ...draftEvent, type: types[(idx + 1) % types.length] });
+                      }}
+                      className={`shrink-0 px-1.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide cursor-pointer hover:opacity-70 transition-opacity ${
+                        draftEvent.type === 'lecture' ? 'bg-blue-50 text-blue-600' :
+                        draftEvent.type === 'assignment' ? 'bg-amber-50 text-amber-600' :
+                        draftEvent.type === 'exam' ? 'bg-rose-50 text-rose-600' :
+                        'bg-gray-100 text-gray-500'
+                      }`}
+                    >{draftEvent.type}</button>
+                    <input
+                      type="date"
+                      value={draftEvent.date}
+                      onChange={(ev) => setDraftEvent({ ...draftEvent, date: ev.target.value })}
+                      onKeyDown={(ev) => { if (ev.key === 'Enter') { ev.preventDefault(); handleSaveDraftEvent(); } }}
+                      className="text-xs text-slate-500 bg-transparent outline-none border-b border-slate-300 focus:border-indigo-400 w-28 shrink-0"
+                    />
+                    <input
+                      type="time"
+                      value={draftEvent.startTime}
+                      onChange={(ev) => setDraftEvent({ ...draftEvent, startTime: ev.target.value })}
+                      onKeyDown={(ev) => { if (ev.key === 'Enter') { ev.preventDefault(); handleSaveDraftEvent(); } }}
+                      className="text-xs text-slate-500 bg-transparent outline-none border-b border-slate-300 focus:border-indigo-400 w-20 shrink-0"
+                    />
+                    {draftEvent.type !== 'assignment' && (
+                      <>
+                        <span className="text-xs text-gray-400">–</span>
+                        <input
+                          type="time"
+                          value={draftEvent.endTime}
+                          onChange={(ev) => setDraftEvent({ ...draftEvent, endTime: ev.target.value })}
+                          onKeyDown={(ev) => { if (ev.key === 'Enter') { ev.preventDefault(); handleSaveDraftEvent(); } }}
+                          className="text-xs text-slate-500 bg-transparent outline-none border-b border-slate-300 focus:border-indigo-400 w-20 shrink-0"
+                        />
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setDraftEvent(null)}
+                      className="p-0.5 rounded text-slate-300 hover:text-rose-400 transition-colors shrink-0"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {hasMissingDateOrTime && (
+              <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+                <span className="shrink-0 mt-0.5">⚠</span>
+                <p>
+                  {missingDateOrTimeCount} event{missingDateOrTimeCount !== 1 ? 's' : ''} {missingDateOrTimeCount !== 1 ? 'have' : 'has'} missing dates or times. Fix or delete them before exporting.
+                </p>
               </div>
             )}
 
@@ -1561,14 +1724,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                 >
                   Back to Upload
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setShowRegenerateModal(true)}
-                  disabled={!pendingText || calendarStatus === 'loading'}
-                  className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  Regenerate
-                </button>
+
                 <button
                   onClick={() => setShowDocuments(!showDocuments)}
                   className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors gap-1.5"
@@ -1743,29 +1899,31 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                     <p className="text-xs text-gray-500">
                       {isSyncComplete
                         ? calendarMessage || `Exported to ${selectedCalendarId === 'primary' ? 'your default calendar' : `"${selectedCalendarSummary}"`}`
-                        : hasEvents
-                          ? `${events.length} event${events.length !== 1 ? 's' : ''} ready to export to your Google Calendar.`
-                          : 'No events yet.'}
+                        : isGoogleConnected && hasMissingDateOrTime
+                          ? 'Please fix or remove events with missing dates or times before exporting to Google Calendar.'
+                          : hasEvents
+                            ? `${events.length} event${events.length !== 1 ? 's' : ''} ready to export to your Google Calendar.`
+                            : 'No events yet.'}
                       {!isSyncComplete && !isGoogleConnected ? ' Connect your Google account to continue.' : ''}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => void handleAddToGoogleCalendar()}
-                    disabled={!hasEvents || !isGoogleConnected || calendarStatus === 'loading'}
+                    disabled={!hasEvents || !isGoogleConnected || calendarStatus === 'loading' || (isGoogleConnected && hasMissingDateOrTime)}
                     className={
                       syncButtonClassName +
-                      (!hasEvents || !isGoogleConnected || calendarStatus === 'loading'
+                      (!hasEvents || !isGoogleConnected || calendarStatus === 'loading' || (isGoogleConnected && hasMissingDateOrTime)
                         ? primaryPurpleDisabled
                         : isSyncComplete
                           ? syncedWhite
                           : primaryPurple) +
-                      (!isSyncComplete && hasEvents && isGoogleConnected && calendarStatus !== 'loading'
+                      (!isSyncComplete && hasEvents && isGoogleConnected && calendarStatus !== 'loading' && !hasMissingDateOrTime
                         ? ' hover:-translate-y-[1px]'
                         : '')
                     }
-                    aria-disabled={!hasEvents || !isGoogleConnected || calendarStatus === 'loading'}
-                    title={!isGoogleConnected ? 'Connect your Google account to enable exporting.' : undefined}
+                    aria-disabled={!hasEvents || !isGoogleConnected || calendarStatus === 'loading' || (isGoogleConnected && hasMissingDateOrTime)}
+                    title={!isGoogleConnected ? 'Connect your Google account to enable exporting.' : hasMissingDateOrTime ? 'Fix or remove events with missing dates or times before exporting.' : undefined}
                   >
                     <span className="inline-flex items-center gap-2">
                       <CalendarCheck
@@ -1796,30 +1954,32 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-gray-900">Export to Planner</p>
-                    <p className={`text-xs ${plannerUploadStatus === 'error' ? 'text-gray-500' : 'text-gray-500'}`}>
+                    <p className="text-xs text-gray-500">
                       {plannerUploadStatus === 'done'
                         ? plannerUploadMsg
                         : plannerUploadStatus === 'error'
                           ? plannerUploadMsg
                           : !isLoggedIn
                             ? 'Sign in to upload to your planner.'
-                            : assignmentExamEvents.length > 0
-                              ? `${assignmentExamEvents.length} assignment${assignmentExamEvents.length !== 1 ? 's' : ''} and exam${assignmentExamEvents.length !== 1 ? 's' : ''} ready to export to your planner.`
-                              : 'No assignments or exams found.'}
+                            : isLoggedIn && hasMissingDateOrTime
+                              ? 'Please fix or remove events with missing dates or times before exporting to your planner.'
+                              : assignmentExamEvents.length > 0
+                                ? `${assignmentExamEvents.length} assignment${assignmentExamEvents.length !== 1 ? 's' : ''} and exam${assignmentExamEvents.length !== 1 ? 's' : ''} ready to export to your planner.`
+                                : 'No assignments or exams found.'}
                     </p>
                   </div>
                   <button
                     type="button"
                     onClick={() => void handleOpenPlannerUpload()}
-                    disabled={!isLoggedIn || !hasEvents || assignmentExamEvents.length === 0 || plannerUploadStatus === 'uploading'}
+                    disabled={!isLoggedIn || !hasEvents || assignmentExamEvents.length === 0 || plannerUploadStatus === 'uploading' || (isLoggedIn && hasMissingDateOrTime)}
                     className={
                       syncButtonClassName +
-                      (!isLoggedIn || !hasEvents || assignmentExamEvents.length === 0 || plannerUploadStatus === 'uploading'
+                      (!isLoggedIn || !hasEvents || assignmentExamEvents.length === 0 || plannerUploadStatus === 'uploading' || (isLoggedIn && hasMissingDateOrTime)
                         ? primaryPurpleDisabled
                         : plannerUploadStatus === 'done'
                           ? syncedWhite
                           : primaryPurple) +
-                      (isLoggedIn && plannerUploadStatus !== 'done' && assignmentExamEvents.length > 0 && plannerUploadStatus !== 'uploading'
+                      (isLoggedIn && plannerUploadStatus !== 'done' && assignmentExamEvents.length > 0 && plannerUploadStatus !== 'uploading' && !hasMissingDateOrTime
                         ? ' hover:-translate-y-[1px]'
                         : '')
                     }
@@ -1827,7 +1987,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                     <span className="inline-flex items-center gap-2">
                       {plannerUploadStatus === 'done' ? (
                         <>
-
+                        
                         <BookOpen className="h-4 w-4 animate-pulse" />
                         Exported
                         </>
@@ -1963,51 +2123,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
         </div>
       )}
 
-      {showRegenerateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
-            <h3 className="text-sm font-semibold text-gray-900 mb-4">
-              Regenerate Events
-            </h3>
-
-            <div className="space-y-3 mb-6">
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input type="checkbox" className="rounded border-gray-300" />
-                Lectures
-              </label>
-
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input type="checkbox" className="rounded border-gray-300" />
-                Assignments
-              </label>
-
-              <label className="flex items-center gap-2 text-sm text-gray-700">
-                <input type="checkbox" className="rounded border-gray-300" />
-                Exams
-              </label>
-            </div>
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowRegenerateModal(false)}
-                className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowRegenerateModal(false);
-                  void processPendingText();
-                }}
-                className="rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-700"
-              >
-                Regenerate
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );
