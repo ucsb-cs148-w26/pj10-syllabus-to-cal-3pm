@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
-import { ChevronLeft, ChevronRight, Plus, Pencil, Trash2, ChevronDown } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, Pencil, Trash2, ChevronDown, X } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { GoogleCalendarEventItem } from '@/lib/googleCalendar';
 
@@ -60,17 +60,17 @@ function CalendarMultiPicker({
 
   const displayLabel =
     selectedIds.length === 0
-      ? 'No calendars'
+      ? 'No Calendars'
       : selectedIds.length === 1
-        ? (calendars.find((c) => c.id === selectedIds[0])?.summary ?? selectedIds[0])
-        : `${selectedIds.length} calendars`;
+        ? '1 Calendar'
+        : `${selectedIds.length} Calendars`;
 
   return (
     <div ref={dropdownRef} className="relative">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
+        className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
       >
         <span className="truncate max-w-[140px]">{displayLabel}</span>
         <ChevronDown className={`h-3.5 w-3.5 shrink-0 text-gray-400 transition-transform ${open ? 'rotate-180' : ''}`} />
@@ -815,7 +815,7 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
                     setCreateDate(createDateValue);
                     setCreateOpen(true);
                   }}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors"
+                  className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Add Event
@@ -963,11 +963,14 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
           aria-modal="true"
           aria-labelledby="create-event-title"
         >
-          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 w-full max-w-md mx-4">
-            <h3 id="create-event-title" className="text-lg font-semibold text-gray-900 mb-4">
-              Create event
-            </h3>
-            <form onSubmit={handleCreateSubmit} className="space-y-4">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-md mx-4 overflow-hidden">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+              <h3 id="create-event-title" className="text-lg font-semibold text-gray-900">Create Event</h3>
+              <button type="button" onClick={() => setCreateOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close dialog">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleCreateSubmit} className="space-y-4 px-6 py-4 overflow-y-auto max-h-[80vh]">
               <div>
                 <label htmlFor="create-title" className="block text-sm font-medium text-gray-700 mb-1">
                   Title
@@ -978,7 +981,7 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
                   value={createTitle}
                   onChange={(e) => setCreateTitle(e.target.value)}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   placeholder="Event title"
                 />
               </div>
@@ -992,7 +995,7 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
                   value={createDate || createDateValue}
                   onChange={(e) => setCreateDate(e.target.value)}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -1018,7 +1021,7 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
                       type="time"
                       value={createStartTime}
                       onChange={(e) => setCreateStartTime(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full px-3 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     />
                   </div>
                   <div>
@@ -1030,23 +1033,26 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
                       type="time"
                       value={createEndTime}
                       onChange={(e) => setCreateEndTime(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full px-3 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     />
                   </div>
                 </div>
               )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Repeat</label>
-                <select
-                  value={createRepeat}
-                  onChange={(e) => setCreateRepeat(e.target.value as 'none' | 'daily' | 'weekdays' | 'weekly')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value="none">Does not repeat</option>
-                  <option value="daily">Daily</option>
-                  <option value="weekdays">Weekdays (M–F)</option>
-                  <option value="weekly">Weekly — pick which days below</option>
-                </select>
+                <div className="relative">
+                  <select
+                    value={createRepeat}
+                    onChange={(e) => setCreateRepeat(e.target.value as 'none' | 'daily' | 'weekdays' | 'weekly')}
+                    className="w-full px-3 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none pr-8"
+                  >
+                    <option value="none">Does not repeat</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekdays">Weekdays (M–F)</option>
+                    <option value="weekly">Weekly — pick which days below</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                </div>
                 {createRepeat === 'weekly' && (
                   <div className="mt-2">
                     <p className="text-xs text-gray-600 mb-1.5">Repeat on these days (check all that apply):</p>
@@ -1075,22 +1081,25 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
                 )}
                 {(createRepeat === 'daily' || createRepeat === 'weekdays' || createRepeat === 'weekly') && (
                   <div className="mt-2 space-y-2">
-                    <label className="block text-xs text-gray-600">Ends</label>
-                    <select
-                      value={createEndType}
-                      onChange={(e) => setCreateEndType(e.target.value as 'never' | 'date' | 'count')}
-                      className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg"
-                    >
-                      <option value="never">Never</option>
-                      <option value="date">On a specific date</option>
-                      <option value="count">After a number of occurrences</option>
-                    </select>
+                    <label className="block text-sm font-medium text-gray-700">Ends</label>
+                    <div className="relative">
+                      <select
+                        value={createEndType}
+                        onChange={(e) => setCreateEndType(e.target.value as 'never' | 'date' | 'count')}
+                        className="w-full px-3 py-2 text-sm bg-white text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none pr-8"
+                      >
+                        <option value="never">Never</option>
+                        <option value="date">On a specific date</option>
+                        <option value="count">After a number of occurrences</option>
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    </div>
                     {createEndType === 'date' && (
                       <input
                         type="date"
                         value={createEndDate}
                         onChange={(e) => setCreateEndDate(e.target.value)}
-                        className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg"
+                        className="w-full px-3 py-2 text-sm bg-white text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         aria-label="End date"
                       />
                     )}
@@ -1101,7 +1110,7 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
                           min={1}
                           value={createEndCount}
                           onChange={(e) => setCreateEndCount(parseInt(e.target.value, 10) || 5)}
-                          className="w-20 px-3 py-1.5 text-sm border border-gray-300 rounded-lg"
+                          className="w-20 px-3 py-2 text-sm bg-white text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           aria-label="Number of occurrences"
                         />
                         <span className="text-sm text-gray-600">occurrences</span>
@@ -1119,25 +1128,25 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
                   value={createDescription}
                   onChange={(e) => setCreateDescription(e.target.value)}
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   placeholder="Description"
                 />
               </div>
               {createError && (
                 <p className="text-sm text-red-600">{createError}</p>
               )}
-              <div className="flex gap-2 justify-end pt-2">
+              <div className="flex gap-2 justify-end border-t border-gray-100 pt-4">
                 <button
                   type="button"
                   onClick={() => setCreateOpen(false)}
-                  className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={createSubmitting}
-                  className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-50"
+                  className="px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
                 >
                   {createSubmitting ? 'Creating…' : 'Create'}
                 </button>
@@ -1212,11 +1221,14 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
           aria-modal="true"
           aria-labelledby="edit-event-title"
         >
-          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 w-full max-w-md mx-4">
-            <h3 id="edit-event-title" className="text-lg font-semibold text-gray-900 mb-4">
-              Edit event
-            </h3>
-            <form onSubmit={handleEditSubmit} className="space-y-4">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-md mx-4 overflow-hidden">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+              <h3 id="edit-event-title" className="text-lg font-semibold text-gray-900">Edit event</h3>
+              <button type="button" onClick={() => { setEditOpen(false); setEditingEvent(null); }} className="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Close dialog">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <form onSubmit={handleEditSubmit} className="space-y-4 px-6 py-4 overflow-y-auto max-h-[80vh]">
               <div>
                 <label htmlFor="edit-title" className="block text-sm font-medium text-gray-700 mb-1">
                   Title
@@ -1227,7 +1239,7 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   placeholder="Event title"
                 />
               </div>
@@ -1241,7 +1253,7 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
                   value={editDate}
                   onChange={(e) => setEditDate(e.target.value)}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
               <div className="flex items-center gap-2">
@@ -1267,7 +1279,7 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
                       type="time"
                       value={editStartTime}
                       onChange={(e) => setEditStartTime(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full px-3 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     />
                   </div>
                   <div>
@@ -1279,23 +1291,26 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
                       type="time"
                       value={editEndTime}
                       onChange={(e) => setEditEndTime(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="w-full px-3 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     />
                   </div>
                 </div>
               )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Repeat</label>
-                <select
-                  value={editRepeat}
-                  onChange={(e) => setEditRepeat(e.target.value as 'none' | 'daily' | 'weekdays' | 'weekly')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value="none">Does not repeat</option>
-                  <option value="daily">Daily</option>
-                  <option value="weekdays">Weekdays (M–F)</option>
-                  <option value="weekly">Weekly — pick which days below</option>
-                </select>
+                <div className="relative">
+                  <select
+                    value={editRepeat}
+                    onChange={(e) => setEditRepeat(e.target.value as 'none' | 'daily' | 'weekdays' | 'weekly')}
+                    className="w-full px-3 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none pr-8"
+                  >
+                    <option value="none">Does not repeat</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekdays">Weekdays (M–F)</option>
+                    <option value="weekly">Weekly — pick which days below</option>
+                  </select>
+                  <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                </div>
                 {editRepeat === 'weekly' && (
                   <div className="mt-2">
                     <p className="text-xs text-gray-600 mb-1.5">Repeat on these days (check all that apply):</p>
@@ -1324,22 +1339,25 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
                 )}
                 {(editRepeat === 'daily' || editRepeat === 'weekdays' || editRepeat === 'weekly') && (
                   <div className="mt-2 space-y-2">
-                    <label className="block text-xs text-gray-600">Ends</label>
-                    <select
-                      value={editEndType}
-                      onChange={(e) => setEditEndType(e.target.value as 'never' | 'date' | 'count')}
-                      className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg"
-                    >
-                      <option value="never">Never</option>
-                      <option value="date">On a specific date</option>
-                      <option value="count">After a number of occurrences</option>
-                    </select>
+                    <label className="block text-sm font-medium text-gray-700">Ends</label>
+                    <div className="relative">
+                      <select
+                        value={editEndType}
+                        onChange={(e) => setEditEndType(e.target.value as 'never' | 'date' | 'count')}
+                        className="w-full px-3 py-2 text-sm bg-white text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 appearance-none pr-8"
+                      >
+                        <option value="never">Never</option>
+                        <option value="date">On a specific date</option>
+                        <option value="count">After a number of occurrences</option>
+                      </select>
+                      <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    </div>
                     {editEndType === 'date' && (
                       <input
                         type="date"
                         value={editEndDate}
                         onChange={(e) => setEditEndDate(e.target.value)}
-                        className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded-lg"
+                        className="w-full px-3 py-2 text-sm bg-white text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         aria-label="End date"
                       />
                     )}
@@ -1350,7 +1368,7 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
                           min={1}
                           value={editEndCount}
                           onChange={(e) => setEditEndCount(parseInt(e.target.value, 10) || 5)}
-                          className="w-20 px-3 py-1.5 text-sm border border-gray-300 rounded-lg"
+                          className="w-20 px-3 py-2 text-sm bg-white text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                           aria-label="Number of occurrences"
                         />
                         <span className="text-sm text-gray-600">occurrences</span>
@@ -1368,14 +1386,14 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
                   value={editDescription}
                   onChange={(e) => setEditDescription(e.target.value)}
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 bg-white text-gray-700 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                   placeholder="Description"
                 />
               </div>
               {editError && (
                 <p className="text-sm text-red-600">{editError}</p>
               )}
-              <div className="flex flex-wrap gap-2 justify-between pt-2">
+              <div className="flex flex-wrap gap-2 justify-between border-t border-gray-100 pt-4">
                 <button
                   type="button"
                   onClick={() => {
@@ -1383,7 +1401,7 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
                     setEditOpen(false);
                     setEditingEvent(null);
                   }}
-                  className="px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 border border-red-200"
+                  className="px-3 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 border border-red-200 transition-colors"
                 >
                   Delete event
                 </button>
@@ -1391,14 +1409,14 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
                   <button
                     type="button"
                     onClick={() => { setEditOpen(false); setEditingEvent(null); }}
-                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50"
+                    className="px-4 py-2 text-sm font-medium rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition-colors"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={editSubmitting}
-                    className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 disabled:opacity-50"
+                    className="px-4 py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-colors"
                   >
                     {editSubmitting ? 'Saving…' : 'Save'}
                   </button>

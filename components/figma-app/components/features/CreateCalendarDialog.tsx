@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Plus, X, Loader2 } from 'lucide-react';
 
 interface CreateCalendarDialogProps {
@@ -96,7 +97,7 @@ export function CreateCalendarDialog({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900"
+        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white h-10 px-3 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900"
         title="Create a new Google Calendar"
       >
         <Plus className="h-4 w-4" />
@@ -105,7 +106,7 @@ export function CreateCalendarDialog({
       </button>
 
       {/* Modal backdrop and dialog */}
-      {isOpen && (
+      {isOpen && createPortal(
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-[fadeIn_150ms_ease-out]"
           onClick={(e) => {
@@ -153,7 +154,7 @@ export function CreateCalendarDialog({
                   onKeyDown={handleKeyDown}
                   placeholder="e.g., [Course] Schedule"
                   disabled={isLoading}
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400"
+                  className="w-full px-3 py-2 text-sm bg-white text-gray-700 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400"
                 />
               </div>
 
@@ -173,7 +174,7 @@ export function CreateCalendarDialog({
                   placeholder="e.g., Syllabus events and assignments"
                   disabled={isLoading}
                   rows={3}
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400 resize-none"
+                  className="w-full px-3 py-2 text-sm bg-white text-gray-700 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-50 disabled:text-gray-400 resize-none"
                 />
               </div>
 
@@ -215,7 +216,8 @@ export function CreateCalendarDialog({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

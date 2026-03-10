@@ -34,11 +34,6 @@ export function Profile(_props: ProfileProps) {
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [passwordError, setPasswordError] = useState("");
 
-  // Forgot password states
-  const [resetSending, setResetSending] = useState(false);
-  const [resetSent, setResetSent] = useState(false);
-  const [resetError, setResetError] = useState("");
-
   // Load user data
   useEffect(() => {
     async function loadUser() {
@@ -135,26 +130,6 @@ export function Profile(_props: ProfileProps) {
       );
     } finally {
       setPasswordSubmitting(false);
-    }
-  };
-
-  // Forgot password
-  const handleForgotPassword = async () => {
-    setResetSending(true);
-    setResetError("");
-    setResetSent(false);
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
-      if (error) throw error;
-
-      setResetSent(true);
-    } catch (err) {
-      setResetError(
-        err instanceof Error ? err.message : "Failed to send reset email"
-      );
-    } finally {
-      setResetSending(false);
     }
   };
 
@@ -285,24 +260,7 @@ export function Profile(_props: ProfileProps) {
                   </div>
                 )}
 
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-col gap-1">
-                    <button
-                      type="button"
-                      onClick={handleForgotPassword}
-                      disabled={resetSending}
-                      className="text-xs text-indigo-700 hover:text-indigo-900 underline underline-offset-4 disabled:opacity-60 transition text-left"
-                    >
-                      {resetSending ? "Sending…" : "Forgot password?"}
-                    </button>
-                    {resetSent && (
-                      <p className="text-xs text-emerald-600">Reset email sent.</p>
-                    )}
-                    {resetError && (
-                      <p className="text-xs text-rose-600">{resetError}</p>
-                    )}
-                  </div>
-
+                <div className="flex items-center justify-end">
                   <button
                     type="submit"
                     disabled={passwordSubmitting}
