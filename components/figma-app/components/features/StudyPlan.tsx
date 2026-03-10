@@ -104,15 +104,6 @@ export function StudyPlan({ accessToken, isAuthenticated }: StudyPlanProps) {
   const [cardSlideDir, setCardSlideDir] = useState<Record<string, 'left' | 'right'>>({});
   const [cardAnimKey, setCardAnimKey] = useState<Record<string, number>>({});
 
-  //Class prority (0-5) 
-  const CLASS_PRIORITY_MULTIPLIER: Record<number, number> = {
-    1: 0.8,
-    2: 0.9,
-    3: 1.0,
-    4: 1.1,
-    5: 1.2,
-  };
-  
   const CLASS_PRIORITY_LABEL: Record<number, string> = {
     1: 'Low Priority',
     2: 'Below Average',
@@ -276,18 +267,13 @@ export function StudyPlan({ accessToken, isAuthenticated }: StudyPlanProps) {
       if (a.completed) continue;
       const courseName = courses.find((c) => c.id === a.course_id)?.class_name ?? 'No Course';
 
-      // Compute priority from days until due
-       const due = new Date(a.due_date + 'T00:00:00');
-      const baseScore = priority_score(due, due, a.type);
-      if (isNaN(baseScore)) continue;
-
       const classPriority = courses.find((c) => c.id === a.course_id)?.class_priority ?? 3;
-      const multiplier = CLASS_PRIORITY_MULTIPLIER[classPriority] ?? 1;
-      const score = baseScore / multiplier;
-      
+      const score = priority_score(a.due_date, a.type, classPriority);
+      if (!isFinite(score)) continue;
+
       let priority: 'high' | 'medium' | 'low' = 'low';
-      if (score < 480) priority = 'high';
-      else if (score < 1680) priority = 'medium';
+      if (score < 96) priority = 'high';
+      else if (score < 216) priority = 'medium';
 
       items.push({
         id: `db-${a.id}`,
@@ -804,29 +790,57 @@ export function StudyPlan({ accessToken, isAuthenticated }: StudyPlanProps) {
                       className={`w-3 h-3 mt-1.5 rounded-full shrink-0 ${progressColor} hover:ring-2 hover:ring-offset-1 hover:ring-slate-400 transition-all`}
                     />
                     <div className="min-w-0 flex-1">
-                      {/* Inline-editable class_name */}
-                      {editingField?.courseId === course.id && editingField.field === 'class_name' ? (
-                        <input
-                          autoFocus
-                          className={`${inlineInputBase} font-semibold text-slate-900 text-base`}
-                          value={editingField.value}
-                          onChange={(e) => setEditingField({ ...editingField, value: e.target.value })}
-                          onBlur={() => {
-                            if (escapeInlineRef.current) { escapeInlineRef.current = false; return; }
-                            handleSaveField(course.id, 'class_name', editingField.value);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
-                            if (e.key === 'Escape') { escapeInlineRef.current = true; setEditingField(null); }
-                          }}
-                        />
-                      ) : (
-                        <h4
-                          className="font-semibold text-slate-900 text-base truncate cursor-text hover:underline hover:decoration-dotted transition-all"
-                          title="Click to edit"
-                          onClick={() => setEditingField({ courseId: course.id, field: 'class_name', value: course.class_name })}
-                        >{course.class_name}</h4>
-                      )}
+                      {/* Class name row with priority button */}
+                      <div className="flex items-center gap-2">
+                        <div className="min-w-0 flex-1">
+                          {/* Inline-editable class_name */}
+                          {editingField?.courseId === course.id && editingField.field === 'class_name' ? (
+                            <input
+                              autoFocus
+                              className={`${inlineInputBase} font-semibold text-slate-900 text-base`}
+                              value={editingField.value}
+                              onChange={(e) => setEditingField({ ...editingField, value: e.target.value })}
+                              onBlur={() => {
+                                if (escapeInlineRef.current) { escapeInlineRef.current = false; return; }
+                                handleSaveField(course.id, 'class_name', editingField.value);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); }
+                                if (e.key === 'Escape') { escapeInlineRef.current = true; setEditingField(null); }
+                              }}
+                            />
+                          ) : (
+                            <h4
+                              className="font-semibold text-slate-900 text-base truncate cursor-text hover:underline hover:decoration-dotted transition-all"
+                              title="Click to edit"
+                              onClick={() => setEditingField({ courseId: course.id, field: 'class_name', value: course.class_name })}
+                            >{course.class_name}</h4>
+                          )}
+                        </div>
+                        {/* Priority button */}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              className={`shrink-0 px-2.5 py-1 rounded-lg text-xs font-semibold border cursor-pointer hover:opacity-80 transition-opacity whitespace-nowrap ${CLASS_PRIORITY_COLORS[course.class_priority ?? 3]}`}
+                              title="Click to change priority"
+                            >
+                              {CLASS_PRIORITY_LABEL[course.class_priority ?? 3]}
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="bg-white border border-slate-200 shadow-lg rounded-xl p-1.5 min-w-[9rem]">
+                            {[1, 2, 3, 4, 5].map((level) => (
+                              <DropdownMenuItem
+                                key={level}
+                                onSelect={() => handleSaveClassPriority(course.id, level)}
+                                className={`rounded-lg text-xs font-medium cursor-pointer px-3 py-1.5 mb-0.5 last:mb-0 ${CLASS_PRIORITY_COLORS[level]}`}
+                              >
+                                {CLASS_PRIORITY_LABEL[level]}
+                              </DropdownMenuItem>
+                            ))}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                       {/* Inline-editable teacher */}
                       {editingField?.courseId === course.id && editingField.field === 'teacher' ? (
                         <input
@@ -874,31 +888,6 @@ export function StudyPlan({ accessToken, isAuthenticated }: StudyPlanProps) {
                         >{course.academic_term || <span className="italic">Term</span>}</p>
                       )}
 
-                      {/* 📌 CLASS PRIORITY DROPDOWN */}
-                      <div className="mt-4 mb-3 flex items-center justify-between">
-                        <label className="text-xs font-medium text-slate-600">Class Priority</label>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <button
-                              type="button"
-                              className={`px-2.5 py-1 rounded-lg text-xs font-bold border cursor-pointer hover:opacity-80 transition-opacity ${CLASS_PRIORITY_COLORS[course.class_priority ?? 3]}`}
-                              title="Click to change priority"
-                            >
-                              {course.class_priority ?? 3}
-                            </button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {[1, 2, 3, 4, 5].map((level) => (
-                              <DropdownMenuItem
-                                key={level}
-                                onSelect={() => handleSaveClassPriority(course.id, level)}
-                              >
-                                {CLASS_PRIORITY_LABEL[level]}
-                              </DropdownMenuItem>
-                            ))}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
                     </div>
                   </div>
                   <button
