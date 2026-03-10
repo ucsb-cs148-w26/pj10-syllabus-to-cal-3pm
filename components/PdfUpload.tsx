@@ -127,13 +127,19 @@ export default function PdfUpload({ onTextExtracted, uploadedFiles, onDeleteUplo
 
   async function uploadFiles(files: File[]) {
     const formData = new FormData();
-    const currentUploadedFileCount = uploadedFiles ? uploadedFiles.length : 0; //!assumed undefined uploadedFiles means no files 
-    for (let file_idx=0; file_idx<files.length; file_idx++){
-    // for (const f of files){
-      if(currentUploadedFileCount + file_idx >= UPLOAD_LIMIT){
-        throw new Error(`Cannot upload more files than the limit: ${UPLOAD_LIMIT} files. You tried to upload ${files.length} and you currently have ${currentUploadedFileCount}. Try again with ${UPLOAD_LIMIT - currentUploadedFileCount} files or less.`);
+    if((uploadedFiles ? uploadedFiles.length : 0) + files.length > UPLOAD_LIMIT){
+      const difference : number = UPLOAD_LIMIT - (uploadedFiles ? uploadedFiles.length : 0);
+      let errorMessage : string = `Cannot upload more files than the limit: ${UPLOAD_LIMIT} files. You tried to upload ${files.length} and you currently have ${uploadedFiles ? uploadedFiles.length: 0}. `;
+      if(difference == 0){
+        errorMessage += `Please remove at least 1 file to upload more.`;
       }
-      formData.append("file", files[file_idx]);
+      else{
+        errorMessage += `Please try again with at most ${difference} file` + (difference > 1 ? 's' : '') + '.'; 
+      }
+      throw new Error(errorMessage);
+    }
+    for (const f of files){
+      formData.append("file", f);
     }
     const res = await fetch("/api/upload", { method: "POST", body: formData });
     if (!res.ok) {
