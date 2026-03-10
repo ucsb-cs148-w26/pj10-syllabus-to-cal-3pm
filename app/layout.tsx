@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   title: "Syllabus Calendar",
   description: "Turn your syllabus into a smart schedule — instantly. Upload any syllabus, review and sync to Google Calendar in one go.",
   icons: {
-    icon: "/favicon.ico",
+    icon: "/icon.svg",
   },
 };
 
