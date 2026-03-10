@@ -277,7 +277,6 @@ ${loading ? "opacity-80" : ""}`}
       </div>
 
       {message && <p className={messageClassName}>{message}</p>}
-      <br className="visib  "></br>
 
       {showList && (
         <div className="rounded-2xl border border-gray-200 bg-white/80 backdrop-blur p-4">
