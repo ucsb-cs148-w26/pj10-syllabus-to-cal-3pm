@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { extractText, getDocumentProxy } from "unpdf";
 import { Upload as UploadIcon, Loader2, Trash2, FileText } from "lucide-react";
 import { FILE_ACCEPT_ATTR, validateUploadFile } from "@/lib/fileValidation";
+import { Uploads } from "@/components/figma-app/components/features/Uploads"
+import { set } from "react-hook-form";
+import { upload } from "@testing-library/user-event/dist/cjs/utility/upload.js";
+import { file } from "googleapis/build/src/apis/file";
 
 type UploadedFileMeta = { filename: string; url: string };
 
@@ -26,9 +30,14 @@ function isImageExt(ext: string) {
 export default function PdfUpload({ onTextExtracted, uploadedFiles, onDeleteUploadedFile }: UploadProps) {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageClassName, setMessageClassName] = useState("text-xs md:text-xs text-gray-600")
   const [isDragOver, setIsDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  const UPLOAD_LIMIT : number = 20;
+
+  const ERROR_MESSAGE_CLASS_NAME = "text-xs md:text-base text-red-600 whitespace-pre-wrap"
+  const NORMAL_MESSAGE_CLASS_NAME = "text-xs md:text-xs text-gray-600"
   // Recompute transcript when uploaded list changes (e.g., deletions)
   useEffect(() => {
     const files = uploadedFiles ?? [];
@@ -38,6 +47,7 @@ export default function PdfUpload({ onTextExtracted, uploadedFiles, onDeleteUplo
 
     async function recompute() {
       try {
+        setMessageClassName(NORMAL_MESSAGE_CLASS_NAME);
         setMessage("");
         const texts = await extractAllTexts(files);
         if (cancelled) return;
@@ -122,8 +132,20 @@ export default function PdfUpload({ onTextExtracted, uploadedFiles, onDeleteUplo
 
   async function uploadFiles(files: File[]) {
     const formData = new FormData();
-    for (const f of files) formData.append("file", f);
-
+    if((uploadedFiles ? uploadedFiles.length : 0) + files.length > UPLOAD_LIMIT){
+      const difference : number = UPLOAD_LIMIT - (uploadedFiles ? uploadedFiles.length : 0);
+      let errorMessage : string = `Cannot upload more files than the limit: ${UPLOAD_LIMIT} files. You tried to upload ${files.length} and you currently have ${uploadedFiles ? uploadedFiles.length: 0}.\n`;
+      if(difference == 0){
+        errorMessage += `Please remove at least 1 file to upload more.`;
+      }
+      else{
+        errorMessage += `Please try again with at most ${difference} file` + (difference > 1 ? 's' : '') + '.'; 
+      }
+      throw new Error(errorMessage);
+    }
+    for (const f of files){
+      formData.append("file", f);
+    }
     const res = await fetch("/api/upload", { method: "POST", body: formData });
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
@@ -133,6 +155,7 @@ export default function PdfUpload({ onTextExtracted, uploadedFiles, onDeleteUplo
     return obj.uploadedFiles as UploadedFileMeta[];
   }
 
+
   async function handleFiles(fileList: FileList) {
     const picked = Array.from(fileList ?? []);
     if (picked.length === 0) return;
@@ -141,6 +164,7 @@ export default function PdfUpload({ onTextExtracted, uploadedFiles, onDeleteUplo
     for (const f of picked) {
       const v = validateUploadFile(f);
       if (!v.ok) {
+        setMessageClassName(ERROR_MESSAGE_CLASS_NAME);
         setMessage(v.error); // Scenario 2: MP3 -> "not supported"
         continue;
       }
@@ -149,6 +173,7 @@ export default function PdfUpload({ onTextExtracted, uploadedFiles, onDeleteUplo
     if (ok.length === 0) return;
 
     setLoading(true);
+    setMessageClassName(NORMAL_MESSAGE_CLASS_NAME);
     setMessage("");
 
     try {
@@ -167,6 +192,7 @@ export default function PdfUpload({ onTextExtracted, uploadedFiles, onDeleteUplo
       onTextExtracted(transcript, uploaded);
     } catch (err) {
       console.error(err);
+      setMessageClassName(ERROR_MESSAGE_CLASS_NAME);
       setMessage(err instanceof Error ? err.message : "Upload failed.");
     } finally {
       setLoading(false);
@@ -250,7 +276,7 @@ ${loading ? "opacity-80" : ""}`}
         )}
       </div>
 
-      {message && <p className="text-xs md:text-sm text-gray-600">{message}</p>}
+      {message && <p className={messageClassName}>{message}</p>}
 
       {showList && (
         <div className="rounded-2xl border border-gray-200 bg-white/80 backdrop-blur p-4">

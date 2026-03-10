@@ -433,6 +433,7 @@ function CoursePicker({ courses, selectedId, onSelect }: {
     </div>
   );
 }
+
 export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticated }: UploadsProps) {
   const supabase = useMemo(() => createClient(), []);
   const [step, setStep] = useState<UploadStep>(1);
@@ -612,7 +613,6 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
 
   const newUploadNeutral = 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50';
   const newUploadPurple = 'bg-indigo-600 text-white hover:bg-indigo-700';
-
 
   function handleSyllabusText(rawText: string, uploaded?: string[] | UploadedFileMeta[]) {
     setPendingText(rawText);
