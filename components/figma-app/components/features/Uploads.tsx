@@ -1262,7 +1262,7 @@ export function Uploads({ initialAccessToken, onAccessTokenChange, isAuthenticat
                 onChange={(e) =>
                   setUserPrompt(e.target.value.slice(0, MAX_PROMPT_LENGTH))
                 }
-                placeholder={'Add directions for generation or information about your classes (e.g. section/lab times). Specific dates (e.g. \'remove lecture on 3/20/2026\") are recommended for more accurate results.'}
+                placeholder={'Add directions (e.g. removing a lecture on 01/05/2026) or information about your classes (e.g. your section time). Clear instructions are recommended for a better generation.'}
 
                 rows={3}
                 maxLength={MAX_PROMPT_LENGTH}

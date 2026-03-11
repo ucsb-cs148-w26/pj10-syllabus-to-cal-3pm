@@ -833,14 +833,14 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
           {!accessToken && (
             <div className="mb-4 rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-8 text-center">
               <p className="text-gray-700 font-medium mb-2">Your calendar events will show here</p>
-              <p className="text-sm text-gray-500 mb-4">Connect your Google account on the Uploads page, then come back to see and add events.</p>
+              <p className="text-sm text-gray-500 mb-4">Connect your Google account on the upload page, then return to view and add events.</p>
               {onGoToUploads ? (
                 <button
                   type="button"
                   onClick={onGoToUploads}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700"
                 >
-                  Go to Uploads to connect
+                  Go to Upload to Connect
                 </button>
               ) : (
                 <p className="text-sm text-gray-600">Click <strong>Uploads</strong> in the menu above to connect.</p>
@@ -863,7 +863,7 @@ export function Calendar({ accessToken, onGoToUploads }: CalendarProps) {
             <p className="text-sm text-gray-500 mb-2">Loading events…</p>
           )}
           {accessToken && !loading && !eventsLoadError && events.length === 0 && (
-            <p className="text-sm text-gray-500 mb-2">No events this period. Add one with the button above or in Google Calendar.</p>
+            <p className="text-sm text-gray-500 mb-2">No events this period.</p>
           )}
 
           {viewMode === 'week' ? (
