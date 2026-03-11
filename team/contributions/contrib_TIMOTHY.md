@@ -52,7 +52,10 @@
   - pr: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/157
 
 
-
+# Upload
+  ### File Upload Limit:
+  - issue: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/issues/247#issue-4048741750
+  - pr: https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/248
 
 
 
