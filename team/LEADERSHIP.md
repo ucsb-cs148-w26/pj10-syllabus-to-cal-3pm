@@ -12,7 +12,7 @@
 | N/A       | Wilson Lau       | Retro 3 Leader                                              |
 | N/A       | Matthew Ahmadpour       | UX Coordinator                                              |
 | N/A       | Timothy Lou | Design Document Coordinator                                              |
-| N/A       | Matthew Ahmadpour       | Deployment Document Coordinator                                              |
+| N/A       | Rocky Gao       | Deployment Document Coordinator                                              |
 | N/A       | Timothy Lou       | User Manual Coordinator                                              |
 | N/A       | Matthew Ahmadpour | Final Presentation Leader                                              |
  
