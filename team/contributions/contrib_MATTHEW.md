@@ -2,11 +2,11 @@
 
 - https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/142 - Integrated Figma front-end (upload page) with existing functionality.
 
-- Designed the file deletion system functionality and an option to process events (as opposed to automatic upon upload).
+- https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/142 - Designed the file deletion system functionality and an option to process events (as opposed to automatic upon upload).
   
-- Designed three-step process for upload, including new ability to review events (CSV and UI-version) before exporting them. Compressed the functionality on one page into seperate stages (upload, review, export) and designed buttons, animations, text, slider, etc.
+-  https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/142 - Designed three-step process for upload, including new ability to review events (CSV and UI-version) before exporting them. Compressed the functionality on one page into seperate stages (upload, review, export) and designed buttons, animations, text, slider, etc.
 
-- Created and debugged processing with Gemini API call, converting provided parsed syllabus text into a compatible CSV for export.
+- https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/134 - Fixed processing with Gemini API call, converting provided parsed syllabus text into a compatible CSV for export.
 
 - https://github.com/ucsb-cs148-w26/pj10-syllabus-to-cal-3pm/pull/144 - Investigated and fixed first and second set of errors producing deployment issues. Changed production website to latest version after fix.
 
