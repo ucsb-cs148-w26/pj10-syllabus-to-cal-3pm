@@ -93,12 +93,12 @@ All features are implemented with the goal of providing at least one of three be
 - View generated files and make edits within the interface.
 - Sort viewed events by type, including lecture, assignment, and exam.
 - Provide prompts and select extracted event type (e.g., exams only).
-- Receive warnings for invalid events (e.g., missing time) without them being ignored or including false assumptions
-- Upload to Google Calendar
-- View deadlines in planner and receive real-time priority levels for each exam and assignment
-- Customize class priorities to better reflect deadline importance
-- View and make edits to Google Calendar within the website
-- Download files to add them to other platforms such as Notion
+- Receive warnings for invalid events (e.g., missing time) without them being ignored or including false assumptions.
+- Upload to Google Calendar.
+- View deadlines in planner and receive real-time priority levels for each exam and assignment.
+- Customize class priorities to better reflect deadline importance.
+- View and make edits to Google Calendar within the website.
+- Download files to add them to other platforms such as Notion.
   
 # Deployment
 
