@@ -1,6 +1,6 @@
 # Syllabus to Calendar
 
-Syllabus to Calendar is a web app where users can upload their class syllabus, automatically extract events, and upload them to their Google Calendar. The app's mission is to provide users with three core components that many LLM alternatives lack: speed, security, and readability. Users are provided with new features like a non-CSV review interface with built-in editing, automatic calendar upload, a warning system for extracted events without dates, Google Calendar interaction within the app, and a course planner to view upcoming deadlines and their estimated priority. By improving the process of class organization, Syllabus to Calendar supports students by encouraging responsiblity and structure within each of their courses.
+Syllabus to Calendar is a web app where users can upload their class syllabus, automatically extract events, and upload them to their Google Calendar. The app's mission is to provide users with three core components that many LLM alternatives lack: speed, security, and readability. Users are provided with new features like a non-CSV review interface with built-in editing, automatic calendar upload, a warning system for extracted events without dates, Google Calendar interaction within the app, and a course planner to view upcoming deadlines and their estimated priority. By improving the process of class organization, Syllabus to Calendar supports students by encouraging responsiblity and structure throughout their academic journey.
 
 ## Tech Stack
 * Vercel, Vercel Blob, React, Next.js, Gemini, PyMuPDF, SpaCy, Supabase, OAuth, Google Calendar API 
@@ -67,17 +67,23 @@ npm run dev
 
 ## Structure
 
-### Features
-
-- Uploads.tsx: Calendar upload and generation
-- Calendar.tsx: Google Calendar view
-- StudyPlan.tsx: Planner and course tracker
-- Profile.tsx: Change account information
 ```
-components/figma-app/components/features/Uploads.tsx
-components/figma-app/components/features/Calendar.tsx
-components/figma-app/components/features/StudyPlan.tsx
-components/figma-app/components/features/Profile.tsx
+Repository
+  __tests__ - Jest testing folders
+    integration - Integration files
+    unit - Unit tests
+  app
+    api - Gemini, Vercel Blob, Google Calendar integration, OAuth handling, etc
+  components - Front-end features
+    figma-app
+      components
+        features - Main app pages
+          Uploads.tsx - Calendar upload page
+          Calendar.tsx - Calendar view page
+          StudyPlan.tsx - Planner and course manager page
+          Profile.tsx - Profile settings page
+    PdfUpload.tsx - File uploading
+  lib - DB, CSV parsing, CalendarEvent type, file permissions, etc
 ```
 ## Functionality
 
